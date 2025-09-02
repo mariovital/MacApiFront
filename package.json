@@ -1,0 +1,31 @@
+{
+  "name": "mac-tickets-fullstack",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Tickets - Frontend React + Backend Node.js",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\" --names \"FRONTEND,BACKEND\" --prefix-colors \"cyan,yellow\" --kill-others-on-fail",
+    "dev:frontend": "cd Back/mac-tickets && npm run dev",
+    "dev:backend": "cd Back/mac-tickets-api && npm run dev",
+    "start": "concurrently \"npm run start:frontend\" \"npm run start:backend\" --names \"FRONTEND,BACKEND\" --prefix-colors \"cyan,yellow\"",
+    "start:frontend": "cd Back/mac-tickets && npm run build && npm run preview",
+    "start:backend": "cd Back/mac-tickets-api && npm run start",
+    "install:all": "npm install && cd Back/mac-tickets && npm install && cd ../mac-tickets-api && npm install",
+    "build": "cd Back/mac-tickets && npm run build",
+    "test": "echo \"Tests not implemented yet\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mariovital/MacApiFront.git"
+  },
+  "keywords": ["tickets", "react", "nodejs", "express", "mysql", "fullstack"],
+  "author": "MAC Computadoras",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mariovital/MacApiFront/issues"
+  },
+  "homepage": "https://github.com/mariovital/MacApiFront#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
