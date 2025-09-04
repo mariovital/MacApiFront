@@ -1,11 +1,30 @@
-Docs
-.cursor
-.env
-node_modules
-package-lock.json
-node_modules
+# Dependencies
+node_modules/
+**/node_modules/
 
-node_modules
+# Environment variables
 .env
-*.env
+.env.*
 **/.env
+**/.env.*
+
+# IDE and Editor files
+.cursor/
+.vscode/
+.DS_Store
+*.log
+
+# Build outputs
+dist/
+build/
+
+# Package locks
+package-lock.json
+yarn.lock
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+Thumbs.db
