@@ -26,9 +26,9 @@ const login = async (req, res) => {
         role: 'admin'
       };
 
-      // Token temporal (sin JWT por ahora)
-      const token = 'demo-token-123';
-      const refreshToken = 'demo-refresh-token-456';
+      // Token temporal generado dinámicamente
+      const token = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      const refreshToken = `refresh_${Date.now()}_${Math.random().toString(36).substring(7)}`;
 
       return res.status(200).json({
         success: true,
