@@ -28,7 +28,7 @@ import {
   FiHome,
   FiTag,
   FiUsers,
-  FiBarChart3
+  FiBarChart2
 } from 'react-icons/fi';
 
 const Header = ({ sidebarCollapsed }) => {
@@ -47,7 +47,7 @@ const Header = ({ sidebarCollapsed }) => {
       'dashboard': { label: 'Dashboard', icon: FiHome },
       'tickets': { label: 'Tickets', icon: FiTag },
       'users': { label: 'Usuarios', icon: FiUsers },
-      'reports': { label: 'Reportes', icon: FiBarChart3 },
+      'reports': { label: 'Reportes', icon: FiBarChart2 },
       'settings': { label: 'Configuración', icon: FiSettings }
     };
 

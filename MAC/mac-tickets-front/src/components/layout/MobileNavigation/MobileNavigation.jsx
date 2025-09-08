@@ -6,7 +6,7 @@ import {
   FiHome, 
   FiTag, 
   FiUsers, 
-  FiBarChart3, 
+  FiBarChart2, 
   FiSettings 
 } from 'react-icons/fi';
 
@@ -38,7 +38,7 @@ const MobileNavigation = () => {
     },
     {
       label: 'Reportes',
-      icon: FiBarChart3,
+      icon: FiBarChart2,
       path: '/reports',
       roles: ['admin']
     },
