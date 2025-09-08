@@ -1,5 +1,5 @@
-// App.jsx - Componente principal de la aplicación
 
+// App.jsx - Componente principal de la aplicación
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import CssBaseline from '@mui/material/CssBaseline';
