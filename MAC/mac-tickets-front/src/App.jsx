@@ -11,9 +11,8 @@ import { CustomThemeProvider } from './contexts/ThemeContext';
 // Layout
 import { MainLayout } from './components/layout';
 
-// Páginas
-import Login from './pages/auth/Login';
-import Dashboard from './pages/dashboard/Dashboard';
+// Páginas  
+import { Login, Dashboard, TicketList, UserList, Reports, Settings } from './pages';
 
 // Hook para rutas protegidas
 import { useAuth } from './contexts/AuthContext';
@@ -67,6 +66,42 @@ function App() {
               element={
                 <ProtectedLayout>
                   <Dashboard />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
+              path="/tickets" 
+              element={
+                <ProtectedLayout>
+                  <TicketList />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
+              path="/users" 
+              element={
+                <ProtectedLayout>
+                  <UserList />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
+              path="/reports" 
+              element={
+                <ProtectedLayout>
+                  <Reports />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
+              path="/settings" 
+              element={
+                <ProtectedLayout>
+                  <Settings />
                 </ProtectedLayout>
               } 
             />
