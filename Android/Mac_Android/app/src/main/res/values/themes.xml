@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Prototipo_01" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!-- Opción 1: Usar un tema de Material Components (recomendado) -->
+    <!-- <style name="Theme.Prototipo_01" parent="Theme.Material3.DayNight.NoActionBar">
+        <!- Personaliza tus atributos de tema aquí -->
+        </resources>
