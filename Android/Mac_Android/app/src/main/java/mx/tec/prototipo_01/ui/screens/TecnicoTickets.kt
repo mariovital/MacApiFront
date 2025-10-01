@@ -18,6 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -53,9 +54,14 @@ data class TecnicoTicket(
 )
 
 enum class TicketStatus(val displayName: String, val color: Color) {
-    PENDIENTE("Pendiente", Color(0xFFFFB74D)),
-    EN_PROCESO("En proceso", Color(0xFF4CAF50)),
-    COMPLETADO("Completado", Color(0xFF2196F3))
+    PENDIENTE("Pendiente", Color(0xFFFFBE00)),
+    EN_PROCESO("En proceso", Color(0xFF43A0EE))
+}
+
+enum class TicketPriority(val displayName: String, val color: Color) {
+    NA("N/A", Color(0xFF69696E)),
+    Activo("Activo", Color(0xFF1EC40A)),
+    Completado("Completado", Color(0xFFF50D0D))
 }
 
 @Composable
@@ -68,11 +74,11 @@ private fun TicketsHeader() {
         contentAlignment = Alignment.Center
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically // Reverted
         ) {
             Text(
                 text = "Mis Tickets",
-                fontSize = 20.sp,
+                fontSize = 20.sp, // Reverted
                 fontWeight = FontWeight.Medium,
                 color = Color.White
             )
@@ -80,12 +86,12 @@ private fun TicketsHeader() {
             // Red dot
             Box(
                 modifier = Modifier
-                    .size(6.dp)
+                    .size(6.dp) // Reverted
                     .background(
                         color = Color(0xFFe10600),
                         shape = CircleShape
                     )
-                    .padding(start = 6.dp)
+                    .padding(start = 6.dp) // Reverted
             )
         }
     }
@@ -105,7 +111,7 @@ fun TecnicoTickets() {
                     company = "ITESM S.A de C.V",
                     assignedTo = "Omar Felipe",
                     status = TicketStatus.PENDIENTE,
-                    priority = "N/A",
+                    priority = TicketPriority.NA.displayName,
                     description = "Esperando su confirmación.",
                     date = ""
                 ),
@@ -115,7 +121,7 @@ fun TecnicoTickets() {
                     company = "ITESM S.A de C.V",
                     assignedTo = "Omar Felipe",
                     status = TicketStatus.EN_PROCESO,
-                    priority = "",
+                    priority = TicketPriority.Activo.displayName,
                     description = "Nos vemos.",
                     date = ""
                 ),
@@ -125,7 +131,7 @@ fun TecnicoTickets() {
                     company = "ITESM S.A de C.V",
                     assignedTo = "Omar Felipe",
                     status = TicketStatus.EN_PROCESO,
-                    priority = "",
+                    priority = TicketPriority.Activo.displayName,
                     description = "Nos volvemos una mesa",
                     date = ""
                 )
@@ -135,7 +141,7 @@ fun TecnicoTickets() {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(Color(0xFFCFE3F3))
     ) {
         // Header Section
         TicketsHeader()
@@ -175,7 +181,7 @@ private fun EmptyTicketsState() {
 
             // Main message
             Text(
-                text = "Sin ticket\nasignado",
+                text =  "Sin ticket\nasignado",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.Gray,
@@ -243,13 +249,14 @@ private fun TicketCard(ticket: TecnicoTicket) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Column {
+                    Row {
                         Text(
                             text = ticket.assignedTo,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         // Status badge
                         Box(
@@ -279,12 +286,23 @@ private fun TicketCard(ticket: TecnicoTicket) {
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
-                    if (ticket.priority.isNotEmpty() && ticket.priority != "N/A") {
-                        Text(
-                            text = ticket.priority,
-                            fontSize = 10.sp,
-                            color = Color.Gray
-                        )
+                    // Encuentra el enum de prioridad basado en displayName
+                    val priorityEnum = TicketPriority.values().find { it.displayName == ticket.priority }
+                    if (priorityEnum != null) { // Solo mostrar si se encuentra una prioridad válida
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = priorityEnum.color, // Usar el color del enum encontrado
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = ticket.priority, // Este es el displayName, que es correcto aquí
+                                fontSize = 10.sp,
+                                color = Color.White // Cambiado a blanco para consistencia
+                            )
+                        }
                     }
                 }
             }
@@ -293,10 +311,10 @@ private fun TicketCard(ticket: TecnicoTicket) {
 
             // Ticket title with icon
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Icon(
-                    imageVector = Icons.Default.Create,
+                    imageVector = Icons.Default.DateRange,
                     contentDescription = "Ticket",
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -307,15 +325,27 @@ private fun TicketCard(ticket: TecnicoTicket) {
                 Column {
                     Text(
                         text = ticket.title,
-                        fontSize = 16.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = ticket.company,
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                    Row{
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .background(
+                                    color = Color(0xFF838383),
+                                    shape = CircleShape
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = ticket.company,
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+
                 }
             }
 
