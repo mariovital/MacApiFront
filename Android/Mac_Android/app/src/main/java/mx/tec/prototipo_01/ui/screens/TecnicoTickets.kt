@@ -40,6 +40,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 // Data classes for the ticket system
 data class TecnicoTicket(
@@ -65,40 +68,7 @@ enum class TicketPriority(val displayName: String, val color: Color) {
 }
 
 @Composable
-private fun TicketsHeader() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF424242))
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically // Reverted
-        ) {
-            Text(
-                text = "Mis Tickets",
-                fontSize = 20.sp, // Reverted
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-
-            // Red dot
-            Box(
-                modifier = Modifier
-                    .size(6.dp) // Reverted
-                    .background(
-                        color = Color(0xFFe10600),
-                        shape = CircleShape
-                    )
-                    .padding(start = 6.dp) // Reverted
-            )
-        }
-    }
-}
-
-@Composable
-fun TecnicoTickets() {
+fun TecnicoTickets(navController: NavController) {
     // Sample data - this will be replaced with real data from your backend
     var tickets by remember {
         mutableStateOf(
@@ -134,7 +104,18 @@ fun TecnicoTickets() {
                     priority = TicketPriority.Activo.displayName,
                     description = "Nos volvemos una mesa",
                     date = ""
+                ),
+                TecnicoTicket(
+                    id = "#10123",
+                    title = "Pantalla Rota Dell.",
+                    company = "ITESM S.A de C.V",
+                    assignedTo = "Omar Felipe",
+                    status = TicketStatus.PENDIENTE,
+                    priority = TicketPriority.NA.displayName,
+                    description = "Esperando su confirmación.",
+                    date = ""
                 )
+
 
             )
         )
@@ -143,14 +124,11 @@ fun TecnicoTickets() {
     Column(
         modifier = Modifier.fillMaxSize().background(Color(0xFFCFE3F3))
     ) {
-        // Header Section
-        TicketsHeader()
-
         // Content Section
         if (tickets.isEmpty()) {
             EmptyTicketsState()
         } else {
-            TicketsList(tickets = tickets)
+            TicketsList(tickets = tickets, navController = navController)
         }
     }
 }
@@ -193,7 +171,7 @@ private fun EmptyTicketsState() {
 }
 
 @Composable
-private fun TicketsList(tickets: List<TecnicoTicket>) {
+private fun TicketsList(tickets: List<TecnicoTicket>, navController: NavController) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -202,13 +180,13 @@ private fun TicketsList(tickets: List<TecnicoTicket>) {
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
     ) {
         items(tickets) { ticket ->
-            TicketCard(ticket = ticket)
+            TicketCard(ticket = ticket, navController = navController)
         }
     }
 }
 
 @Composable
-private fun TicketCard(ticket: TecnicoTicket) {
+private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -366,8 +344,15 @@ private fun TicketCard(ticket: TecnicoTicket) {
             // Action button
             Button(
                 onClick = {
-                    // Handle "Ver Detalles" click
-                    // Navigate to ticket details screen
+                    val encodedId = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
+                    val encodedTitle = URLEncoder.encode(ticket.title, StandardCharsets.UTF_8.toString())
+                    val encodedCompany = URLEncoder.encode(ticket.company, StandardCharsets.UTF_8.toString())
+                    val encodedAssignedTo = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
+                    val encodedStatus = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
+                    val encodedPriority = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
+                    val encodedDescription = URLEncoder.encode(ticket.description, StandardCharsets.UTF_8.toString())
+
+                    navController.navigate("tecnico_ticket_details/$encodedId/$encodedTitle/$encodedCompany/$encodedAssignedTo/$encodedStatus/$encodedPriority/$encodedDescription")
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(

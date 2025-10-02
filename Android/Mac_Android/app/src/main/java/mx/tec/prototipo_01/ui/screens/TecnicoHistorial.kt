@@ -18,7 +18,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -40,112 +40,49 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-// Data classes for the ticket system
-data class TecnicoHistorial(
-    val id: String,
-    val title: String,
-    val company: String,
-    val assignedTo: String,
-    val status: TicketStatus,
-    val priority: String,
-    val description: String,
-    val date: String
-)
-
-enum class TicketStatusHistorial(val displayName: String, val color: Color) {
-    PENDIENTE("Pendiente", Color(0xFFFFB74D)),
-    EN_PROCESO("En proceso", Color(0xFF4CAF50)),
-    COMPLETADO("Completado", Color(0xFF2196F3))
-}
+import androidx.navigation.NavController
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
-private fun TicketsHeader() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color(0xFF424242))
-            .padding(vertical = 16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Tickets pasados",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-
-            // Red dot
-            Box(
-                modifier = Modifier
-                    .size(6.dp)
-                    .background(
-                        color = Color(0xFFe10600),
-                        shape = CircleShape
-                    )
-                    .padding(start = 6.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun TecnicoHistorial() {
+fun TecnicoHistorial(navController: NavController) {
     // Sample data - this will be replaced with real data from your backend
     var tickets by remember {
         mutableStateOf(
-            listOf<TecnicoHistorial>(
-                // Uncomment to test with sample data:
-                /*
-                TecnicoHistorial(
-                    id = "#10123",
-                    title = "Pantalla Rota Dell.",
-                    company = "ITESM S.A de C.V",
+            listOf<TecnicoTicket>(
+                // Sample data for completed tickets
+                TecnicoTicket(
+                    id = "#10120",
+                    title = "Reparación de Teclado",
+                    company = "Tech Solutions",
                     assignedTo = "Omar Felipe",
-                    status = TicketStatus.PENDIENTE,
-                    priority = "N/A",
-                    description = "Esperando su confirmación.",
+                    status = TicketStatus.EN_PROCESO, // Changed from null to prevent crash
+                    priority = TicketPriority.Completado.displayName,
+                    description = "El teclado ha sido reemplazado.",
                     date = ""
                 ),
-                TecnicoHistorial(
-                    id = "#10124",
-                    title = "Pantalla Rota Dell.",
-                    company = "ITESM S.A de C.V",
+                TecnicoTicket(
+                    id = "#10121",
+                    title = "Instalación de Software",
+                    company = "Innovate Inc.",
                     assignedTo = "Omar Felipe",
-                    status = TicketStatus.EN_PROCESO,
-                    priority = "",
-                    description = "Nos vemos.",
-                    date = ""
-                ),
-                TecnicoHistorial(
-                    id = "#10125",
-                    title = "Pantalla Rota Dell.",
-                    company = "ITESM S.A de C.V",
-                    assignedTo = "Omar Felipe",
-                    status = TicketStatus.EN_PROCESO,
-                    priority = "",
-                    description = "Nos volvemos una mesa",
+                    status = TicketStatus.EN_PROCESO, // Changed from null to prevent crash
+                    priority = TicketPriority.Completado.displayName,
+                    description = "Software antivirus instalado y configurado.",
                     date = ""
                 )
-                */
             )
         )
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().background(Color(0xFFCFE3F3))
     ) {
-        // Header Section
-        TicketsHeader()
-
         // Content Section
         if (tickets.isEmpty()) {
             EmptyTicketsState()
         } else {
-            TicketsList(tickets = tickets)
+            TicketsList(tickets = tickets, navController = navController)
         }
     }
 }
@@ -157,6 +94,7 @@ private fun EmptyTicketsState() {
             .fillMaxSize()
             .background(Color.White),
         contentAlignment = Alignment.Center
+
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -165,7 +103,7 @@ private fun EmptyTicketsState() {
         ) {
             // Icon
             Icon(
-                imageVector = Icons.Default.Info,
+                imageVector = Icons.Default.Create,
                 contentDescription = "Sin tickets",
                 modifier = Modifier
                     .size(80.dp)
@@ -175,7 +113,7 @@ private fun EmptyTicketsState() {
 
             // Main message
             Text(
-                text = "No hay\ntickets\npasados",
+                text =  "Sin tickets \npasados",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.Gray,
@@ -187,7 +125,7 @@ private fun EmptyTicketsState() {
 }
 
 @Composable
-private fun TicketsList(tickets: List<TecnicoHistorial>) {
+private fun TicketsList(tickets: List<TecnicoTicket>, navController: NavController) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -196,13 +134,13 @@ private fun TicketsList(tickets: List<TecnicoHistorial>) {
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 16.dp)
     ) {
         items(tickets) { ticket ->
-            TicketCard(ticket = ticket)
+            TicketCard(ticket = ticket, navController = navController)
         }
     }
 }
 
 @Composable
-private fun TicketCard(ticket: TecnicoHistorial) {
+private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -243,30 +181,14 @@ private fun TicketCard(ticket: TecnicoHistorial) {
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    Column {
+                    Row {
                         Text(
                             text = ticket.assignedTo,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-
-                        // Status badge
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    color = ticket.status.color,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = ticket.status.displayName,
-                                fontSize = 10.sp,
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        // Status badge removed
                     }
                 }
 
@@ -279,12 +201,23 @@ private fun TicketCard(ticket: TecnicoHistorial) {
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
-                    if (ticket.priority.isNotEmpty() && ticket.priority != "N/A") {
-                        Text(
-                            text = ticket.priority,
-                            fontSize = 10.sp,
-                            color = Color.Gray
-                        )
+                    // Find priority enum based on displayName
+                    val priorityEnum = TicketPriority.values().find { it.displayName == ticket.priority }
+                    if (priorityEnum != null) { // Only show if a valid priority is found
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = priorityEnum.color, // Use color from the found enum
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = ticket.priority, // This is the displayName, which is correct here
+                                fontSize = 10.sp,
+                                color = Color.White // Changed to white for consistency
+                            )
+                        }
                     }
                 }
             }
@@ -293,10 +226,10 @@ private fun TicketCard(ticket: TecnicoHistorial) {
 
             // Ticket title with icon
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Icon(
-                    imageVector = Icons.Default.Info,
+                    imageVector = Icons.Default.DateRange,
                     contentDescription = "Ticket",
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary
@@ -307,15 +240,27 @@ private fun TicketCard(ticket: TecnicoHistorial) {
                 Column {
                     Text(
                         text = ticket.title,
-                        fontSize = 16.sp,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = ticket.company,
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                    Row{
+                        Box(
+                            modifier = Modifier
+                                .size(5.dp)
+                                .background(
+                                    color = Color(0xFF838383),
+                                    shape = CircleShape
+                                )
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = ticket.company,
+                            fontSize = 11.sp,
+                            color = Color.Gray
+                        )
+                    }
+
                 }
             }
 
@@ -336,8 +281,15 @@ private fun TicketCard(ticket: TecnicoHistorial) {
             // Action button
             Button(
                 onClick = {
-                    // Handle "Ver Detalles" click
-                    // Navigate to ticket details screen
+                    val encodedId = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
+                    val encodedTitle = URLEncoder.encode(ticket.title, StandardCharsets.UTF_8.toString())
+                    val encodedCompany = URLEncoder.encode(ticket.company, StandardCharsets.UTF_8.toString())
+                    val encodedAssignedTo = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
+                    val encodedStatus = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
+                    val encodedPriority = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
+                    val encodedDescription = URLEncoder.encode(ticket.description, StandardCharsets.UTF_8.toString())
+
+                    navController.navigate("tecnico_ticket_details/$encodedId/$encodedTitle/$encodedCompany/$encodedAssignedTo/$encodedStatus/$encodedPriority/$encodedDescription")
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
