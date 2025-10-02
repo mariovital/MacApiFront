@@ -12,7 +12,8 @@ const Ticket = sequelize.define('Ticket', {
   ticket_number: {
     type: DataTypes.STRING(20),
     allowNull: false,
-    unique: true
+    unique: true,
+    defaultValue: ''
   },
   title: {
     type: DataTypes.STRING(200),
