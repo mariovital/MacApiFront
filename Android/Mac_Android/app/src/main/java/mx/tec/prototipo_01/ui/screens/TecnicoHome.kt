@@ -2,6 +2,7 @@ package mx.tec.prototipo_01.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -60,13 +61,13 @@ fun TecnicoHome(navController: NavController) {
                         2 -> "Configuración"
                         else -> ""
                     }
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(text = titleText, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 20.sp)
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(text = titleText, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 28.sp)
                         // Red dot
                         Box(
                             modifier = Modifier
-                                .padding(start = 6.dp)
-                                .size(6.dp)
+                                .padding(start = 4.dp, bottom = 6.dp)
+                                .size(7.dp)
                                 .background(color = Color(0xFFe10600), shape = CircleShape)
                         )
                     }
