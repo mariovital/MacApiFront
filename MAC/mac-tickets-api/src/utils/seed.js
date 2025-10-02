@@ -160,7 +160,7 @@ const seedDatabase = async () => {
 
     for (const userData of users) {
       const [user, created] = await User.findOrCreate({
-        where: { email: userData.email },
+        where: { username: userData.username },
         defaults: userData
       });
       
@@ -272,18 +272,52 @@ const seedDatabase = async () => {
       }
     ];
 
+    // Función helper para generar ticket_number
+    const generateTicketNumber = async (createdAt) => {
+      const date = new Date(createdAt);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      
+      // Obtener el último ticket del mes
+      const lastTicket = await Ticket.findOne({
+        where: {
+          ticket_number: {
+            [sequelize.Sequelize.Op.like]: `ID-${year}-${month}-%`
+          }
+        },
+        order: [['created_at', 'DESC']]
+      });
+
+      let nextNumber = 1;
+      if (lastTicket && lastTicket.ticket_number) {
+        const lastNumber = parseInt(lastTicket.ticket_number.split('-')[3]);
+        nextNumber = lastNumber + 1;
+      }
+
+      return `ID-${year}-${month}-${String(nextNumber).padStart(3, '0')}`;
+    };
+
     for (const ticketData of tickets) {
-      // El hook beforeCreate generará el ticket_number automáticamente
-      const [ticket, created] = await Ticket.findOrCreate({
-        where: { title: ticketData.title },
-        defaults: ticketData
+      // Verificar si el ticket ya existe
+      const existingTicket = await Ticket.findOne({
+        where: { title: ticketData.title }
+      });
+
+      if (existingTicket) {
+        console.log(`  ℹ️  Ticket ya existe: ${existingTicket.ticket_number}`);
+        continue;
+      }
+
+      // Generar ticket_number manualmente
+      const ticketNumber = await generateTicketNumber(ticketData.created_at);
+      
+      // Crear ticket con ticket_number incluido
+      const ticket = await Ticket.create({
+        ...ticketData,
+        ticket_number: ticketNumber
       });
       
-      if (created) {
-        console.log(`  ✅ Ticket creado: ${ticket.ticket_number} - ${ticketData.title.substring(0, 50)}...`);
-      } else {
-        console.log(`  ℹ️  Ticket ya existe: ${ticket.ticket_number}`);
-      }
+      console.log(`  ✅ Ticket creado: ${ticket.ticket_number} - ${ticketData.title.substring(0, 50)}...`);
     }
 
     console.log(`\n✅ Total tickets DEMO: ${tickets.length}\n`);
