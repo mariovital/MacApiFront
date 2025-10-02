@@ -24,7 +24,38 @@ const seedDatabase = async () => {
     console.log('✅ Tablas verificadas\n');
 
     // =====================================================================
-    // 3. POBLAR USUARIOS DEMO
+    // 3. LIMPIAR DATOS EXISTENTES
+    // =====================================================================
+    console.log('🧹 Limpiando datos existentes...');
+    
+    // Desactivar verificación de foreign keys temporalmente
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+    
+    // Limpiar todas las tablas en orden
+    await sequelize.query('TRUNCATE TABLE ticket_history');
+    console.log('  ✅ ticket_history limpiada');
+    
+    await sequelize.query('TRUNCATE TABLE ticket_comments');
+    console.log('  ✅ ticket_comments limpiada');
+    
+    await sequelize.query('TRUNCATE TABLE ticket_attachments');
+    console.log('  ✅ ticket_attachments limpiada');
+    
+    await sequelize.query('TRUNCATE TABLE notifications');
+    console.log('  ✅ notifications limpiada');
+    
+    await sequelize.query('TRUNCATE TABLE tickets');
+    console.log('  ✅ tickets limpiada');
+    
+    await sequelize.query('TRUNCATE TABLE users');
+    console.log('  ✅ users limpiada');
+    
+    // Reactivar verificación de foreign keys
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+    console.log('✅ Base de datos limpiada completamente\n');
+
+    // =====================================================================
+    // 4. POBLAR USUARIOS DEMO
     // =====================================================================
     console.log('👥 Creando usuarios DEMO...');
     
@@ -159,22 +190,14 @@ const seedDatabase = async () => {
     ];
 
     for (const userData of users) {
-      const [user, created] = await User.findOrCreate({
-        where: { username: userData.username },
-        defaults: userData
-      });
-      
-      if (created) {
-        console.log(`  ✅ Usuario creado: ${userData.email}`);
-      } else {
-        console.log(`  ℹ️  Usuario ya existe: ${userData.email}`);
-      }
+      const user = await User.create(userData);
+      console.log(`  ✅ Usuario creado: ${user.username} (${user.email})`);
     }
 
     console.log(`\n✅ Total usuarios DEMO: ${users.length}\n`);
 
     // =====================================================================
-    // 4. CREAR ALGUNOS TICKETS DE PRUEBA
+    // 5. CREAR ALGUNOS TICKETS DE PRUEBA
     // =====================================================================
     console.log('🎫 Creando tickets DEMO...\n');
 
@@ -272,42 +295,22 @@ const seedDatabase = async () => {
       }
     ];
 
+    // Contador global para el número de ticket dentro del seed
+    let ticketCounter = 0;
+    
     // Función helper para generar ticket_number
     const generateTicketNumber = async (createdAt) => {
       const date = new Date(createdAt);
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
       
-      // Obtener el último ticket del mes
-      const lastTicket = await Ticket.findOne({
-        where: {
-          ticket_number: {
-            [sequelize.Sequelize.Op.like]: `ID-${year}-${month}-%`
-          }
-        },
-        order: [['created_at', 'DESC']]
-      });
-
-      let nextNumber = 1;
-      if (lastTicket && lastTicket.ticket_number) {
-        const lastNumber = parseInt(lastTicket.ticket_number.split('-')[3]);
-        nextNumber = lastNumber + 1;
-      }
-
-      return `ID-${year}-${month}-${String(nextNumber).padStart(3, '0')}`;
+      // Incrementar el contador
+      ticketCounter++;
+      
+      return `ID-${year}-${month}-${String(ticketCounter).padStart(3, '0')}`;
     };
 
     for (const ticketData of tickets) {
-      // Verificar si el ticket ya existe
-      const existingTicket = await Ticket.findOne({
-        where: { title: ticketData.title }
-      });
-
-      if (existingTicket) {
-        console.log(`  ℹ️  Ticket ya existe: ${existingTicket.ticket_number}`);
-        continue;
-      }
-
       // Generar ticket_number manualmente
       const ticketNumber = await generateTicketNumber(ticketData.created_at);
       
