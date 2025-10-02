@@ -49,12 +49,6 @@ INSERT INTO users (username, email, password_hash, first_name, last_name, role_i
 ('usuario.inactivo', 'inactivo@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Usuario', 'Inactivo', 3, FALSE, '2024-10-01 12:00:00');
 
 -- ================================================================
--- 3. ACTUALIZAR CREATED_BY EN CATEGORÍAS
--- ================================================================
-
-UPDATE categories SET created_by = 1 WHERE created_by IS NULL;
-
--- ================================================================
 -- 4. TICKETS DEMO (Variedad de estados y prioridades)
 -- ================================================================
 
