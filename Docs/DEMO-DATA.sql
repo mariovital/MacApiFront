@@ -4,7 +4,7 @@
 -- Propósito: Poblar la base de datos con datos realistas para demo
 -- ================================================================
 
-USE ticket_system;
+USE macTickets;
 
 -- ================================================================
 -- 1. LIMPIAR DATOS EXISTENTES (SOLO DEMO - ¡CUIDADO EN PRODUCCIÓN!)
@@ -291,69 +291,69 @@ INSERT INTO ticket_comments (ticket_id, user_id, comment, is_internal, created_a
 INSERT INTO ticket_history (ticket_id, user_id, action_type, old_value, new_value, description, created_at) VALUES
 -- Historial ticket 1 (Facturación)
 (1, 8, 'created', NULL, NULL, 'Ticket creado por Lucía Mesa', '2025-01-15 08:15:00'),
-(1, 1, 'status_change', 'Nuevo', 'Asignado', 'Ticket asignado a técnico Juan Pérez', '2025-01-15 08:20:00'),
-(1, 3, 'status_change', 'Asignado', 'En Proceso', 'Técnico comenzó diagnóstico', '2025-01-15 08:30:00'),
+(1, 1, 'status_changed', 'Nuevo', 'Asignado', 'Ticket asignado a técnico Juan Pérez', '2025-01-15 08:20:00'),
+(1, 3, 'status_changed', 'Asignado', 'En Proceso', 'Técnico comenzó diagnóstico', '2025-01-15 08:30:00'),
 
 -- Historial ticket 2 (Base de datos)
 (2, 1, 'created', NULL, NULL, 'Ticket creado por admin Roberto', '2025-01-15 07:45:00'),
-(2, 1, 'priority_change', 'Alta', 'Crítica', 'Escalado a prioridad crítica por impacto', '2025-01-15 07:50:00'),
-(2, 1, 'status_change', 'Nuevo', 'Asignado', 'Asignado a María González', '2025-01-15 07:55:00'),
-(2, 4, 'status_change', 'Asignado', 'En Proceso', 'Iniciando diagnóstico de hardware', '2025-01-15 08:00:00'),
+(2, 1, 'status_changed', 'Prioridad Alta', 'Prioridad Crítica', 'Escalado a prioridad crítica por impacto', '2025-01-15 07:50:00'),
+(2, 1, 'status_changed', 'Nuevo', 'Asignado', 'Asignado a María González', '2025-01-15 07:55:00'),
+(2, 4, 'status_changed', 'Asignado', 'En Proceso', 'Iniciando diagnóstico de hardware', '2025-01-15 08:00:00'),
 
 -- Historial ticket 4 (Impresora)
 (4, 8, 'created', NULL, NULL, 'Ticket creado por Lucía Mesa', '2025-01-15 09:00:00'),
-(4, 2, 'status_change', 'Nuevo', 'Asignado', 'Asignado a Juan Pérez', '2025-01-15 09:05:00'),
-(4, 3, 'comment_added', NULL, NULL, 'Técnico agregó comentario', '2025-01-15 09:10:00'),
+(4, 2, 'status_changed', 'Nuevo', 'Asignado', 'Asignado a Juan Pérez', '2025-01-15 09:05:00'),
+(4, 3, 'commented', NULL, NULL, 'Técnico agregó comentario', '2025-01-15 09:10:00'),
 
 -- Historial ticket 5 (WiFi)
 (5, 9, 'created', NULL, NULL, 'Ticket creado por Diego Soporte', '2025-01-14 16:30:00'),
-(5, 1, 'status_change', 'Nuevo', 'Asignado', 'Asignado a Ana Torres', '2025-01-14 16:45:00'),
-(5, 6, 'status_change', 'Asignado', 'En Proceso', 'Técnico en sitio diagnosticando', '2025-01-14 17:00:00'),
-(5, 6, 'status_change', 'En Proceso', 'Resuelto', 'AP reemplazado, problema solucionado', '2025-01-15 08:30:00'),
+(5, 1, 'status_changed', 'Nuevo', 'Asignado', 'Asignado a Ana Torres', '2025-01-14 16:45:00'),
+(5, 6, 'status_changed', 'Asignado', 'En Proceso', 'Técnico en sitio diagnosticando', '2025-01-14 17:00:00'),
+(5, 6, 'status_changed', 'En Proceso', 'Resuelto', 'AP reemplazado, problema solucionado', '2025-01-15 08:30:00'),
 
 -- Historial ticket 11 (Escáner - RESUELTO)
 (11, 8, 'created', NULL, NULL, 'Ticket creado por Lucía Mesa', '2025-01-12 10:00:00'),
-(11, 2, 'status_change', 'Nuevo', 'Asignado', 'Asignado a María González', '2025-01-12 10:30:00'),
-(11, 4, 'status_change', 'Asignado', 'En Proceso', 'Técnico revisando escáner', '2025-01-12 11:00:00'),
-(11, 4, 'status_change', 'En Proceso', 'Resuelto', 'Escáner calibrado correctamente', '2025-01-13 14:00:00'),
-(11, 8, 'status_change', 'Resuelto', 'Cerrado', 'Usuario confirmó solución', '2025-01-13 14:30:00'),
+(11, 2, 'status_changed', 'Nuevo', 'Asignado', 'Asignado a María González', '2025-01-12 10:30:00'),
+(11, 4, 'status_changed', 'Asignado', 'En Proceso', 'Técnico revisando escáner', '2025-01-12 11:00:00'),
+(11, 4, 'status_changed', 'En Proceso', 'Resuelto', 'Escáner calibrado correctamente', '2025-01-13 14:00:00'),
+(11, 8, 'status_changed', 'Resuelto', 'Cerrado', 'Usuario confirmó solución', '2025-01-13 14:30:00'),
 
 -- Historial ticket 16 (Proyector - RESUELTO)
 (16, 8, 'created', NULL, NULL, 'Ticket creado', '2025-01-14 08:00:00'),
-(16, 1, 'status_change', 'Nuevo', 'Asignado', 'Asignado a Juan Pérez', '2025-01-14 08:15:00'),
-(16, 3, 'status_change', 'Asignado', 'En Proceso', 'Técnico diagnosticando', '2025-01-14 09:00:00'),
-(16, 3, 'status_change', 'En Proceso', 'Resuelto', 'Cable HDMI reemplazado', '2025-01-14 11:00:00'),
-(16, 8, 'status_change', 'Resuelto', 'Cerrado', 'Usuario confirmó funcionamiento', '2025-01-14 11:30:00'),
+(16, 1, 'status_changed', 'Nuevo', 'Asignado', 'Asignado a Juan Pérez', '2025-01-14 08:15:00'),
+(16, 3, 'status_changed', 'Asignado', 'En Proceso', 'Técnico diagnosticando', '2025-01-14 09:00:00'),
+(16, 3, 'status_changed', 'En Proceso', 'Resuelto', 'Cable HDMI reemplazado', '2025-01-14 11:00:00'),
+(16, 8, 'status_changed', 'Resuelto', 'Cerrado', 'Usuario confirmó funcionamiento', '2025-01-14 11:30:00'),
 
 -- Historial ticket 19 (Antivirus - CERRADO)
 (19, 1, 'created', NULL, NULL, 'Ticket creado por admin', '2025-01-10 08:00:00'),
-(19, 1, 'status_change', 'Nuevo', 'Asignado', 'Asignado a Pedro Ramírez', '2025-01-10 08:15:00'),
-(19, 7, 'status_change', 'Asignado', 'En Proceso', 'Iniciando actualización masiva', '2025-01-10 09:00:00'),
-(19, 7, 'status_change', 'En Proceso', 'Resuelto', '45 equipos actualizados exitosamente', '2025-01-10 16:00:00'),
-(19, 1, 'status_change', 'Resuelto', 'Cerrado', 'Verificación completa, ticket cerrado', '2025-01-10 17:00:00');
+(19, 1, 'status_changed', 'Nuevo', 'Asignado', 'Asignado a Pedro Ramírez', '2025-01-10 08:15:00'),
+(19, 7, 'status_changed', 'Asignado', 'En Proceso', 'Iniciando actualización masiva', '2025-01-10 09:00:00'),
+(19, 7, 'status_changed', 'En Proceso', 'Resuelto', '45 equipos actualizados exitosamente', '2025-01-10 16:00:00'),
+(19, 1, 'status_changed', 'Resuelto', 'Cerrado', 'Verificación completa, ticket cerrado', '2025-01-10 17:00:00');
 
 -- ================================================================
 -- 7. NOTIFICACIONES DEMO
 -- ================================================================
 
-INSERT INTO notifications (user_id, ticket_id, notification_type, title, message, is_read, created_at) VALUES
+INSERT INTO notifications (user_id, ticket_id, type, title, message, is_read, created_at) VALUES
 -- Notificaciones para técnicos
 (3, 1, 'ticket_assigned', 'Ticket Crítico Asignado', 'Se te ha asignado el ticket ID-2025-001: Sistema de facturación caído', FALSE, '2025-01-15 08:20:00'),
 (4, 2, 'ticket_assigned', 'Ticket Crítico Asignado', 'Se te ha asignado el ticket ID-2025-002: Servidor de base de datos en falla', FALSE, '2025-01-15 07:55:00'),
 (5, 3, 'ticket_assigned', 'Ticket Crítico Asignado', 'Se te ha asignado el ticket ID-2025-003: Ataque ransomware detectado', FALSE, '2025-01-15 07:00:00'),
 
 -- Notificaciones para usuarios que crearon tickets
-(8, 1, 'ticket_updated', 'Ticket Actualizado', 'Tu ticket ID-2025-001 ha sido actualizado a estado: En Proceso', TRUE, '2025-01-15 08:30:00'),
+(8, 1, 'ticket_status_changed', 'Ticket Actualizado', 'Tu ticket ID-2025-001 ha sido actualizado a estado: En Proceso', TRUE, '2025-01-15 08:30:00'),
 (8, 4, 'ticket_assigned', 'Ticket Asignado', 'Tu ticket ID-2025-004 ha sido asignado a Juan Pérez', TRUE, '2025-01-15 09:05:00'),
-(9, 5, 'ticket_resolved', 'Ticket Resuelto', 'Tu ticket ID-2025-005 ha sido resuelto: Red WiFi restaurada', TRUE, '2025-01-15 08:30:00'),
+(9, 5, 'ticket_status_changed', 'Ticket Resuelto', 'Tu ticket ID-2025-005 ha sido resuelto: Red WiFi restaurada', TRUE, '2025-01-15 08:30:00'),
 
 -- Notificaciones de comentarios
-(8, 1, 'comment_added', 'Nuevo Comentario', 'Juan Pérez ha comentado en tu ticket ID-2025-001', TRUE, '2025-01-15 09:20:00'),
-(3, 4, 'comment_added', 'Nuevo Comentario', 'Usuario ha respondido en ticket ID-2025-004', FALSE, '2025-01-15 09:40:00'),
+(8, 1, 'ticket_commented', 'Nuevo Comentario', 'Juan Pérez ha comentado en tu ticket ID-2025-001', TRUE, '2025-01-15 09:20:00'),
+(3, 4, 'ticket_commented', 'Nuevo Comentario', 'Usuario ha respondido en ticket ID-2025-004', FALSE, '2025-01-15 09:40:00'),
 
 -- Notificaciones para administradores
-(1, 3, 'priority_escalated', 'Ticket Escalado', 'Ticket ID-2025-003 escalado a prioridad CRÍTICA', FALSE, '2025-01-15 07:00:00'),
-(2, 2, 'priority_escalated', 'Ticket Escalado', 'Ticket ID-2025-002 requiere atención inmediata', FALSE, '2025-01-15 07:50:00');
+(1, 3, 'sla_warning', 'Advertencia SLA', 'Ticket ID-2025-003 escalado a prioridad CRÍTICA - SLA en riesgo', FALSE, '2025-01-15 07:00:00'),
+(2, 2, 'sla_warning', 'Advertencia SLA', 'Ticket ID-2025-002 requiere atención inmediata - SLA próximo a vencer', FALSE, '2025-01-15 07:50:00');
 
 -- ================================================================
 -- 8. ACTUALIZAR CONTADORES DE NOTIFICACIONES
