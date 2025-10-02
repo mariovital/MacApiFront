@@ -1,4 +1,4 @@
-// /models/Role.js - Modelo de Roles
+// /models/Role.js
 
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/database.js';
@@ -20,11 +20,12 @@ const Role = sequelize.define('Role', {
   },
   created_at: {
     type: DataTypes.DATE,
+    allowNull: false,
     defaultValue: DataTypes.NOW
   },
   updated_at: {
     type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
+    allowNull: true
   },
   deleted_at: {
     type: DataTypes.DATE,
@@ -37,10 +38,9 @@ const Role = sequelize.define('Role', {
 }, {
   tableName: 'roles',
   timestamps: true,
+  paranoid: false, // Soft delete manual
   createdAt: 'created_at',
-  updatedAt: 'updated_at',
-  paranoid: false // No usamos paranoid porque manejamos soft delete manualmente
+  updatedAt: 'updated_at'
 });
 
 export default Role;
-

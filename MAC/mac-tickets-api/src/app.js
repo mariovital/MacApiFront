@@ -110,13 +110,15 @@ app.get('/health', (req, res) => {
 
 // Importar rutas de la API
 import authRoutes from './routes/auth.js';
-// import ticketRoutes from './routes/tickets.js';
+import ticketRoutes from './routes/tickets.js';
 import userRoutes from './routes/users.js';
+import catalogRoutes from './routes/catalog.js';
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
-// app.use('/api/tickets', ticketRoutes);
+app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api', catalogRoutes); // Categories, Priorities, Statuses, Technicians
 
 // =====================================================================
 // MIDDLEWARE DE MANEJO DE ERRORES
