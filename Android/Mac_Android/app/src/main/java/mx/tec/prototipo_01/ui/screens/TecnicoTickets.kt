@@ -41,40 +41,18 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import mx.tec.prototipo_01.models.TecnicoTicket
+import mx.tec.prototipo_01.models.TicketPriority
+import mx.tec.prototipo_01.models.TicketStatus
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-
-// Data classes for the ticket system
-data class TecnicoTicket(
-    val id: String,
-    val title: String,
-    val company: String,
-    val assignedTo: String,
-    val status: TicketStatus,
-    val priority: String,
-    val description: String,
-    val date: String
-)
-
-enum class TicketStatus(val displayName: String, val color: Color) {
-    PENDIENTE("Pendiente", Color(0xFFFFBE00)),
-    EN_PROCESO("En proceso", Color(0xFF43A0EE))
-}
-
-enum class TicketPriority(val displayName: String, val color: Color) {
-    NA("N/A", Color(0xFF69696E)),
-    Activo("Activo", Color(0xFF1EC40A)),
-    Completado("Completado", Color(0xFFF50D0D))
-}
 
 @Composable
 fun TecnicoTickets(navController: NavController) {
     // Sample data - this will be replaced with real data from your backend
     var tickets by remember {
         mutableStateOf(
-            listOf<TecnicoTicket>(
-                // Uncomment to test with sample data:
-
+            listOf(
                 TecnicoTicket(
                     id = "#10123",
                     title = "Pantalla Rota Dell.",
@@ -94,29 +72,7 @@ fun TecnicoTickets(navController: NavController) {
                     priority = TicketPriority.Activo.displayName,
                     description = "Nos vemos.",
                     date = ""
-                ),
-                TecnicoTicket(
-                    id = "#10125",
-                    title = "Pantalla Rota Dell.",
-                    company = "ITESM S.A de C.V",
-                    assignedTo = "Omar Felipe",
-                    status = TicketStatus.EN_PROCESO,
-                    priority = TicketPriority.Activo.displayName,
-                    description = "Nos volvemos una mesa",
-                    date = ""
-                ),
-                TecnicoTicket(
-                    id = "#10123",
-                    title = "Pantalla Rota Dell.",
-                    company = "ITESM S.A de C.V",
-                    assignedTo = "Omar Felipe",
-                    status = TicketStatus.PENDIENTE,
-                    priority = TicketPriority.NA.displayName,
-                    description = "Esperando su confirmación.",
-                    date = ""
                 )
-
-
             )
         )
     }
@@ -149,7 +105,6 @@ private fun EmptyTicketsState() {
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(32.dp)
         ) {
-            // Icon
             Icon(
                 imageVector = Icons.Default.Create,
                 contentDescription = "Sin tickets",
@@ -158,8 +113,6 @@ private fun EmptyTicketsState() {
                     .padding(bottom = 24.dp),
                 tint = Color.Gray.copy(alpha = 0.6f)
             )
-
-            // Main message
             Text(
                 text =  "Sin ticket\nasignado",
                 fontSize = 24.sp,
@@ -202,7 +155,6 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Header with user info and ticket ID
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -211,7 +163,6 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // User avatar
                     Box(
                         modifier = Modifier
                             .size(32.dp)
@@ -226,9 +177,7 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             tint = Color.Gray
                         )
                     }
-
                     Spacer(modifier = Modifier.width(8.dp))
-
                     Row {
                         Text(
                             text = ticket.assignedTo,
@@ -237,8 +186,6 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-
-                        // Status badge
                         Box(
                             modifier = Modifier
                                 .background(
@@ -256,8 +203,6 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                         }
                     }
                 }
-
-                // Ticket ID and priority
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
@@ -266,30 +211,26 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
-                    // Encuentra el enum de prioridad basado en displayName
                     val priorityEnum = TicketPriority.values().find { it.displayName == ticket.priority }
-                    if (priorityEnum != null) { // Solo mostrar si se encuentra una prioridad válida
+                    if (priorityEnum != null) {
                         Box(
                             modifier = Modifier
                                 .background(
-                                    color = priorityEnum.color, // Usar el color del enum encontrado
+                                    color = priorityEnum.color,
                                     shape = RoundedCornerShape(12.dp)
                                 )
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
                             Text(
-                                text = ticket.priority, // Este es el displayName, que es correcto aquí
+                                text = ticket.priority,
                                 fontSize = 10.sp,
-                                color = Color.White // Cambiado a blanco para consistencia
+                                color = Color.White
                             )
                         }
                     }
                 }
             }
-
             Spacer(modifier = Modifier.height(12.dp))
-
-            // Ticket title with icon
             Row(
                 verticalAlignment = Alignment.Top
             ) {
@@ -299,9 +240,7 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
-
                 Spacer(modifier = Modifier.width(8.dp))
-
                 Column {
                     Text(
                         text = ticket.title,
@@ -325,13 +264,9 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             color = Color.Gray
                         )
                     }
-
                 }
             }
-
             Spacer(modifier = Modifier.height(8.dp))
-
-            // Description
             if (ticket.description.isNotEmpty()) {
                 Text(
                     text = ticket.description,
@@ -339,11 +274,8 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                     color = Color.Gray,
                     lineHeight = 18.sp
                 )
-
                 Spacer(modifier = Modifier.height(12.dp))
             }
-
-            // Action button
             Button(
                 onClick = {
                     val encodedId = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())

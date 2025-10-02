@@ -44,6 +44,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import mx.tec.prototipo_01.models.TicketPriority
+import mx.tec.prototipo_01.models.TicketStatus
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -66,7 +68,6 @@ fun TecnicoTicketDetails(
     val decodedPriority = priority?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
     val decodedDescription = description?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
 
-    // Hardcoded data based on the new design image
     val dispositivo = "Dell Latitude 5420"
     val serialNumber = "000000000000"
     val problema = "La pantalla tiene un golpe el cual dejó inutilizable el dispositivo"
@@ -108,7 +109,6 @@ fun TecnicoTicketDetails(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        // Section 1: User/Status and ID/Priority
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -120,14 +120,7 @@ fun TecnicoTicketDetails(
                                 StatusBadge(status = decodedStatus)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = decodedId,
-                                    fontSize = 12.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier
-                                        .background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
+                                Text(decodedId, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
                                 Spacer(modifier = Modifier.height(4.dp))
                                 PriorityBadge(priority = decodedPriority)
                             }
@@ -150,7 +143,6 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Section 3: Short Description (Timeline)
                         Row(verticalAlignment = Alignment.Top) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 8.dp)) {
                                 Box(modifier = Modifier.width(1.dp).height(4.dp).background(Color.LightGray))
@@ -162,7 +154,6 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Section 4: Full Details
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -173,7 +164,6 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Section 5: Location
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Ubicación:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -182,36 +172,33 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Section 6: Map Placeholder
-                        Box(
-                            modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)).background(Color.LightGray),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)).background(Color.LightGray), contentAlignment = Alignment.Center) {
                             Text("Map Placeholder", color = Color.DarkGray, fontWeight = FontWeight.Medium)
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Section 7: Action Buttons
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp)
-                        ) {
-                            Button(
-                                onClick = { /* TODO: Accept action */ },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-                            ) {
-                                Text("Aceptar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                        // Conditional buttons section
+                        when (decodedStatus) {
+                            TicketStatus.PENDIENTE.displayName -> {
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Button(onClick = { /* TODO: Accept */ }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) {
+                                        Text("Aceptar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                    }
+                                    Button(onClick = { /* TODO: Decline */ }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))) {
+                                        Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                    }
+                                }
                             }
-                            Button(
-                                onClick = { /* TODO: Decline action */ },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))
-                            ) {
-                                Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                            TicketStatus.EN_PROCESO.displayName, TicketStatus.COMPLETADO.displayName -> {
+                                Button(
+                                    onClick = { /* TODO: Go to chat */ },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C6BC0))
+                                ) {
+                                    Text("Ir a chat", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -225,17 +212,8 @@ fun TecnicoTicketDetails(
 private fun StatusBadge(status: String) {
     val statusEnum = TicketStatus.values().find { it.displayName.equals(status, ignoreCase = true) }
     if (statusEnum != null) {
-        Box(
-            modifier = Modifier
-                .background(statusEnum.color, RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = statusEnum.displayName,
-                color = Color.White,
-                fontWeight = FontWeight.Medium,
-                fontSize = 12.sp
-            )
+        Box(modifier = Modifier.background(statusEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+            Text(statusEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
         }
     }
 }
@@ -244,17 +222,8 @@ private fun StatusBadge(status: String) {
 private fun PriorityBadge(priority: String) {
     val priorityEnum = TicketPriority.values().find { it.displayName.equals(priority, ignoreCase = true) }
     if (priorityEnum != null) {
-        Box(
-            modifier = Modifier
-                .background(priorityEnum.color, RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = priorityEnum.displayName,
-                color = Color.White,
-                fontWeight = FontWeight.Medium,
-                fontSize = 12.sp
-            )
+        Box(modifier = Modifier.background(priorityEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+            Text(priorityEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
         }
     }
 }
