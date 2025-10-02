@@ -27,26 +27,26 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- Contraseña para TODOS los usuarios: "demo123"
 -- Hash bcrypt: $2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a
 
-INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, phone, is_active, created_at) VALUES
+INSERT INTO users (username, email, password_hash, first_name, last_name, role_id, is_active, created_at) VALUES
 -- ADMINISTRADORES
-('admin', 'admin@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Roberto', 'Administrador', 1, '+52 555 100 0001', TRUE, '2024-11-01 08:00:00'),
-('admin.sistemas', 'sistemas@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Laura', 'Martínez', 1, '+52 555 100 0002', TRUE, '2024-11-01 09:00:00'),
+('admin', 'admin@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Roberto', 'Administrador', 1, TRUE, '2024-11-01 08:00:00'),
+('admin.sistemas', 'sistemas@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Laura', 'Martínez', 1, TRUE, '2024-11-01 09:00:00'),
 
 -- TÉCNICOS
-('juan.perez', 'juan.perez@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Juan', 'Pérez', 2, '+52 555 200 0001', TRUE, '2024-11-05 10:00:00'),
-('maria.gonzalez', 'maria.gonzalez@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'María', 'González', 2, '+52 555 200 0002', TRUE, '2024-11-05 11:00:00'),
-('carlos.ruiz', 'carlos.ruiz@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Carlos', 'Ruiz', 2, '+52 555 200 0003', TRUE, '2024-11-10 09:30:00'),
-('ana.torres', 'ana.torres@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Ana', 'Torres', 2, '+52 555 200 0004', TRUE, '2024-11-10 10:00:00'),
-('pedro.ramirez', 'pedro.ramirez@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Pedro', 'Ramírez', 2, '+52 555 200 0005', TRUE, '2024-11-12 08:45:00'),
+('juan.perez', 'juan.perez@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Juan', 'Pérez', 2, TRUE, '2024-11-05 10:00:00'),
+('maria.gonzalez', 'maria.gonzalez@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'María', 'González', 2, TRUE, '2024-11-05 11:00:00'),
+('carlos.ruiz', 'carlos.ruiz@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Carlos', 'Ruiz', 2, TRUE, '2024-11-10 09:30:00'),
+('ana.torres', 'ana.torres@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Ana', 'Torres', 2, TRUE, '2024-11-10 10:00:00'),
+('pedro.ramirez', 'pedro.ramirez@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Pedro', 'Ramírez', 2, TRUE, '2024-11-12 08:45:00'),
 
 -- MESA DE TRABAJO (Usuarios que crean tickets)
-('lucia.mesa', 'lucia.mesa@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Lucía', 'Mesa', 3, '+52 555 300 0001', TRUE, '2024-11-15 09:00:00'),
-('diego.soporte', 'diego.soporte@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Diego', 'Soporte', 3, '+52 555 300 0002', TRUE, '2024-11-15 10:00:00'),
-('carmen.ventas', 'carmen.ventas@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Carmen', 'Ventas', 3, '+52 555 300 0003', TRUE, '2024-11-18 11:30:00'),
-('roberto.admin', 'roberto.admin@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Roberto', 'Administración', 3, '+52 555 300 0004', TRUE, '2024-11-20 08:00:00'),
+('lucia.mesa', 'lucia.mesa@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Lucía', 'Mesa', 3, TRUE, '2024-11-15 09:00:00'),
+('diego.soporte', 'diego.soporte@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Diego', 'Soporte', 3, TRUE, '2024-11-15 10:00:00'),
+('carmen.ventas', 'carmen.ventas@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Carmen', 'Ventas', 3, TRUE, '2024-11-18 11:30:00'),
+('roberto.admin', 'roberto.admin@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Roberto', 'Administración', 3, TRUE, '2024-11-20 08:00:00'),
 
 -- USUARIOS INACTIVOS (para pruebas)
-('usuario.inactivo', 'inactivo@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Usuario', 'Inactivo', 3, '+52 555 400 0001', FALSE, '2024-10-01 12:00:00');
+('usuario.inactivo', 'inactivo@maccomputadoras.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5QoBZxXyNXM5a', 'Usuario', 'Inactivo', 3, FALSE, '2024-10-01 12:00:00');
 
 -- ================================================================
 -- 3. ACTUALIZAR CREATED_BY EN CATEGORÍAS
