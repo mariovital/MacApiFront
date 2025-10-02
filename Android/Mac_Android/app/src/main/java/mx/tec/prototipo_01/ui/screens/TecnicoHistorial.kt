@@ -76,7 +76,9 @@ fun TecnicoHistorial(navController: NavController) {
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(Color(0xFFCFE3F3))
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFFCFE3F3))
     ) {
         // Content Section
         if (tickets.isEmpty()) {

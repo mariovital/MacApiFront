@@ -40,15 +40,14 @@ import mx.tec.prototipo_01.ui.theme.Prototipo_01Theme
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
     Column(modifier = modifier.fillMaxSize()) {
-        // Parte Superior (Roja)
         val redBoxShape = RoundedCornerShape(
             topStart = 0.dp,
             topEnd = 0.dp,
-            bottomEnd = 50.dp, // Aumenté un poco el radio para que la sombra sea más visible
+            bottomEnd = 50.dp,
             bottomStart = 50.dp
         )
         Box(
-            modifier = Modifier       // Primer argumento: el modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
                 .shadow(
@@ -58,11 +57,10 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                 )
                 .clip(redBoxShape)
                 .background(Color(0xFFe10600)),
-            contentAlignment = Alignment.Center // Segundo argumento: contentAlignment
+            contentAlignment = Alignment.Center
         ) {
-            // Contenido del Box, por ejemplo, la Image
             Image(
-                painter = painterResource(id = R.mipmap.mac_compu), // Asegúrate que este recurso exista
+                painter = painterResource(id = R.mipmap.mac_compu),
                 contentDescription = null,
                 modifier = Modifier
                     .size(120.dp)
@@ -70,7 +68,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                 contentScale = ContentScale.Fit
             )
 
-            Spacer(modifier = Modifier.height(16.dp)) // Espacio entre la línea y el texto
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Correo",
@@ -78,7 +76,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                     .offset(x = (-120).dp, y = (-50).dp),
                 color = Color.White
             )
-            Spacer(modifier = Modifier.height(8.dp)) // Espacio entre el texto y el TextField
+            Spacer(modifier = Modifier.height(8.dp))
 
             var userEmail by remember { mutableStateOf(TextFieldValue("")) }
             OutlinedTextField(
@@ -103,7 +101,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                     unfocusedTextColor = Color.Black
                 )
             )
-            Spacer(modifier = Modifier.height(20.dp)) // Espacio adicional al final
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = "Contraseña",
@@ -111,7 +109,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                     .offset(x = (-120).dp, y = (70).dp),
                 color = Color.White
             )
-            Spacer(modifier = Modifier.height(8.dp)) // Espacio entre el texto y el TextField
+            Spacer(modifier = Modifier.height(8.dp))
 
             var userPassword by remember { mutableStateOf(TextFieldValue("")) }
             OutlinedTextField(
@@ -137,7 +135,7 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                     unfocusedTextColor = Color.Black
                 )
             )
-            Spacer(modifier = Modifier.height(20.dp)) // Espacio adicional al final
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
                 text = "¿Olvidaste tu contraseña?",
@@ -145,19 +143,16 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                     .offset(x = (0).dp, y = (170).dp),
                 color = Color.White
             )
-            Spacer(modifier = Modifier.height(8.dp)) // Espacio entre el texto y el TextField
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
-
-        // Parte Inferior (Blanca)
-        // Parte Inferior (Blanca) con un Botón
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(.5f) // Ocupa la mitad inferior
+                .weight(.5f)
                 .background(Color.White)
-                .padding(16.dp), // Padding general para el contenido del Box blanco
-            contentAlignment = Alignment.Center // Alineación base del contenido
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
         ) {
             val context = LocalContext.current
             Button(
@@ -165,15 +160,13 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                     onLoginSuccess()
                 },
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.DarkGray, // Nuevo color de fondo del botón
-                    contentColor = Color.White    // Nuevo color del texto del botón
+                    containerColor = Color.DarkGray,
+                    contentColor = Color.White
                 ),
                 modifier = Modifier
-                    // Sube el botón 20.dp desde su posición centrada
-                    // Un valor 'y' negativo lo mueve hacia arriba.
                     .offset(y = (-80).dp)
             ) {
-                Text("Iniciar Sesión") // Texto actualizado del botón
+                Text("Iniciar Sesión")
             }
         }
     }

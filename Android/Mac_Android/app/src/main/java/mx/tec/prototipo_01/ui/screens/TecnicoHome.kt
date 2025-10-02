@@ -2,12 +2,12 @@ package mx.tec.prototipo_01.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Refresh
@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
@@ -52,8 +53,10 @@ fun TecnicoHome(navController: NavController) {
     }
 
     Scaffold(
+        containerColor = Color(0xFFCFE3F3), // Set background for the content
         topBar = {
             CenterAlignedTopAppBar(
+                modifier = Modifier.clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
                 title = {
                     val titleText = when (selectedOption) {
                         0 -> "Mis Tickets"
@@ -103,7 +106,7 @@ fun TecnicoHome(navController: NavController) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding),
+                .padding(padding)
         ) {
             when(selectedOption) {
                 0 -> TecnicoTickets(navController = navController)
