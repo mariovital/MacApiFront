@@ -29,6 +29,17 @@ fun AppNavigation() {
                 description = backStackEntry.arguments?.getString("description")
             )
         }
+        composable("tecnico_ticket_chat/{id}/{title}/{company}/{assignedTo}/{status}/{priority}") { backStackEntry ->
+            TecnicoTicketChat(
+                navController = navController,
+                id = backStackEntry.arguments?.getString("id"),
+                title = backStackEntry.arguments?.getString("title"),
+                company = backStackEntry.arguments?.getString("company"),
+                assignedTo = backStackEntry.arguments?.getString("assignedTo"),
+                status = backStackEntry.arguments?.getString("status"),
+                priority = backStackEntry.arguments?.getString("priority")
+            )
+        }
         // Placeholder for the client home screen
         composable("client_home") {
             // TODO: Create a real ClientHomeScreen later

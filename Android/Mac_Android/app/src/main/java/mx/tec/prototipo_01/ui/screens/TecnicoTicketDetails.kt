@@ -53,6 +53,7 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.models.TicketStatus
 import java.net.URLDecoder
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -70,6 +71,7 @@ fun TecnicoTicketDetails(
     val decodedId = id?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
     val decodedTitle = title?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
     val decodedCompany = company?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
+    val decodedAssignedTo = assignedTo?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
     val decodedStatus = status?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
     val decodedPriority = priority?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
     val decodedDescription = description?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
@@ -222,7 +224,15 @@ fun TecnicoTicketDetails(
                             }
                             TicketStatus.EN_PROCESO.displayName, TicketStatus.COMPLETADO.displayName -> {
                                 Button(
-                                    onClick = { /* TODO: Go to chat */ },
+                                    onClick = {
+                                        val encodedIdNav = URLEncoder.encode(decodedId, StandardCharsets.UTF_8.toString())
+                                        val encodedTitleNav = URLEncoder.encode(decodedTitle, StandardCharsets.UTF_8.toString())
+                                        val encodedCompanyNav = URLEncoder.encode(decodedCompany, StandardCharsets.UTF_8.toString())
+                                        val encodedAssignedToNav = URLEncoder.encode(decodedAssignedTo, StandardCharsets.UTF_8.toString())
+                                        val encodedStatusNav = URLEncoder.encode(decodedStatus, StandardCharsets.UTF_8.toString())
+                                        val encodedPriorityNav = URLEncoder.encode(decodedPriority, StandardCharsets.UTF_8.toString())
+                                        navController.navigate("tecnico_ticket_chat/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
+                                    },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C6BC0))
