@@ -1,10 +1,12 @@
 package mx.tec.prototipo_01.viewmodels
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.LoginRequest
@@ -43,15 +45,28 @@ class LoginViewModel : ViewModel() {
 
     // Performs the login operation
     fun login() {
-        // Basic hardcoded validation
-        if (email == "test@test.com" && password == "1234") {
-            loginState = LoginState.Success("tecnico")
-        } else {
-            loginState = LoginState.Error("Credenciales incorrectas")
+        // --- INICIO: CÓDIGO DE PRUEBA LOCAL (SIN CONEXIÓN) ---
+        viewModelScope.launch {
+            loginState = LoginState.Loading
+            delay(1000) // Simula un pequeño retraso de red
+
+            when {
+                email.equals("admin@test.com", ignoreCase = true) -> {
+                    // Simula un login exitoso para el rol de Administrador
+                    loginState = LoginState.Success("Admin")
+                }
+                email.equals("tech@test.com", ignoreCase = true) -> {
+                    // Simula un login exitoso para el rol de Técnico
+                    loginState = LoginState.Success("tecnico")
+                }
+                else -> {
+                    // Para cualquier otro email, simula un error de credenciales
+                    loginState = LoginState.Error("Credenciales de prueba incorrectas.")
+                }
+            }
         }
 
-        // --- REAL NETWORK REQUEST (Commented out for now) ---
-        /*
+        /* DESCOMENTAR CUANDO SE CONECTE A AWS
         viewModelScope.launch {
             loginState = LoginState.Loading
             try {
@@ -65,13 +80,12 @@ class LoginViewModel : ViewModel() {
                     loginState = LoginState.Error("Credenciales incorrectas. Inténtalo de nuevo.")
                 }
             } catch (e: Exception) {
+                Log.e("LoginViewModel", "Error de red: ${e.message}")
                 loginState = LoginState.Error("Error de red: ${e.message}")
             }
-        }
-        */
+        } */
     }
 
-    // Resets the login state to Idle
     fun resetLoginState() {
         loginState = LoginState.Idle
     }

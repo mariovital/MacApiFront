@@ -9,7 +9,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 object RetrofitClient {
 
     // TODO: Reemplaza esta URL con la dirección de tu servidor real.
-    private const val BASE_URL = "http://192.168.1.100:3000/api/"
+    private const val BASE_URL = "http://192.168.0.8:3000/api/"
 
     // Creación de la instancia de Retrofit
     private val retrofit by lazy {
