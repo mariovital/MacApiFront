@@ -44,6 +44,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.GoogleMap
+import com.google.maps.android.compose.Marker
+import com.google.maps.android.compose.MarkerState
+import com.google.maps.android.compose.rememberCameraPositionState
 import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.models.TicketStatus
 import java.net.URLDecoder
@@ -72,6 +78,8 @@ fun TecnicoTicketDetails(
     val serialNumber = "000000000000"
     val problema = "La pantalla tiene un golpe el cual dejó inutilizable el dispositivo"
     val ubicacion = "Granjas México, Iztacalco, 08400 Ciudad de México, CDMX"
+    // Hardcoded coordinates for Palacio de los Deportes
+    val mapLocation = LatLng(19.4056, -99.0965)
 
     val view = LocalView.current
     val topBarColor = Color(0xFF424242)
@@ -109,6 +117,7 @@ fun TecnicoTicketDetails(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
+                        // Section 1: User/Status and ID/Priority
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -120,7 +129,14 @@ fun TecnicoTicketDetails(
                                 StatusBadge(status = decodedStatus)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text(decodedId, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
+                                Text(
+                                    text = decodedId,
+                                    fontSize = 12.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier
+                                        .background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 PriorityBadge(priority = decodedPriority)
                             }
@@ -128,6 +144,7 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Section 2: Title and Company
                         Row(verticalAlignment = Alignment.Top) {
                             Icon(Icons.Default.DateRange, "Ticket Title", modifier = Modifier.padding(top = 4.dp))
                             Spacer(modifier = Modifier.width(8.dp))
@@ -143,6 +160,7 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Section 3: Short Description (Timeline)
                         Row(verticalAlignment = Alignment.Top) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 8.dp)) {
                                 Box(modifier = Modifier.width(1.dp).height(4.dp).background(Color.LightGray))
@@ -154,6 +172,7 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
+                        // Section 4: Full Details
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -164,6 +183,7 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
+                        // Section 5: Location
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Ubicación:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -172,13 +192,23 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)).background(Color.LightGray), contentAlignment = Alignment.Center) {
-                            Text("Map Placeholder", color = Color.DarkGray, fontWeight = FontWeight.Medium)
+                        // Section 6: Google Map
+                        val cameraPositionState = rememberCameraPositionState {
+                            position = CameraPosition.fromLatLngZoom(mapLocation, 15f)
+                        }
+                        GoogleMap(
+                            modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)),
+                            cameraPositionState = cameraPositionState
+                        ) {
+                            Marker(
+                                state = MarkerState(position = mapLocation),
+                                title = "Ubicación del Ticket"
+                            )
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Conditional buttons section
+                        // Section 7: Action Buttons
                         when (decodedStatus) {
                             TicketStatus.PENDIENTE.displayName -> {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
