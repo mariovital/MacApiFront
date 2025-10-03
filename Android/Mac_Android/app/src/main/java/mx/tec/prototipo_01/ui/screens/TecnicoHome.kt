@@ -37,10 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TecnicoHome(navController: NavController) {
+fun TecnicoHome(navController: NavController, viewModel: TecnicoSharedViewModel) { // viewModel is now passed in
     var selectedOption by remember { mutableStateOf(0) }
 
     val view = LocalView.current
@@ -109,8 +110,9 @@ fun TecnicoHome(navController: NavController) {
                 .padding(padding)
         ) {
             when(selectedOption) {
-                0 -> TecnicoTickets(navController = navController)
-                1 -> TecnicoHistorial(navController = navController)
+                // Now we pass the shared viewModel to the child screens
+                0 -> TecnicoTickets(navController = navController, viewModel = viewModel)
+                1 -> TecnicoHistorial(navController = navController, viewModel = viewModel)
                 2 -> TecnicoConfig(onLogout = {
                     navController.navigate("login") {
                         popUpTo("tecnico_home") { inclusive = true }

@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +53,7 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.models.TicketStatus
+import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -60,27 +62,22 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun TecnicoTicketDetails(
     navController: NavController,
-    id: String?,
-    title: String?,
-    company: String?,
-    assignedTo: String?,
-    status: String?,
-    priority: String?,
-    description: String?
+    viewModel: TecnicoSharedViewModel,
+    ticketId: String
 ) {
-    val decodedId = id?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
-    val decodedTitle = title?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
-    val decodedCompany = company?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
-    val decodedAssignedTo = assignedTo?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
-    val decodedStatus = status?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
-    val decodedPriority = priority?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
-    val decodedDescription = description?.let { URLDecoder.decode(it, StandardCharsets.UTF_8.toString()) } ?: "N/A"
+    // Get the ticket from the ViewModel. This is reactive and will update if the ticket changes.
+    val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
+
+    // If the ticket is null for any reason (e.g., it was rejected and removed), just go back.
+    if (ticket == null) {
+        navController.popBackStack()
+        return
+    }
 
     val dispositivo = "Dell Latitude 5420"
     val serialNumber = "000000000000"
     val problema = "La pantalla tiene un golpe el cual dejó inutilizable el dispositivo"
     val ubicacion = "Granjas México, Iztacalco, 08400 Ciudad de México, CDMX"
-    // Hardcoded coordinates for Palacio de los Deportes
     val mapLocation = LatLng(19.4056, -99.0965)
 
     val view = LocalView.current
@@ -119,7 +116,6 @@ fun TecnicoTicketDetails(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(20.dp)) {
-                        // Section 1: User/Status and ID/Priority
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -128,11 +124,11 @@ fun TecnicoTicketDetails(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Person, "Usuario", tint = Color.LightGray, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                StatusBadge(status = decodedStatus)
+                                StatusBadge(status = ticket.status.displayName)
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = decodedId,
+                                    text = ticket.id,
                                     fontSize = 12.sp,
                                     color = Color.Gray,
                                     modifier = Modifier
@@ -140,41 +136,38 @@ fun TecnicoTicketDetails(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
-                                PriorityBadge(priority = decodedPriority)
+                                PriorityBadge(priority = ticket.priority)
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Section 2: Title and Company
                         Row(verticalAlignment = Alignment.Top) {
                             Icon(Icons.Default.DateRange, "Ticket Title", modifier = Modifier.padding(top = 4.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Column {
-                                Text(decodedTitle, fontWeight = FontWeight.Bold, fontSize = 22.sp)
+                                Text(ticket.title, fontWeight = FontWeight.Bold, fontSize = 22.sp)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text("·", color = Color.Gray, fontWeight = FontWeight.Bold)
                                     Spacer(modifier = Modifier.width(4.dp))
-                                    Text(decodedCompany, color = Color.Gray, fontSize = 14.sp)
+                                    Text(ticket.company, color = Color.Gray, fontSize = 14.sp)
                                 }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Section 3: Short Description (Timeline)
                         Row(verticalAlignment = Alignment.Top) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 8.dp)) {
                                 Box(modifier = Modifier.width(1.dp).height(4.dp).background(Color.LightGray))
                                 Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color.LightGray))
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text(decodedDescription, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp, color = Color.Gray)
+                            Text(ticket.description, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp, color = Color.Gray)
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Section 4: Full Details
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -185,7 +178,6 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Section 5: Location
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Ubicación:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
@@ -194,7 +186,6 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Section 6: Google Map
                         val cameraPositionState = rememberCameraPositionState {
                             position = CameraPosition.fromLatLngZoom(mapLocation, 15f)
                         }
@@ -210,27 +201,32 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(24.dp))
 
-                        // Section 7: Action Buttons
-                        when (decodedStatus) {
-                            TicketStatus.PENDIENTE.displayName -> {
+                        when (ticket.status) {
+                            TicketStatus.PENDIENTE -> {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    Button(onClick = { /* TODO: Accept */ }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) {
+                                    Button(onClick = {
+                                        viewModel.acceptTicket(ticket.id)
+                                        navController.popBackStack()
+                                    }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) {
                                         Text("Aceptar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                     }
-                                    Button(onClick = { /* TODO: Decline */ }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))) {
+                                    Button(onClick = {
+                                        viewModel.rejectTicket(ticket.id)
+                                        navController.popBackStack()
+                                    }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))) {
                                         Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
-                            TicketStatus.EN_PROCESO.displayName, TicketStatus.COMPLETADO.displayName -> {
+                            TicketStatus.EN_PROCESO, TicketStatus.COMPLETADO, TicketStatus.RECHAZADO -> {
                                 Button(
                                     onClick = {
-                                        val encodedIdNav = URLEncoder.encode(decodedId, StandardCharsets.UTF_8.toString())
-                                        val encodedTitleNav = URLEncoder.encode(decodedTitle, StandardCharsets.UTF_8.toString())
-                                        val encodedCompanyNav = URLEncoder.encode(decodedCompany, StandardCharsets.UTF_8.toString())
-                                        val encodedAssignedToNav = URLEncoder.encode(decodedAssignedTo, StandardCharsets.UTF_8.toString())
-                                        val encodedStatusNav = URLEncoder.encode(decodedStatus, StandardCharsets.UTF_8.toString())
-                                        val encodedPriorityNav = URLEncoder.encode(decodedPriority, StandardCharsets.UTF_8.toString())
+                                        val encodedIdNav = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
+                                        val encodedTitleNav = URLEncoder.encode(ticket.title, StandardCharsets.UTF_8.toString())
+                                        val encodedCompanyNav = URLEncoder.encode(ticket.company, StandardCharsets.UTF_8.toString())
+                                        val encodedAssignedToNav = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
+                                        val encodedStatusNav = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
+                                        val encodedPriorityNav = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
                                         navController.navigate("tecnico_ticket_chat/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
                                     },
                                     modifier = Modifier.fillMaxWidth(),
