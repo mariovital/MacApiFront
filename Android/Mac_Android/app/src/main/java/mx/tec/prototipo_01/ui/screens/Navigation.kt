@@ -1,5 +1,6 @@
 package mx.tec.prototipo_01.ui.screens
 
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,14 +12,7 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            LoginScreen { 
-                navController.navigate("tecnico_home") {
-                    // Avoid multiple copies of the same destination when re-logging
-                    popUpTo("login") {
-                        inclusive = true
-                    }
-                }
-            }
+            LoginScreen(navController = navController)
         }
         composable("tecnico_home") {
             TecnicoHome(navController = navController)
@@ -34,6 +28,11 @@ fun AppNavigation() {
                 priority = backStackEntry.arguments?.getString("priority"),
                 description = backStackEntry.arguments?.getString("description")
             )
+        }
+        // Placeholder for the client home screen
+        composable("client_home") {
+            // TODO: Create a real ClientHomeScreen later
+            Text("Client Home Screen")
         }
     }
 }

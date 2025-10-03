@@ -15,14 +15,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,14 +29,42 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import mx.tec.prototipo_01.R
-import mx.tec.prototipo_01.ui.theme.Prototipo_01Theme
+import mx.tec.prototipo_01.viewmodels.LoginState
+import mx.tec.prototipo_01.viewmodels.LoginViewModel
 
 @Composable
-fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
+fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
+    val loginViewModel: LoginViewModel = viewModel()
+    val context = LocalContext.current
+    val loginState = loginViewModel.loginState
+
+    LaunchedEffect(loginState) {
+        when (loginState) {
+            is LoginState.Success -> {
+                Toast.makeText(context, "Login Exitoso", Toast.LENGTH_SHORT).show()
+                val destination = if (loginState.role.equals("tecnico", ignoreCase = true)) {
+                    "tecnico_home"
+                } else {
+                    "client_home"
+                }
+                navController.navigate(destination) {
+                    popUpTo("login") { inclusive = true }
+                }
+                loginViewModel.resetLoginState()
+            }
+            is LoginState.Error -> {
+                Toast.makeText(context, loginState.message, Toast.LENGTH_LONG).show()
+                loginViewModel.resetLoginState()
+            }
+            else -> {}
+        }
+    }
+
     Column(modifier = modifier.fillMaxSize()) {
         val redBoxShape = RoundedCornerShape(
             topStart = 0.dp,
@@ -78,10 +104,9 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            var userEmail by remember { mutableStateOf(TextFieldValue("")) }
             OutlinedTextField(
-                value = userEmail,
-                onValueChange = { userEmail = it },
+                value = loginViewModel.email,
+                onValueChange = { loginViewModel.onEmailChange(it) },
                 label = { Text("Correo Electrónico") },
                 singleLine = true,
                 modifier = Modifier
@@ -111,12 +136,12 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
             )
             Spacer(modifier = Modifier.height(8.dp))
 
-            var userPassword by remember { mutableStateOf(TextFieldValue("")) }
             OutlinedTextField(
-                value = userPassword,
-                onValueChange = { userPassword = it },
+                value = loginViewModel.password,
+                onValueChange = { loginViewModel.onPasswordChange(it) },
                 label = { Text("Contraseña") },
                 singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
                 modifier = Modifier
                     .offset(x = (0).dp, y = (120).dp)
                     .fillMaxWidth(0.85f)
@@ -154,11 +179,9 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
-            val context = LocalContext.current
             Button(
-                onClick = {
-                    onLoginSuccess()
-                },
+                onClick = { loginViewModel.login() },
+                enabled = loginState != LoginState.Loading,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.DarkGray,
                     contentColor = Color.White
@@ -166,7 +189,11 @@ fun LoginScreen(modifier: Modifier = Modifier, onLoginSuccess: () -> Unit) {
                 modifier = Modifier
                     .offset(y = (-80).dp)
             ) {
-                Text("Iniciar Sesión")
+                if (loginState == LoginState.Loading) {
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                } else {
+                    Text("Iniciar Sesión")
+                }
             }
         }
     }
