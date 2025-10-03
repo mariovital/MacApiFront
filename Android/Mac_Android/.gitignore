@@ -1,10 +1,23 @@
-.gradle/
-**/.gradle/
-**/build/
-**/.cxx/
+# Misc.
+*.apk
+*.aab
+*.ap_
+*.a
+*.o
+*.so
+*.zip
+
+# Android Studio
+.gradle
+build/
 .idea/
-*.iml
+captures/
+.cxx/
 local.properties
-**/local.properties
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
+
+# Proguard
+proguard/
+
+# Keystore
+*.jks
+keystores/
