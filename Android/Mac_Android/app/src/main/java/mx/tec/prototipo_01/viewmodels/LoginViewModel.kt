@@ -57,7 +57,7 @@ class LoginViewModel : ViewModel() {
                     // Simula un login exitoso para el rol de Técnico
                     loginState = LoginState.Success("tecnico")
                 }
-                email.equals("ayuda@test.com", ignoreCase = true) -> {
+                email.equals("ayuda@test.com", ignoreCase = true) && password == "1234" -> {
                     // Simula un login exitoso para el rol de Mesa de Ayuda
                     loginState = LoginState.Success("Mesa de Ayuda")
                 }
