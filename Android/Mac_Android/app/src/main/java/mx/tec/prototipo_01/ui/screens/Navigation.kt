@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 
 @Composable
@@ -19,24 +20,16 @@ fun AppNavigation() {
             LoginScreen(navController = navController)
         }
 
-        // Nested graph for the technician flow. The ViewModel is scoped to this graph,
-        // so all screens within it (home, details) share the same instance.
+        // Nested graph for the technician flow.
         navigation(startDestination = "tecnico_main", route = "tecnico_home") {
-
             composable("tecnico_main") { backStackEntry ->
-                // Get the back stack entry for the parent navigation graph
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("tecnico_home") }
-                // Pass that entry to viewModel() to get a shared instance
                 val viewModel: TecnicoSharedViewModel = viewModel(parentEntry)
-
                 TecnicoHome(navController = navController, viewModel = viewModel)
             }
-
             composable("tecnico_ticket_details/{id}") { backStackEntry ->
-                // Do the same here to get the *same* shared instance
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("tecnico_home") }
                 val viewModel: TecnicoSharedViewModel = viewModel(parentEntry)
-
                 val ticketId = backStackEntry.arguments?.getString("id")
                 if (ticketId != null) {
                     TecnicoTicketDetails(
@@ -45,6 +38,16 @@ fun AppNavigation() {
                         ticketId = ticketId
                     )
                 }
+            }
+        }
+
+        // Nested graph for the Mesa de Ayuda flow.
+        navigation(startDestination = "mesa_ayuda_main", route = "mesa_ayuda_home") {
+            composable("mesa_ayuda_main") { backStackEntry ->
+                // Scoped ViewModel for Mesa de Ayuda
+                val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("mesa_ayuda_home") }
+                val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
+                MesaAyudaHome(navController = navController)
             }
         }
 
@@ -59,6 +62,11 @@ fun AppNavigation() {
                 priority = backStackEntry.arguments?.getString("priority")
             )
         }
+
+        composable("create_ticket") {
+            CreateTicketScreen(navController = navController)
+        }
+
         // Placeholder for the client home screen
         composable("client_home") {
             // TODO: Create a real ClientHomeScreen later

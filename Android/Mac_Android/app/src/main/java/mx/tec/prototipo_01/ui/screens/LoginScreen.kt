@@ -47,10 +47,10 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
         when (loginState) {
             is LoginState.Success -> {
                 Toast.makeText(context, "Login Exitoso", Toast.LENGTH_SHORT).show()
-                val destination = if (loginState.role.equals("tecnico", ignoreCase = true)) {
-                    "tecnico_home"
-                } else {
-                    "client_home"
+                val destination = when {
+                    loginState.role.equals("tecnico", ignoreCase = true) -> "tecnico_home"
+                    loginState.role.equals("Mesa de Ayuda", ignoreCase = true) -> "mesa_ayuda_home"
+                    else -> "client_home"
                 }
                 navController.navigate(destination) {
                     popUpTo("login") { inclusive = true }
