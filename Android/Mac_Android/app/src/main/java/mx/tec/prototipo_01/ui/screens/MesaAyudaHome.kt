@@ -37,10 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MesaAyudaHome(navController: NavController) {
+fun MesaAyudaHome(navController: NavController, viewModel: MesaAyudaSharedViewModel) {
     var selectedOption by remember { mutableStateOf(0) }
 
     val view = LocalView.current
@@ -109,11 +110,11 @@ fun MesaAyudaHome(navController: NavController) {
                 .padding(padding)
         ) {
             when(selectedOption) {
-                0 -> MesaAyudaTickets(navController = navController)
-                1 -> MesaAyudaHistorial()
+                0 -> MesaAyudaTickets(navController = navController, viewModel = viewModel)
+                1 -> MesaAyudaHistorial(navController = navController, viewModel = viewModel)
                 2 -> MesaAyudaConfig(onLogout = {
                     navController.navigate("login") {
-                        popUpTo("mesaayuda_home") { inclusive = true }
+                        popUpTo("mesa_ayuda_home") { inclusive = true }
                     }
                 })
             }

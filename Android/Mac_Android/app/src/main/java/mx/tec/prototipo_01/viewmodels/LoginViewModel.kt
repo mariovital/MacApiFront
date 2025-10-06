@@ -57,6 +57,10 @@ class LoginViewModel : ViewModel() {
                     // Simula un login exitoso para el rol de Técnico
                     loginState = LoginState.Success("tecnico")
                 }
+                email.equals("ayuda@test.com", ignoreCase = true) -> {
+                    // Simula un login exitoso para el rol de Mesa de Ayuda
+                    loginState = LoginState.Success("Mesa de Ayuda")
+                }
                 else -> {
                     // Para cualquier otra combinación, simula un error de credenciales
                     loginState = LoginState.Error("Credenciales de prueba incorrectas.")

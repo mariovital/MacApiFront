@@ -5,12 +5,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,12 +23,28 @@ fun CreateTicketScreen(navController: NavController) {
     var title by remember { mutableStateOf("") }
     var company by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var priority by remember { mutableStateOf("") }
-    var assignedTo by remember { mutableStateOf("") }
+
+    val priorityOptions = listOf("Alta", "Media", "Baja")
+    var priority by remember { mutableStateOf(priorityOptions[0]) }
+    var priorityExpanded by remember { mutableStateOf(false) }
+
+    val assignedToOptions = listOf("Juan Perez", "Maria Rodriguez", "Carlos Lopez")
+    var assignedTo by remember { mutableStateOf(assignedToOptions[0]) }
+    var assignedToExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Crear Ticket") })
+            TopAppBar(
+                title = { Text("Crear Ticket") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Volver atrás"
+                        )
+                    }
+                }
+            )
         }
     ) { padding ->
         Column(
@@ -59,6 +72,72 @@ fun CreateTicketScreen(navController: NavController) {
                 label = { Text("Descripción") },
                 modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Priority Spinner
+            ExposedDropdownMenuBox(
+                expanded = priorityExpanded,
+                onExpandedChange = { priorityExpanded = !priorityExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = priority,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Prioridad") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = priorityExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = priorityExpanded,
+                    onDismissRequest = { priorityExpanded = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    priorityOptions.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption) },
+                            onClick = {
+                                priority = selectionOption
+                                priorityExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // AssignedTo Spinner
+            ExposedDropdownMenuBox(
+                expanded = assignedToExpanded,
+                onExpandedChange = { assignedToExpanded = !assignedToExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                OutlinedTextField(
+                    value = assignedTo,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Asignado a") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = assignedToExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = assignedToExpanded,
+                    onDismissRequest = { assignedToExpanded = false },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    assignedToOptions.forEach { selectionOption ->
+                        DropdownMenuItem(
+                            text = { Text(selectionOption) },
+                            onClick = {
+                                assignedTo = selectionOption
+                                assignedToExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(16.dp))
             Button(
                 onClick = { /* TODO: Handle ticket creation */ },

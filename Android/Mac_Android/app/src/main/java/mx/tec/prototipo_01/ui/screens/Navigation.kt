@@ -47,7 +47,7 @@ fun AppNavigation() {
                 // Scoped ViewModel for Mesa de Ayuda
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("mesa_ayuda_home") }
                 val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
-                MesaAyudaHome(navController = navController)
+                MesaAyudaHome(navController = navController, viewModel = viewModel)
             }
         }
 
