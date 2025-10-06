@@ -8,8 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import mx.tec.prototipo_01.api.RetrofitClient
-import mx.tec.prototipo_01.models.LoginRequest
 
 // Represents the different states of the Login screen
 sealed class LoginState {
@@ -45,22 +43,22 @@ class LoginViewModel : ViewModel() {
 
     // Performs the login operation
     fun login() {
-        // --- INICIO: CÓDIGO DE PRUEBA LOCAL (SIN CONEXIÓN) ---
+        // --- INICIO: CÓDIGO DE PRUEBA LOCAL (CON CONTRASEÑA) ---
         viewModelScope.launch {
             loginState = LoginState.Loading
             delay(1000) // Simula un pequeño retraso de red
 
             when {
-                email.equals("admin@test.com", ignoreCase = true) -> {
+                email.equals("admin@test.com", ignoreCase = true) && password == "1234" -> {
                     // Simula un login exitoso para el rol de Administrador
                     loginState = LoginState.Success("Admin")
                 }
-                email.equals("tech@test.com", ignoreCase = true) -> {
+                email.equals("tech@test.com", ignoreCase = true) && password == "1234" -> {
                     // Simula un login exitoso para el rol de Técnico
                     loginState = LoginState.Success("tecnico")
                 }
                 else -> {
-                    // Para cualquier otro email, simula un error de credenciales
+                    // Para cualquier otra combinación, simula un error de credenciales
                     loginState = LoginState.Error("Credenciales de prueba incorrectas.")
                 }
             }
