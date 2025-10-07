@@ -1,22 +1,21 @@
-// /pages/auth/Login.jsx - Página de Login
+// /pages/auth/Login.jsx - Página de Login (Diseño Figma)
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Card, 
-  CardContent, 
   TextField, 
   Button, 
   Typography, 
   Alert,
   InputAdornment,
-  IconButton 
+  IconButton,
+  Link
 } from '@mui/material';
-import { FiUser, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
+import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  // 1. HOOKS - Siempre en este orden
+  // 1. HOOKS
   const { login, loading, error, isAuthenticated, setError } = useAuth();
   const navigate = useNavigate();
   const [credentials, setCredentials] = useState({
@@ -34,7 +33,6 @@ const Login = () => {
       [name]: value
     }));
     
-    // Limpiar errores al escribir
     if (error) setError(null);
     if (localError) setLocalError('');
   };
@@ -42,7 +40,6 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validaciones básicas
     if (!credentials.email || !credentials.password) {
       setLocalError('Por favor complete todos los campos');
       return;
@@ -55,9 +52,7 @@ const Login = () => {
 
     try {
       await login(credentials);
-      // Si el login es exitoso, se redirigirá automáticamente
     } catch (loginError) {
-      // El error ya se maneja en el AuthContext
       console.error('Error en login:', loginError);
     }
   };
@@ -66,86 +61,150 @@ const Login = () => {
     setShowPassword(prev => !prev);
   };
 
-  // 3. EFFECTS - Siempre al final de hooks
+  // 3. EFFECTS
   useEffect(() => {
-    // Redirigir si ya está autenticado
     if (isAuthenticated) {
       navigate('/dashboard');
     }
   }, [isAuthenticated, navigate]);
 
-  // 4. EARLY RETURNS - Validaciones y loading states
+  // 4. EARLY RETURNS
   if (isAuthenticated) {
     return <div className="p-4">Redirigiendo...</div>;
   }
 
-  // 5. RENDER LOGIC - Variables para el render
+  // 5. RENDER LOGIC
   const currentError = error || localError;
 
-  // 6. JSX RETURN
+  // 6. JSX RETURN - DISEÑO FIGMA
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Logo y Título */}
-        <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-4">
-            <FiUser className="text-2xl text-white" />
+    <div className="min-h-screen bg-[#E31E24] flex items-center justify-center p-4 md:p-8">
+      {/* Contenedor principal con fondo blanco en los bordes */}
+      <div className="w-full max-w-[500px] bg-white rounded-[40px] p-8 md:p-12 shadow-2xl">
+        
+        {/* Contenedor interior con fondo rojo */}
+        <div className="bg-[#E31E24] rounded-[32px] px-6 py-10 md:px-10 md:py-12">
+          
+          {/* Logo MAC Computadoras */}
+          <div className="text-center mb-8">
+            <div className="flex justify-center mb-6">
+              <div className="text-white">
+                <svg 
+                  width="200" 
+                  height="80" 
+                  viewBox="0 0 200 80" 
+                  className="mx-auto"
+                >
+                  {/* Logo simplificado MAC */}
+                  <text 
+                    x="100" 
+                    y="40" 
+                    fontSize="48" 
+                    fontWeight="bold" 
+                    fill="white" 
+                    textAnchor="middle" 
+                    fontFamily="Arial, sans-serif"
+                    letterSpacing="4"
+                  >
+                    MAC
+                  </text>
+                  <text 
+                    x="100" 
+                    y="65" 
+                    fontSize="14" 
+                    fill="white" 
+                    textAnchor="middle" 
+                    fontFamily="Arial, sans-serif"
+                    letterSpacing="2"
+                  >
+                    COMPUTADORAS
+                  </text>
+                  {/* Líneas decorativas */}
+                  <line x1="20" y1="45" x2="50" y2="45" stroke="white" strokeWidth="2"/>
+                  <line x1="150" y1="45" x2="180" y2="45" stroke="white" strokeWidth="2"/>
+                </svg>
+              </div>
+            </div>
           </div>
-          <Typography variant="h4" className="font-bold text-gray-900 dark:text-white mb-2">
-            MAC Computadoras
-          </Typography>
-          <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
-            Sistema de Gestión de Tickets
-          </Typography>
-        </div>
 
-        {/* Formulario de Login */}
-        <Card className="shadow-xl border-0">
-          <CardContent className="p-8">
-            <Typography variant="h5" className="font-semibold text-center mb-6 dark:text-white">
-              Iniciar Sesión
-            </Typography>
+          {/* Error Alert */}
+          {currentError && (
+            <Alert 
+              severity="error" 
+              className="mb-6 bg-white/90 backdrop-blur-sm"
+              sx={{
+                borderRadius: '12px',
+                '& .MuiAlert-message': {
+                  color: '#E31E24'
+                }
+              }}
+            >
+              {currentError}
+            </Alert>
+          )}
 
-            {/* Error Alert */}
-            {currentError && (
-              <Alert severity="error" className="mb-6">
-                {currentError}
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Campo Email */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Campo Correo */}
+            <div>
+              <Typography 
+                variant="body2" 
+                className="text-white font-medium mb-2 text-sm"
+              >
+                Correo
+              </Typography>
               <TextField
                 fullWidth
                 name="email"
                 type="email"
-                label="Usuario o Email"
+                placeholder="tucorreo@correo.com"
                 value={credentials.email}
                 onChange={handleInputChange}
                 disabled={loading}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <FiUser className="text-gray-400" />
+                      <FiMail className="text-gray-500" />
                     </InputAdornment>
                   ),
+                  sx: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '12px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: 'none'
+                    },
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: 'white',
+                    },
+                    fontSize: '14px',
+                    height: '50px'
+                  }
                 }}
-                className="bg-white dark:bg-gray-800"
               />
+            </div>
 
-              {/* Campo Password */}
+            {/* Campo Contraseña */}
+            <div>
+              <Typography 
+                variant="body2" 
+                className="text-white font-medium mb-2 text-sm"
+              >
+                Contraseña
+              </Typography>
               <TextField
                 fullWidth
                 name="password"
                 type={showPassword ? 'text' : 'password'}
-                label="Contraseña"
+                placeholder="••••••••"
                 value={credentials.password}
                 onChange={handleInputChange}
                 disabled={loading}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <FiLock className="text-gray-400" />
+                      <FiLock className="text-gray-500" />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -154,45 +213,76 @@ const Login = () => {
                         onClick={togglePasswordVisibility}
                         edge="end"
                         disabled={loading}
+                        sx={{ color: 'rgba(0, 0, 0, 0.54)' }}
                       >
                         {showPassword ? <FiEyeOff /> : <FiEye />}
                       </IconButton>
                     </InputAdornment>
                   ),
+                  sx: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '12px',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      border: 'none'
+                    },
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    },
+                    '&.Mui-focused': {
+                      backgroundColor: 'white',
+                    },
+                    fontSize: '14px',
+                    height: '50px'
+                  }
                 }}
-                className="bg-white dark:bg-gray-800"
               />
-
-              {/* Botón de Login */}
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={loading}
-                className="bg-blue-600 hover:bg-blue-700 py-3 text-lg font-medium"
-              >
-                {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
-              </Button>
-            </form>
-
-            {/* Credenciales de Demo */}
-            <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-300 text-center mb-2">
-                <strong>Credenciales de Demo:</strong>
-              </Typography>
-              <Typography variant="body2" className="text-gray-600 dark:text-gray-300 text-center">
-                Email: admin@tuempresa.com<br />
-                Contraseña: admin123
-              </Typography>
             </div>
-          </CardContent>
-        </Card>
 
-        {/* Footer */}
-        <Typography variant="body2" className="text-center text-gray-500 mt-6">
-          © 2024 MAC Computadoras. Todos los derechos reservados.
-        </Typography>
+            {/* Link Olvidaste Contraseña */}
+            <div className="text-center">
+              <Link
+                href="#"
+                underline="always"
+                className="text-white text-sm font-medium hover:opacity-80 transition-opacity"
+                sx={{
+                  color: 'white',
+                  textDecorationColor: 'white'
+                }}
+              >
+                ¿Olvidaste tu Contraseña?
+              </Link>
+            </div>
+
+            {/* Botón Iniciar Sesión */}
+            <Button
+              type="submit"
+              fullWidth
+              variant="contained"
+              size="large"
+              disabled={loading}
+              sx={{
+                backgroundColor: '#4A5568',
+                color: 'white',
+                borderRadius: '12px',
+                height: '52px',
+                fontSize: '16px',
+                fontWeight: '600',
+                textTransform: 'none',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                '&:hover': {
+                  backgroundColor: '#2D3748',
+                },
+                '&:disabled': {
+                  backgroundColor: '#718096',
+                  color: 'white'
+                }
+              }}
+            >
+              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            </Button>
+          </form>
+
+        </div>
       </div>
     </div>
   );
