@@ -1,9 +1,10 @@
+// /pages/dashboard/Dashboard.jsx - Dashboard Principal con estética Figma
+
 import React, { useState } from 'react';
 import { 
   Typography, 
   Card, 
   CardContent, 
-  Grid, 
   Button,
   LinearProgress,
   Chip,
@@ -21,14 +22,16 @@ import {
   FiTrendingUp, 
   FiTrendingDown,
   FiClock,
-  FiUsers,
   FiTag,
   FiTarget,
   FiActivity,
   FiEye,
   FiRefreshCw,
   FiPlus,
-  FiAlertCircle
+  FiAlertCircle,
+  FiCheckCircle,
+  FiCalendar,
+  FiUsers
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -48,9 +51,10 @@ const Dashboard = () => {
     highPriority: 12,
     avgResolutionTime: '4.2 horas',
     customerSatisfaction: 4.6,
+    slaCompliance: 87,
     trends: {
       tickets: { value: 12.5, isPositive: true },
-      resolution: { value: -15.3, isPositive: true }, // negativo es mejor en tiempo
+      resolution: { value: -15.3, isPositive: true },
       satisfaction: { value: 3.2, isPositive: true }
     }
   };
@@ -82,18 +86,41 @@ const Dashboard = () => {
       status: { name: 'Nuevo', color: '#6B7280' },
       created_at: '2025-01-15T08:45:00Z',
       assigned_to: null
+    },
+    {
+      id: 4,
+      ticket_number: 'ID-2025-004',
+      title: 'Actualización de sistema operativo',
+      priority: { name: 'Baja', color: '#4CAF50' },
+      status: { name: 'Resuelto', color: '#10B981' },
+      created_at: '2025-01-14T16:20:00Z',
+      assigned_to: { first_name: 'Carlos', last_name: 'Ruiz' }
     }
   ];
 
   const upcomingTasks = [
-    { task: 'Revisar tickets críticos pendientes', deadline: 'En 2 horas', priority: 'high' },
-    { task: 'Reunión de seguimiento semanal', deadline: 'Mañana 10:00 AM', priority: 'medium' },
-    { task: 'Actualización sistema de monitoreo', deadline: 'Viernes', priority: 'low' }
+    { 
+      task: 'Revisar tickets críticos pendientes', 
+      deadline: 'En 2 horas', 
+      priority: 'high',
+      icon: <FiAlertCircle />
+    },
+    { 
+      task: 'Reunión de seguimiento semanal', 
+      deadline: 'Mañana 10:00 AM', 
+      priority: 'medium',
+      icon: <FiUsers />
+    },
+    { 
+      task: 'Actualización sistema de monitoreo', 
+      deadline: 'Viernes', 
+      priority: 'low',
+      icon: <FiActivity />
+    }
   ];
 
   const handleRefresh = async () => {
     setLoading(true);
-    // Simular carga de datos
     setTimeout(() => {
       setLoading(false);
     }, 1500);
@@ -131,41 +158,54 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header de bienvenida */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-xl p-6 text-white shadow-lg">
+    <div className="min-h-screen bg-[#F5F5F5]">
+      {/* Header estilo Figma */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <Typography variant="h4" className="font-bold mb-2">
-              {getWelcomeMessage()}
+            <Typography variant="h4" className="font-bold text-gray-900">
+              Dashboard<span className="text-[#E31E24]">.</span>
             </Typography>
-            <Typography variant="body1" className="opacity-90 mb-1">
-              {getRoleLabel(user?.role_id)} • {user?.email}
-            </Typography>
-            <Typography variant="body2" className="opacity-75">
-              Sistema de Tickets - {new Date().toLocaleDateString('es-ES', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
+            <Typography variant="body2" className="text-gray-600 mt-1">
+              {getWelcomeMessage()} • {getRoleLabel(user?.role_id)}
             </Typography>
           </div>
-          <div className="hidden md:flex space-x-3">
+          <div className="flex space-x-3">
             <Button
-              variant="outlined"
+              variant="contained"
               startIcon={<FiPlus />}
               onClick={() => navigate('/tickets')}
-              className="border-white/30 text-white hover:bg-white/10"
+              sx={{
+                backgroundColor: '#E31E24',
+                color: 'white',
+                borderRadius: '12px',
+                textTransform: 'none',
+                padding: '10px 24px',
+                fontWeight: '600',
+                '&:hover': {
+                  backgroundColor: '#C41A1F'
+                }
+              }}
             >
               Nuevo Ticket
             </Button>
             <Button
-              variant="contained"
+              variant="outlined"
               startIcon={<FiRefreshCw className={loading ? 'animate-spin' : ''} />}
               onClick={handleRefresh}
               disabled={loading}
-              className="bg-white/20 hover:bg-white/30 text-white"
+              sx={{
+                borderColor: '#E5E7EB',
+                color: '#6B7280',
+                borderRadius: '12px',
+                textTransform: 'none',
+                padding: '10px 24px',
+                fontWeight: '600',
+                '&:hover': {
+                  borderColor: '#D1D5DB',
+                  backgroundColor: '#F9FAFB'
+                }
+              }}
             >
               Actualizar
             </Button>
@@ -173,307 +213,367 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Métricas principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Tickets */}
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="body2" className="text-blue-600 font-medium mb-1">
-                  Total Tickets
-                </Typography>
-                <Typography variant="h4" className="font-bold text-blue-700 mb-2">
-                  {dashboardStats.totalTickets}
-                </Typography>
-                <div className="flex items-center">
-                  <FiTrendingUp className="text-green-500 mr-1" size={16} />
-                  <Typography variant="caption" className="text-green-600 font-medium">
+      {/* Contenido principal */}
+      <div className="px-6 pb-6">
+        {/* Métricas principales - Estilo Figma */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {/* Total Tickets */}
+          <Card 
+            className="shadow-lg hover:shadow-xl transition-shadow"
+            sx={{ borderRadius: '16px' }}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-100 rounded-xl">
+                  <FiTag className="text-blue-600" size={24} />
+                </div>
+                <div className="flex items-center space-x-1">
+                  <FiTrendingUp className="text-green-500" size={16} />
+                  <Typography variant="caption" className="text-green-600 font-bold">
                     +{dashboardStats.trends.tickets.value}%
                   </Typography>
                 </div>
               </div>
-              <div className="p-3 bg-blue-500 rounded-full">
-                <FiTag className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+                Total Tickets
+              </Typography>
+              <Typography variant="h3" className="font-bold text-gray-900">
+                {dashboardStats.totalTickets}
+              </Typography>
+            </CardContent>
+          </Card>
 
-        {/* En Proceso */}
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-yellow-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="body2" className="text-yellow-600 font-medium mb-1">
-                  En Proceso
-                </Typography>
-                <Typography variant="h4" className="font-bold text-yellow-700 mb-2">
-                  {dashboardStats.inProgress}
-                </Typography>
-                <div className="flex items-center">
-                  <Typography variant="caption" className="text-yellow-600 font-medium">
-                    {Math.round((dashboardStats.inProgress / dashboardStats.totalTickets) * 100)}% del total
-                  </Typography>
-                </div>
-              </div>
-              <div className="p-3 bg-yellow-500 rounded-full">
-                <FiClock className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Resueltos */}
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="body2" className="text-green-600 font-medium mb-1">
-                  Resueltos
-                </Typography>
-                <Typography variant="h4" className="font-bold text-green-700 mb-2">
-                  {dashboardStats.resolved}
-                </Typography>
-                <div className="flex items-center">
-                  <FiTrendingDown className="text-green-500 mr-1" size={16} />
-                  <Typography variant="caption" className="text-green-600 font-medium">
-                    {Math.abs(dashboardStats.trends.resolution.value)}% mejor tiempo
-                  </Typography>
-                </div>
-              </div>
-              <div className="p-3 bg-green-500 rounded-full">
-                <FiTarget className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Críticos */}
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 border-red-200 hover:shadow-lg transition-shadow">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="body2" className="text-red-600 font-medium mb-1">
-                  Críticos
-                </Typography>
-                <Typography variant="h4" className="font-bold text-red-700 mb-2">
-                  {dashboardStats.critical}
-                </Typography>
-                <div className="flex items-center">
-                  <FiAlertCircle className="text-red-500 mr-1" size={16} />
-                  <Typography variant="caption" className="text-red-600 font-medium">
-                    Requieren atención
-                  </Typography>
-                </div>
-              </div>
-              <div className="p-3 bg-red-500 rounded-full">
-                <FiActivity className="text-white" size={24} />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Contenido principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tickets Recientes - 2/3 del ancho */}
-        <div className="lg:col-span-2">
-          <Card className="h-full">
+          {/* En Proceso */}
+          <Card 
+            className="shadow-lg hover:shadow-xl transition-shadow"
+            sx={{ borderRadius: '16px' }}
+          >
             <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
-                  Tickets Recientes
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-orange-100 rounded-xl">
+                  <FiClock className="text-orange-600" size={24} />
+                </div>
+                <Typography variant="caption" className="text-gray-600 font-medium">
+                  {Math.round((dashboardStats.inProgress / dashboardStats.totalTickets) * 100)}%
                 </Typography>
-                <Button
-                  size="small"
-                  onClick={() => navigate('/tickets')}
-                  className="text-blue-600 hover:bg-blue-50"
-                >
-                  Ver todos
-                </Button>
               </div>
-              
-              <TableContainer component={Paper} className="shadow-none">
-                <Table size="small">
-                  <TableHead className="bg-gray-50 dark:bg-gray-800">
-                    <TableRow>
-                      <TableCell className="font-semibold">Ticket</TableCell>
-                      <TableCell className="font-semibold">Prioridad</TableCell>
-                      <TableCell className="font-semibold">Estado</TableCell>
-                      <TableCell className="font-semibold">Asignado</TableCell>
-                      <TableCell className="font-semibold">Acciones</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {recentTickets.map((ticket) => (
-                      <TableRow key={ticket.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <TableCell>
-                          <div>
-                            <Typography variant="body2" className="font-medium text-blue-600">
-                              {ticket.ticket_number}
-                            </Typography>
-                            <Typography variant="caption" className="text-gray-600 dark:text-gray-400 block truncate max-w-xs">
-                              {ticket.title}
-                            </Typography>
-                            <Typography variant="caption" className="text-gray-400">
-                              {formatTimeAgo(ticket.created_at)}
-                            </Typography>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={ticket.priority.name}
-                            size="small"
-                            style={{ 
-                              backgroundColor: ticket.priority.color + '20',
-                              color: ticket.priority.color,
-                              fontSize: '0.7rem'
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={ticket.status.name}
-                            size="small"
-                            style={{ 
-                              backgroundColor: ticket.status.color + '20',
-                              color: ticket.status.color,
-                              fontSize: '0.7rem'
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {ticket.assigned_to ? (
-                            <Typography variant="caption" className="text-gray-700 dark:text-gray-300">
-                              {ticket.assigned_to.first_name} {ticket.assigned_to.last_name}
-                            </Typography>
-                          ) : (
-                            <Typography variant="caption" className="text-gray-400 italic">
-                              Sin asignar
-                            </Typography>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title="Ver detalles">
-                            <IconButton size="small" className="text-blue-600 hover:bg-blue-50">
-                              <FiEye />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+                En Proceso
+              </Typography>
+              <Typography variant="h3" className="font-bold text-gray-900">
+                {dashboardStats.inProgress}
+              </Typography>
+            </CardContent>
+          </Card>
+
+          {/* Resueltos */}
+          <Card 
+            className="shadow-lg hover:shadow-xl transition-shadow"
+            sx={{ borderRadius: '16px' }}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-100 rounded-xl">
+                  <FiTarget className="text-green-600" size={24} />
+                </div>
+                <div className="flex items-center space-x-1">
+                  <FiTrendingDown className="text-green-500" size={16} />
+                  <Typography variant="caption" className="text-green-600 font-bold">
+                    {Math.abs(dashboardStats.trends.resolution.value)}%
+                  </Typography>
+                </div>
+              </div>
+              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+                Resueltos
+              </Typography>
+              <Typography variant="h3" className="font-bold text-gray-900">
+                {dashboardStats.resolved}
+              </Typography>
+            </CardContent>
+          </Card>
+
+          {/* Críticos */}
+          <Card 
+            className="shadow-lg hover:shadow-xl transition-shadow"
+            sx={{ borderRadius: '16px' }}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-red-100 rounded-xl">
+                  <FiActivity className="text-red-600" size={24} />
+                </div>
+                <Chip 
+                  label="Atención"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#FEE2E2',
+                    color: '#DC2626',
+                    fontWeight: '700',
+                    fontSize: '0.7rem'
+                  }}
+                />
+              </div>
+              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+                Críticos
+              </Typography>
+              <Typography variant="h3" className="font-bold text-gray-900">
+                {dashboardStats.critical}
+              </Typography>
             </CardContent>
           </Card>
         </div>
 
-        {/* Panel lateral - 1/3 del ancho */}
-        <div className="space-y-6">
-          {/* Próximas tareas */}
-          <Card>
-            <CardContent className="p-6">
-              <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-4">
-                Próximas Tareas
-              </Typography>
-              <div className="space-y-3">
-                {upcomingTasks.map((task, index) => (
-                  <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className={`w-2 h-2 rounded-full mt-2 ${
-                      task.priority === 'high' ? 'bg-red-500' : 
-                      task.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
-                    }`} />
-                    <div className="flex-1">
-                      <Typography variant="body2" className="font-medium">
-                        {task.task}
-                      </Typography>
-                      <Typography variant="caption" className="text-gray-500">
-                        {task.deadline}
-                      </Typography>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Métricas adicionales */}
-          <Card>
-            <CardContent className="p-6">
-              <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-4">
-                Métricas del Mes
-              </Typography>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <Typography variant="body2" className="text-gray-600">
-                      Tiempo Promedio
-                    </Typography>
-                    <Typography variant="body2" className="font-bold text-green-600">
-                      {dashboardStats.avgResolutionTime}
-                    </Typography>
-                  </div>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={75} 
-                    className="h-2 rounded-full"
+        {/* Contenido en dos columnas */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Tickets Recientes - 2/3 del ancho */}
+          <div className="lg:col-span-2">
+            <Card 
+              className="shadow-lg"
+              sx={{ borderRadius: '16px' }}
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <Typography variant="h6" className="font-bold text-gray-900">
+                    Tickets Recientes
+                  </Typography>
+                  <Button
+                    size="small"
+                    onClick={() => navigate('/tickets')}
                     sx={{
-                      backgroundColor: '#f3f4f6',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: '#10B981'
+                      color: '#E31E24',
+                      textTransform: 'none',
+                      fontWeight: '600',
+                      '&:hover': {
+                        backgroundColor: '#FEE2E2'
                       }
                     }}
-                  />
+                  >
+                    Ver todos
+                  </Button>
                 </div>
                 
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <Typography variant="body2" className="text-gray-600">
-                      Satisfacción Cliente
-                    </Typography>
-                    <Typography variant="body2" className="font-bold text-blue-600">
-                      ⭐ {dashboardStats.customerSatisfaction}/5.0
-                    </Typography>
-                  </div>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={dashboardStats.customerSatisfaction * 20} 
-                    className="h-2 rounded-full"
-                    sx={{
-                      backgroundColor: '#f3f4f6',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: '#3B82F6'
-                      }
-                    }}
-                  />
-                </div>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow className="bg-gray-50">
+                        <TableCell className="font-bold text-gray-700">Ticket</TableCell>
+                        <TableCell className="font-bold text-gray-700">Prioridad</TableCell>
+                        <TableCell className="font-bold text-gray-700">Estado</TableCell>
+                        <TableCell className="font-bold text-gray-700">Asignado</TableCell>
+                        <TableCell className="font-bold text-gray-700">Acciones</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {recentTickets.map((ticket) => (
+                        <TableRow 
+                          key={ticket.id} 
+                          className="hover:bg-gray-50 transition-colors"
+                        >
+                          <TableCell>
+                            <div>
+                              <Typography variant="body2" className="font-semibold text-[#E31E24]">
+                                {ticket.ticket_number}
+                              </Typography>
+                              <Typography variant="caption" className="text-gray-600 block truncate max-w-xs">
+                                {ticket.title}
+                              </Typography>
+                              <Typography variant="caption" className="text-gray-400 flex items-center mt-1">
+                                <FiClock className="mr-1" size={12} />
+                                {formatTimeAgo(ticket.created_at)}
+                              </Typography>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={ticket.priority.name}
+                              size="small"
+                              sx={{ 
+                                backgroundColor: ticket.priority.color,
+                                color: 'white',
+                                fontSize: '0.7rem',
+                                fontWeight: '700'
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={ticket.status.name}
+                              size="small"
+                              sx={{ 
+                                backgroundColor: ticket.status.color + '20',
+                                color: ticket.status.color,
+                                fontSize: '0.7rem',
+                                fontWeight: '600',
+                                border: `1px solid ${ticket.status.color}40`
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {ticket.assigned_to ? (
+                              <Typography variant="caption" className="text-gray-700 font-medium">
+                                {ticket.assigned_to.first_name} {ticket.assigned_to.last_name}
+                              </Typography>
+                            ) : (
+                              <Typography variant="caption" className="text-gray-400 italic">
+                                Sin asignar
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Tooltip title="Ver detalles">
+                              <IconButton 
+                                size="small" 
+                                sx={{ 
+                                  color: '#E31E24',
+                                  '&:hover': {
+                                    backgroundColor: '#FEE2E2'
+                                  }
+                                }}
+                              >
+                                <FiEye />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </div>
 
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <Typography variant="body2" className="text-gray-600">
-                      SLA Compliance
-                    </Typography>
-                    <Typography variant="body2" className="font-bold text-purple-600">
-                      87%
-                    </Typography>
-                  </div>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={87} 
-                    className="h-2 rounded-full"
-                    sx={{
-                      backgroundColor: '#f3f4f6',
-                      '& .MuiLinearProgress-bar': {
-                        backgroundColor: '#8B5CF6'
-                      }
-                    }}
-                  />
+          {/* Panel lateral - 1/3 del ancho */}
+          <div className="space-y-6">
+            {/* Próximas tareas */}
+            <Card 
+              className="shadow-lg"
+              sx={{ borderRadius: '16px' }}
+            >
+              <CardContent className="p-6">
+                <Typography variant="h6" className="font-bold text-gray-900 mb-4 flex items-center">
+                  <FiCalendar className="mr-2 text-[#E31E24]" />
+                  Próximas Tareas
+                </Typography>
+                <div className="space-y-3">
+                  {upcomingTasks.map((task, index) => (
+                    <div 
+                      key={index} 
+                      className="p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start space-x-3">
+                        <div className={`p-2 rounded-lg ${
+                          task.priority === 'high' ? 'bg-red-100 text-red-600' : 
+                          task.priority === 'medium' ? 'bg-orange-100 text-orange-600' : 
+                          'bg-green-100 text-green-600'
+                        }`}>
+                          {task.icon}
+                        </div>
+                        <div className="flex-1">
+                          <Typography variant="body2" className="font-semibold text-gray-900">
+                            {task.task}
+                          </Typography>
+                          <Typography variant="caption" className="text-gray-500 flex items-center mt-1">
+                            <FiClock className="mr-1" size={12} />
+                            {task.deadline}
+                          </Typography>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+
+            {/* Métricas del mes */}
+            <Card 
+              className="shadow-lg"
+              sx={{ borderRadius: '16px' }}
+            >
+              <CardContent className="p-6">
+                <Typography variant="h6" className="font-bold text-gray-900 mb-4 flex items-center">
+                  <FiActivity className="mr-2 text-[#E31E24]" />
+                  Métricas del Mes
+                </Typography>
+                <div className="space-y-4">
+                  {/* Tiempo Promedio */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <Typography variant="body2" className="text-gray-600 font-medium">
+                        Tiempo Promedio
+                      </Typography>
+                      <Typography variant="body2" className="font-bold text-green-600">
+                        {dashboardStats.avgResolutionTime}
+                      </Typography>
+                    </div>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={75} 
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#F3F4F6',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#10B981',
+                          borderRadius: 4
+                        }
+                      }}
+                    />
+                  </div>
+                  
+                  {/* Satisfacción Cliente */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <Typography variant="body2" className="text-gray-600 font-medium">
+                        Satisfacción Cliente
+                      </Typography>
+                      <Typography variant="body2" className="font-bold text-blue-600">
+                        ⭐ {dashboardStats.customerSatisfaction}/5.0
+                      </Typography>
+                    </div>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={dashboardStats.customerSatisfaction * 20} 
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#F3F4F6',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#3B82F6',
+                          borderRadius: 4
+                        }
+                      }}
+                    />
+                  </div>
+
+                  {/* SLA Compliance */}
+                  <div>
+                    <div className="flex justify-between mb-2">
+                      <Typography variant="body2" className="text-gray-600 font-medium">
+                        SLA Compliance
+                      </Typography>
+                      <Typography variant="body2" className="font-bold text-purple-600">
+                        {dashboardStats.slaCompliance}%
+                      </Typography>
+                    </div>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={dashboardStats.slaCompliance} 
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#F3F4F6',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#8B5CF6',
+                          borderRadius: 4
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

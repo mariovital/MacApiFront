@@ -198,3 +198,5 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
         }
     }
 }
+
+annotation class LoginScreen

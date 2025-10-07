@@ -14,7 +14,7 @@ data class TecnicoTicket(
     val date: String
 )
 
-enum class TicketStatus(val displayName: String, val color: Color) {
+public enum class TicketStatus(val displayName: String, val color: Color) {
     PENDIENTE("Pendiente", Color(0xFFFFBE00)),
     EN_PROCESO("En proceso", Color(0xFF43A0EE)),
     COMPLETADO("Completado", Color(0xFF808080)),
