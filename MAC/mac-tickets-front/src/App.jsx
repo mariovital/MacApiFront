@@ -13,7 +13,7 @@ import { MainLayout } from './components/layout';
 
 // Páginas  
 import { Login, Dashboard, TicketList, UserList, Reports, Settings } from './pages';
-import { TicketHistory } from './pages/tickets';
+import { TicketHistory, CreateTicket } from './pages/tickets';
 
 // Hook para rutas protegidas
 import { useAuth } from './contexts/AuthContext';
@@ -76,6 +76,15 @@ function App() {
               element={
                 <ProtectedLayout>
                   <TicketList />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
+              path="/tickets/create" 
+              element={
+                <ProtectedLayout>
+                  <CreateTicket />
                 </ProtectedLayout>
               } 
             />
