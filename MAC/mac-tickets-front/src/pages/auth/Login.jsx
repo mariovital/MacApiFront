@@ -88,42 +88,12 @@ const Login = () => {
           {/* Logo MAC Computadoras */}
           <div className="text-center mb-8">
             <div className="flex justify-center mb-6">
-              <div className="text-white">
-                <svg 
-                  width="200" 
-                  height="80" 
-                  viewBox="0 0 200 80" 
-                  className="mx-auto"
-                >
-                  {/* Logo simplificado MAC */}
-                  <text 
-                    x="100" 
-                    y="40" 
-                    fontSize="48" 
-                    fontWeight="bold" 
-                    fill="white" 
-                    textAnchor="middle" 
-                    fontFamily="Arial, sans-serif"
-                    letterSpacing="4"
-                  >
-                    MAC
-                  </text>
-                  <text 
-                    x="100" 
-                    y="65" 
-                    fontSize="14" 
-                    fill="white" 
-                    textAnchor="middle" 
-                    fontFamily="Arial, sans-serif"
-                    letterSpacing="2"
-                  >
-                    COMPUTADORAS
-                  </text>
-                  {/* Líneas decorativas */}
-                  <line x1="20" y1="45" x2="50" y2="45" stroke="white" strokeWidth="2"/>
-                  <line x1="150" y1="45" x2="180" y2="45" stroke="white" strokeWidth="2"/>
-                </svg>
-              </div>
+              {/* TODO: Agregar ruta del logo oficial de MAC Computadoras */}
+              <img 
+                src="/path/to/your/mac-logo.png" 
+                alt="MAC Computadoras Logo"
+                className="w-48 h-auto"
+              />
             </div>
           </div>
 
