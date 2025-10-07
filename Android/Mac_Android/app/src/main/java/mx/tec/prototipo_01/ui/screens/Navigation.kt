@@ -49,6 +49,11 @@ fun AppNavigation() {
                 val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
                 MesaAyudaHome(navController = navController, viewModel = viewModel)
             }
+            composable("create_ticket") { backStackEntry ->
+                val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("mesa_ayuda_home") }
+                val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
+                CreateTicketScreen(navController = navController, viewModel = viewModel)
+            }
         }
 
         composable("tecnico_ticket_chat/{id}/{title}/{company}/{assignedTo}/{status}/{priority}") { backStackEntry ->
@@ -61,10 +66,6 @@ fun AppNavigation() {
                 status = backStackEntry.arguments?.getString("status"),
                 priority = backStackEntry.arguments?.getString("priority")
             )
-        }
-
-        composable("create_ticket") {
-            CreateTicketScreen(navController = navController)
         }
 
         // Placeholder for the client home screen
