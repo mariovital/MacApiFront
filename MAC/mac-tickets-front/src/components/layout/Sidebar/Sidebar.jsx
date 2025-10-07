@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+// /components/layout/Sidebar/Sidebar.jsx - Sidebar con estética Figma
+
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useTheme } from '../../../contexts/ThemeContext';
@@ -8,13 +10,12 @@ import {
   FiUsers, 
   FiBarChart2, 
   FiSettings, 
-  FiBell, 
+  FiClock,
+  FiLogOut,
   FiSun, 
-  FiMoon,
-  FiChevronLeft,
-  FiChevronRight
+  FiMoon
 } from 'react-icons/fi';
-import { Avatar, Badge, Tooltip, IconButton } from '@mui/material';
+import { Avatar, Tooltip, IconButton, Divider } from '@mui/material';
 
 const Sidebar = ({ collapsed, onToggle }) => {
   const { user, logout } = useAuth();
@@ -22,7 +23,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Elementos de navegación
+  // Elementos de navegación según Figma
   const navigationItems = [
     {
       label: 'Dashboard',
@@ -34,8 +35,13 @@ const Sidebar = ({ collapsed, onToggle }) => {
       label: 'Tickets',
       icon: FiTag,
       path: '/tickets',
-      roles: ['admin', 'tecnico', 'mesa_trabajo'],
-      badge: 5 // TODO: obtener de API
+      roles: ['admin', 'tecnico', 'mesa_trabajo']
+    },
+    {
+      label: 'Tickets Pasados',
+      icon: FiClock,
+      path: '/tickets/history',
+      roles: ['admin', 'tecnico', 'mesa_trabajo']
     },
     {
       label: 'Usuarios',
@@ -81,149 +87,146 @@ const Sidebar = ({ collapsed, onToggle }) => {
 
   return (
     <div className={`
-      fixed left-0 top-0 h-full bg-gradient-to-b from-blue-900 to-blue-800 
-      text-white shadow-xl transition-all duration-300 z-30
-      ${collapsed ? 'w-16' : 'w-72'}
+      fixed left-0 top-0 h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
+      shadow-lg transition-all duration-300 z-30
+      ${collapsed ? 'w-20' : 'w-72'}
     `}>
-      {/* Toggle Button */}
-      <button
-        onClick={onToggle}
-        className="absolute -right-3 top-6 bg-white rounded-full p-1 text-blue-900 shadow-lg hover:shadow-xl transition-shadow"
-      >
-        {collapsed ? <FiChevronRight size={16} /> : <FiChevronLeft size={16} />}
-      </button>
-
-      {/* Logo */}
-      <div className="flex items-center p-6 border-b border-blue-700/50">
-        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center">
-          <span className="font-bold text-blue-900 text-lg">
-            {collapsed ? 'M' : 'MAC'}
-          </span>
-        </div>
-        {!collapsed && (
-          <div className="ml-3">
-            <h1 className="font-bold text-lg">MAC Computadoras</h1>
-            <p className="text-blue-200 text-sm">Sistema de Tickets</p>
+      
+      {/* Logo y nombre */}
+      <div className="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-700">
+        {!collapsed ? (
+          <div className="text-center">
+            {/* TODO: Agregar logo de MAC Computadoras */}
+            <div className="w-12 h-12 bg-[#E31E24] rounded-xl flex items-center justify-center mx-auto mb-2">
+              <span className="font-bold text-white text-xl">M</span>
+            </div>
+            <span className="font-bold text-gray-900 dark:text-white text-sm">
+              MAC Computadoras
+            </span>
+          </div>
+        ) : (
+          <div className="w-10 h-10 bg-[#E31E24] rounded-xl flex items-center justify-center">
+            <span className="font-bold text-white text-lg">M</span>
           </div>
         )}
       </div>
 
-      {/* Perfil de Usuario */}
-      <div className="p-4 border-b border-blue-700/50">
-        <div className={`flex items-center ${collapsed ? 'justify-center' : 'space-x-3'}`}>
-          <Avatar
-            src={user?.avatar}
-            alt={user?.first_name}
-            className="w-10 h-10"
-            sx={{ bgcolor: 'white', color: '#1E40AF' }}
-          >
-            {user?.first_name?.[0]?.toUpperCase()}
-          </Avatar>
-          {!collapsed && (
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-white truncate">
-                {user?.first_name} {user?.last_name}
-              </p>
-              <p className="text-blue-200 text-sm truncate">
-                {getRoleLabel(user?.role)}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Navegación Principal */}
-      <nav className="flex-1 px-4 py-6">
-        {visibleItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.path);
-          
-          return (
-            <Tooltip 
-              key={item.path} 
-              title={collapsed ? item.label : ''} 
-              placement="right"
-            >
-              <button
-                onClick={() => handleNavigate(item.path)}
-                className={`
-                  w-full flex items-center px-3 py-3 rounded-lg mb-2 transition-all duration-200
-                  ${active 
-                    ? 'bg-white/10 text-white border-r-2 border-white' 
-                    : 'text-blue-100 hover:bg-white/5 hover:text-white'
-                  }
-                  ${collapsed ? 'justify-center' : 'justify-start'}
-                `}
-              >
-                <div className="relative">
-                  <Icon size={20} />
-                  {item.badge && (
-                    <Badge
-                      badgeContent={item.badge}
-                      color="error"
-                      className="absolute -top-2 -right-2"
-                      sx={{ 
-                        '& .MuiBadge-badge': { 
-                          fontSize: '10px', 
-                          height: '16px', 
-                          minWidth: '16px' 
-                        } 
-                      }}
-                    />
-                  )}
-                </div>
-                {!collapsed && (
-                  <span className="ml-3 font-medium">{item.label}</span>
-                )}
-              </button>
-            </Tooltip>
-          );
-        })}
+      {/* Navegación */}
+      <nav className="p-4 flex-1">
+        <ul className="space-y-2">
+          {visibleItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            
+            return (
+              <li key={item.path}>
+                <Tooltip title={collapsed ? item.label : ''} placement="right">
+                  <button
+                    onClick={() => handleNavigate(item.path)}
+                    className={`
+                      w-full flex items-center px-4 py-3 rounded-xl transition-all
+                      ${active 
+                        ? 'bg-[#E31E24] text-white shadow-lg' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }
+                      ${collapsed ? 'justify-center' : 'justify-start'}
+                    `}
+                  >
+                    <Icon size={20} className={collapsed ? '' : 'mr-3'} />
+                    {!collapsed && (
+                      <span className="font-medium text-sm">
+                        {item.label}
+                      </span>
+                    )}
+                    {!collapsed && item.badge && (
+                      <span className={`
+                        ml-auto bg-red-500 text-white text-xs font-bold 
+                        px-2 py-1 rounded-full
+                      `}>
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                </Tooltip>
+              </li>
+            );
+          })}
+        </ul>
       </nav>
 
-      {/* Footer con controles */}
-      <div className="p-4 border-t border-blue-700/50">
-        <div className={`flex items-center ${collapsed ? 'flex-col space-y-3' : 'justify-between'}`}>
-          {/* Notificaciones */}
-          <Tooltip title="Notificaciones" placement="right">
+      {/* Bottom: Usuario y configuraciones */}
+      <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+        {/* Toggle tema */}
+        <div className="mb-3">
+          <Tooltip title={darkMode ? 'Modo claro' : 'Modo oscuro'}>
             <IconButton 
-              className="text-blue-100 hover:text-white hover:bg-white/10"
-              size="small"
+              onClick={toggleTheme}
+              className={`
+                w-full ${collapsed ? 'justify-center' : 'justify-start'} 
+                hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl
+              `}
+              sx={{ 
+                color: '#6B7280',
+                padding: collapsed ? '12px' : '12px 16px'
+              }}
             >
-              <Badge badgeContent={3} color="error">
-                <FiBell size={18} />
-              </Badge>
+              {darkMode ? <FiSun size={20} /> : <FiMoon size={20} />}
+              {!collapsed && (
+                <span className="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {darkMode ? 'Modo Claro' : 'Modo Oscuro'}
+                </span>
+              )}
             </IconButton>
           </Tooltip>
-
-          {!collapsed && (
-            <div className="flex space-x-2">
-              {/* Toggle Tema */}
-              <Tooltip title={darkMode ? "Tema Claro" : "Tema Oscuro"}>
-                <IconButton 
-                  onClick={toggleTheme}
-                  className="text-blue-100 hover:text-white hover:bg-white/10"
-                  size="small"
-                >
-                  {darkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
-                </IconButton>
-              </Tooltip>
-            </div>
-          )}
-
-          {/* Toggle tema en modo collapsed */}
-          {collapsed && (
-            <Tooltip title={darkMode ? "Tema Claro" : "Tema Oscuro"} placement="right">
-              <IconButton 
-                onClick={toggleTheme}
-                className="text-blue-100 hover:text-white hover:bg-white/10"
-                size="small"
-              >
-                {darkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
-              </IconButton>
-            </Tooltip>
-          )}
         </div>
+
+        {/* Cerrar sesión */}
+        <Tooltip title="Cerrar sesión" placement="right">
+          <button
+            onClick={logout}
+            className={`
+              w-full flex items-center px-4 py-3 rounded-xl transition-all
+              text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20
+              ${collapsed ? 'justify-center' : 'justify-start'}
+            `}
+          >
+            <FiLogOut size={20} />
+            {!collapsed && (
+              <span className="ml-3 font-medium text-sm">
+                Cerrar Sesión
+              </span>
+            )}
+          </button>
+        </Tooltip>
+
+        {!collapsed && (
+          <>
+            <Divider className="my-3" />
+            
+            {/* Info de usuario */}
+            <div className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+              <Avatar 
+                sx={{ 
+                  width: 36, 
+                  height: 36,
+                  bgcolor: '#E31E24',
+                  fontSize: '0.9rem',
+                  fontWeight: 'bold'
+                }}
+              >
+                {user?.first_name?.[0]}{user?.last_name?.[0]}
+              </Avatar>
+              <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                  {user?.first_name} {user?.last_name}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                  {getRoleLabel(user?.role)}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

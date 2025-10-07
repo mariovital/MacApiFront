@@ -1,22 +1,23 @@
+// /components/layout/MobileNavigation/MobileNavigation.jsx - Navegación móvil estilo Figma
 
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
-import { Badge } from '@mui/material';
 import { 
   FiHome, 
   FiTag, 
+  FiClock,
   FiUsers, 
-  FiBarChart2, 
-  FiSettings 
+  FiBarChart2
 } from 'react-icons/fi';
+import { Badge } from '@mui/material';
 
 const MobileNavigation = () => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Elementos de navegación móvil
+  // Elementos de navegación para mobile
   const navigationItems = [
     {
       label: 'Dashboard',
@@ -29,7 +30,13 @@ const MobileNavigation = () => {
       icon: FiTag,
       path: '/tickets',
       roles: ['admin', 'tecnico', 'mesa_trabajo'],
-      badge: 5 // TODO: obtener de API
+      badge: 5
+    },
+    {
+      label: 'Historial',
+      icon: FiClock,
+      path: '/tickets/history',
+      roles: ['admin', 'tecnico', 'mesa_trabajo']
     },
     {
       label: 'Usuarios',
@@ -42,12 +49,6 @@ const MobileNavigation = () => {
       icon: FiBarChart2,
       path: '/reports',
       roles: ['admin']
-    },
-    {
-      label: 'Config',
-      icon: FiSettings,
-      path: '/settings',
-      roles: ['admin', 'tecnico', 'mesa_trabajo']
     }
   ];
 
@@ -56,17 +57,17 @@ const MobileNavigation = () => {
     item.roles.includes(user?.role)
   );
 
-  const isActive = (path) => {
-    return location.pathname === path || location.pathname.startsWith(path + '/');
-  };
-
   const handleNavigate = (path) => {
     navigate(path);
   };
 
+  const isActive = (path) => {
+    return location.pathname === path || location.pathname.startsWith(path + '/');
+  };
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-2 py-1 z-40 lg:hidden">
-      <div className="flex justify-around items-center">
+    <nav className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+      <div className="flex justify-around items-center py-2">
         {visibleItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);
@@ -76,40 +77,47 @@ const MobileNavigation = () => {
               key={item.path}
               onClick={() => handleNavigate(item.path)}
               className={`
-                flex flex-col items-center px-3 py-2 rounded-lg min-w-0 flex-1 max-w-20
-                transition-colors duration-200
+                flex flex-col items-center justify-center px-4 py-2 rounded-xl transition-all
+                min-w-[60px]
                 ${active 
-                  ? 'text-blue-600 bg-blue-50 dark:bg-blue-900/20' 
-                  : 'text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
+                  ? 'text-[#E31E24]' 
+                  : 'text-gray-500 dark:text-gray-400'
                 }
               `}
             >
-              <div className="relative mb-1">
-                <Icon size={20} />
-                {item.badge && (
-                  <Badge
-                    badgeContent={item.badge}
+              <div className="relative">
+                {item.badge ? (
+                  <Badge 
+                    badgeContent={item.badge} 
                     color="error"
-                    className="absolute -top-2 -right-2"
-                    sx={{ 
-                      '& .MuiBadge-badge': { 
-                        fontSize: '9px', 
-                        height: '14px', 
-                        minWidth: '14px',
-                        padding: '0 4px'
-                      } 
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        fontSize: '0.65rem',
+                        height: '16px',
+                        minWidth: '16px'
+                      }
                     }}
-                  />
+                  >
+                    <Icon size={22} />
+                  </Badge>
+                ) : (
+                  <Icon size={22} />
                 )}
               </div>
-              <span className="text-xs font-medium leading-tight">
+              <span className={`
+                text-[10px] font-medium mt-1
+                ${active ? 'font-bold' : ''}
+              `}>
                 {item.label}
               </span>
+              {active && (
+                <div className="w-1 h-1 bg-[#E31E24] rounded-full mt-1" />
+              )}
             </button>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 };
 
