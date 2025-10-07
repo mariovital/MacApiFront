@@ -40,27 +40,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import mx.tec.prototipo_01.models.TecnicoTicket
 import mx.tec.prototipo_01.models.TicketPriority
-import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
-
-@Composable
-fun TecnicoTickets(navController: NavController, viewModel: TecnicoSharedViewModel) { // viewModel passed in
-    // The list now comes directly from the viewModel, so it's always in sync
-    val tickets = viewModel.pendingTickets
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFCFE3F3))
-    ) {
-        if (tickets.isEmpty()) {
-            EmptyTicketsState()
-        } else {
-            TicketsList(tickets = tickets, navController = navController)
-        }
-    }
-}
 
 @Composable
 private fun EmptyTicketsState() {
@@ -182,7 +163,7 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
-                    val priorityEnum = TicketPriority.values().find { it.displayName == ticket.priority }
+                    val priorityEnum = TicketPriority.entries.find { it.displayName == ticket.priority }
                     if (priorityEnum != null) {
                         Box(
                             modifier = Modifier
