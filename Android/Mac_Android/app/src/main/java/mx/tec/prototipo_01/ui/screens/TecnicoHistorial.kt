@@ -40,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import mx.tec.prototipo_01.models.TecnicoTicket
 import mx.tec.prototipo_01.models.TicketPriority
-import mx.tec.prototipo_01.ui.screens.EmptyTicketsState
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets

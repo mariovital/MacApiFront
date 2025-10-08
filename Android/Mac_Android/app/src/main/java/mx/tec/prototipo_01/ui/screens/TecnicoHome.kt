@@ -23,7 +23,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,7 +42,7 @@ import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TecnicoHome(navController: NavController, viewModel: TecnicoSharedViewModel) { // viewModel is now passed in
-    var selectedOption by remember { mutableIntStateOf(0) }
+    var selectedOption by remember { mutableStateOf(0) }
 
     val view = LocalView.current
     val headerColor = Color(0xFF424242)

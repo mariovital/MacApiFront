@@ -59,7 +59,7 @@ fun MesaAyudaTickets(navController: NavController, viewModel: MesaAyudaSharedVie
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFD6E6F2))
+                .background(Color(0xFFCFE3F3))
                 .padding(it)
         ) {
             if (tickets.isEmpty()) {
