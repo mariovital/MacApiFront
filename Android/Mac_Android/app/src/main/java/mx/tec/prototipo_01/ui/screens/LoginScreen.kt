@@ -1,5 +1,6 @@
 package mx.tec.prototipo_01.ui.screens
 
+import android.app.Activity
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -21,16 +22,20 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import mx.tec.prototipo_01.R
@@ -42,6 +47,16 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
     val loginViewModel: LoginViewModel = viewModel()
     val context = LocalContext.current
     val loginState = loginViewModel.loginState
+
+    // --- Status Bar Color ---
+    val view = LocalView.current
+    val statusBarColor = Color(0xFFe10600) // Original red color
+    SideEffect {
+        val window = (view.context as Activity).window
+        window.statusBarColor = statusBarColor.toArgb()
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false // Use light icons
+    }
+    // ---
 
     LaunchedEffect(loginState) {
         when (loginState) {
@@ -82,7 +97,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
                     clip = false
                 )
                 .clip(redBoxShape)
-                .background(Color(0xFFe10600)),
+                .background(Color(0xFFe10600)), // Original red color
             contentAlignment = Alignment.Center
         ) {
             Image(
@@ -175,7 +190,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(.5f)
-                .background(Color.White)
+                .background(Color.White) // Original white background
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -183,7 +198,7 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
                 onClick = { loginViewModel.login() },
                 enabled = loginState != LoginState.Loading,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.DarkGray,
+                    containerColor = Color.DarkGray, // Original button color
                     contentColor = Color.White
                 ),
                 modifier = Modifier

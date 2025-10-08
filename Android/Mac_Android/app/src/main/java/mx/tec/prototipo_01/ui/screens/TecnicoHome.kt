@@ -16,6 +16,7 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -41,20 +42,25 @@ import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TecnicoHome(navController: NavController, viewModel: TecnicoSharedViewModel) { // viewModel is now passed in
+fun TecnicoHome(
+    navController: NavController,
+    viewModel: TecnicoSharedViewModel,
+    isDark: Boolean,
+    onThemeChange: () -> Unit
+) {
     var selectedOption by remember { mutableStateOf(0) }
 
     val view = LocalView.current
-    val headerColor = Color(0xFF424242)
+    val headerColor = MaterialTheme.colorScheme.primary
+    val statusBarColor = MaterialTheme.colorScheme.primary
 
     SideEffect {
         val window = (view.context as android.app.Activity).window
-        window.statusBarColor = headerColor.toArgb()
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        window.statusBarColor = statusBarColor.toArgb()
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
     }
 
     Scaffold(
-        containerColor = Color(0xFFCFE3F3), // Set background for the content
         topBar = {
             CenterAlignedTopAppBar(
                 modifier = Modifier.clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
@@ -66,18 +72,23 @@ fun TecnicoHome(navController: NavController, viewModel: TecnicoSharedViewModel)
                         else -> ""
                     }
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Text(text = titleText, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 28.sp)
-                        // Red dot
+                        Text(
+                            text = titleText,
+                            color = Color.White,
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 28.sp
+                        )
                         Box(
                             modifier = Modifier
                                 .padding(start = 4.dp, bottom = 6.dp)
                                 .size(7.dp)
-                                .background(color = Color(0xFFe10600), shape = CircleShape)
+                                .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = headerColor
+                    containerColor = headerColor,
+                    titleContentColor = Color.White
                 )
             )
         },
@@ -109,15 +120,17 @@ fun TecnicoHome(navController: NavController, viewModel: TecnicoSharedViewModel)
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            when(selectedOption) {
-                // Now we pass the shared viewModel to the child screens
+            when (selectedOption) {
                 0 -> TecnicoTickets(navController = navController, viewModel = viewModel)
                 1 -> TecnicoHistorial(navController = navController, viewModel = viewModel)
-                2 -> TecnicoConfig(onLogout = {
-                    navController.navigate("login") {
-                        popUpTo("tecnico_home") { inclusive = true }
-                    }
-                })
+                2 -> TecnicoConfig(
+                    onLogout = {
+                        navController.navigate("login") {
+                            popUpTo("tecnico_home") { inclusive = true }
+                        }
+                    },
+                    onThemeChange = onThemeChange
+                )
             }
         }
     }

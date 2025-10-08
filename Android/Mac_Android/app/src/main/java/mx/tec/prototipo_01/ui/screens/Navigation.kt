@@ -12,7 +12,7 @@ import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(isDark: Boolean, onThemeChange: () -> Unit) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = "login") {
@@ -25,7 +25,12 @@ fun AppNavigation() {
             composable("tecnico_main") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("tecnico_home") }
                 val viewModel: TecnicoSharedViewModel = viewModel(parentEntry)
-                TecnicoHome(navController = navController, viewModel = viewModel)
+                TecnicoHome(
+                    navController = navController,
+                    viewModel = viewModel,
+                    isDark = isDark,
+                    onThemeChange = onThemeChange
+                )
             }
             composable("tecnico_ticket_details/{id}") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("tecnico_home") }

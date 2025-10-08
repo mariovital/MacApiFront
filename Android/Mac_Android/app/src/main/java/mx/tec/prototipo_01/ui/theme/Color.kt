@@ -2,10 +2,27 @@ package mx.tec.prototipo_01.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// MacApi Colors
+val MacRed = Color(0xFFe10600)
+val ButtonBlue = Color(0xFF1976D2)
+val LightGray = Color(0xFFCFD8DC) // Fondo de la app
+val DarkGray = Color(0xFF424242)   // Top bar
+val TextGray = Color(0xFF616161)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Light Theme
+val LightPrimary = DarkGray
+val LightOnPrimary = Color.White
+val LightSecondary = ButtonBlue
+val LightOnSecondary = Color.White
+val LightError = MacRed
+val LightBackground = LightGray
+val LightSurface = Color.White
+
+// Dark Theme
+val DarkPrimary = DarkGray
+val DarkOnPrimary = Color.White
+val DarkSecondary = ButtonBlue
+val DarkOnSecondary = Color.White
+val DarkError = MacRed
+val DarkBackground = Color.Black // Changed to pure black
+val DarkSurface = Color(0xFF212121)

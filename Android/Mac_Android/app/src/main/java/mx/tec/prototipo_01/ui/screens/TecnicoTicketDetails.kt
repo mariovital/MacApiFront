@@ -1,6 +1,7 @@
 package mx.tec.prototipo_01.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,21 +82,22 @@ fun TecnicoTicketDetails(
     val mapLocation = LatLng(19.4056, -99.0965)
 
     val view = LocalView.current
-    val topBarColor = Color(0xFF424242)
+    val isDark = isSystemInDarkTheme()
+    val topBarColor = MaterialTheme.colorScheme.primary
     SideEffect {
         val window = (view.context as android.app.Activity).window
         window.statusBarColor = topBarColor.toArgb()
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
     }
 
     Scaffold(
-        containerColor = Color(0xFFF0F4F8),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = Color.White) },
+                title = { Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = topBarColor)
@@ -213,7 +215,7 @@ fun TecnicoTicketDetails(
                                     Button(onClick = {
                                         viewModel.rejectTicket(ticket.id)
                                         navController.popBackStack()
-                                    }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD32F2F))) {
+                                    }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
                                         Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                     }
                                 }
@@ -231,9 +233,9 @@ fun TecnicoTicketDetails(
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF5C6BC0))
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                                 ) {
-                                    Text("Ir a chat", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                    Text("Ir a chat", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

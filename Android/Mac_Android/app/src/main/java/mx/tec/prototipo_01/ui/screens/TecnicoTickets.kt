@@ -52,7 +52,7 @@ fun TecnicoTickets(navController: NavController, viewModel: TecnicoSharedViewMod
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFCFE3F3))
+            .background(MaterialTheme.colorScheme.background) // Use theme background color
     ) {
         if (tickets.isEmpty()) {
             EmptyTicketsState()
@@ -67,7 +67,7 @@ private fun EmptyTicketsState() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(MaterialTheme.colorScheme.background), // Use theme background color
         contentAlignment = Alignment.Center
 
     ) {
@@ -255,13 +255,13 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5C6BC0)
+                    containerColor = MaterialTheme.colorScheme.secondary
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = "Ver Detalles",
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
             }
         }
