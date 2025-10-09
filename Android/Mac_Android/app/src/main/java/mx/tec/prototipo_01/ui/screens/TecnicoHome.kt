@@ -30,7 +30,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -74,21 +73,20 @@ fun TecnicoHome(
                     Row(verticalAlignment = Alignment.Bottom) {
                         Text(
                             text = titleText,
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onPrimary, // Use theme color
                             fontWeight = FontWeight.Medium,
                             fontSize = 28.sp
                         )
                         Box(
                             modifier = Modifier
-                                .padding(start = 4.dp, bottom = 4.dp) // Adjusted position
+                                .padding(start = 4.dp, bottom = 4.dp)
                                 .size(7.dp)
                                 .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
                         )
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = headerColor,
-                    titleContentColor = Color.White
+                    containerColor = headerColor
                 )
             )
         },
