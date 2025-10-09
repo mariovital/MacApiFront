@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -34,7 +35,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,11 +70,38 @@ fun TecnicoTicketDetails(
     viewModel: TecnicoSharedViewModel,
     ticketId: String
 ) {
+    // Get the ticket from the ViewModel. This is reactive and will update if the ticket changes.
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
+    var showCloseConfirmationDialog by remember { mutableStateOf(false) }
 
+    // If the ticket is null for any reason (e.g., it was rejected and removed), just go back.
     if (ticket == null) {
         navController.popBackStack()
         return
+    }
+
+    if (showCloseConfirmationDialog) {
+        AlertDialog(
+            onDismissRequest = { showCloseConfirmationDialog = false },
+            title = { Text("Confirmar Cierre") },
+            text = { Text("¿Estás seguro de que quieres cerrar este ticket?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.closeTicket(ticket.id)
+                        showCloseConfirmationDialog = false
+                        navController.popBackStack()
+                    }
+                ) {
+                    Text("Confirmar")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showCloseConfirmationDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     val dispositivo = "Dell Latitude 5420"
@@ -92,17 +123,7 @@ fun TecnicoTicketDetails(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.Bottom) { // Changed alignment
-                        Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary)
-                        Box(
-                            modifier = Modifier
-                                .padding(start = 4.dp, bottom = 4.dp) // Added padding
-                                .size(7.dp)
-                                .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
-                        )
-                    }
-                },
+                title = { Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
@@ -228,7 +249,35 @@ fun TecnicoTicketDetails(
                                     }
                                 }
                             }
-                            TicketStatus.EN_PROCESO, TicketStatus.COMPLETADO, TicketStatus.RECHAZADO -> {
+                            TicketStatus.EN_PROCESO -> {
+                                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                                    Button(
+                                        onClick = {
+                                            val encodedIdNav = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
+                                            val encodedTitleNav = URLEncoder.encode(ticket.title, StandardCharsets.UTF_8.toString())
+                                            val encodedCompanyNav = URLEncoder.encode(ticket.company, StandardCharsets.UTF_8.toString())
+                                            val encodedAssignedToNav = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
+                                            val encodedStatusNav = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
+                                            val encodedPriorityNav = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
+                                            navController.navigate("tecnico_ticket_chat/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                                    ) {
+                                        Text("Ir a chat", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                    }
+                                    Button(
+                                        onClick = { showCloseConfirmationDialog = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                    ) {
+                                        Text("Cerrar Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                    }
+                                }
+                            }
+                            TicketStatus.COMPLETADO, TicketStatus.RECHAZADO -> {
                                 Button(
                                     onClick = {
                                         val encodedIdNav = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())

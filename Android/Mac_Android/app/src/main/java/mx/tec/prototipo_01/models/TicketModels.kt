@@ -9,7 +9,7 @@ data class TecnicoTicket(
     val company: String,
     val assignedTo: String,
     var status: TicketStatus, // Changed to var to allow modification
-    val priority: String,
+    var priority: String,
     val description: String,
     val date: String
 )
@@ -24,5 +24,6 @@ public enum class TicketStatus(val displayName: String, val color: Color) {
 enum class TicketPriority(val displayName: String, val color: Color) {
     NA("N/A", Color(0xFF69696E)),
     Activo("Activo", Color(0xFF1EC40A)),
-    Completado("Completado", Color(0xFFF50D0D))
+    Completado("Completado", Color(0xFFF50D0D)),
+    Rechazado("Rechazado", Color(0xFFD32F2F))
 }

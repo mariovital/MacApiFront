@@ -26,7 +26,7 @@ class TecnicoSharedViewModel : ViewModel() {
                 title = "Pantalla Rota Dell.",
                 company = "ITESM S.A de C.V",
                 assignedTo = "Omar Felipe",
-                status = TicketStatus.PENDIENTE,
+            status = TicketStatus.PENDIENTE,
                 priority = TicketPriority.NA.displayName,
                 description = "Esperando su confirmación.",
                 date = ""
@@ -69,6 +69,9 @@ class TecnicoSharedViewModel : ViewModel() {
     fun acceptTicket(ticketId: String) {
         val ticket = pendingTickets.find { it.id == ticketId } ?: return
         ticket.status = TicketStatus.EN_PROCESO
+        if (ticket.priority == TicketPriority.NA.displayName) {
+            ticket.priority = TicketPriority.Activo.displayName
+        }
     }
 
     /**
@@ -80,9 +83,26 @@ class TecnicoSharedViewModel : ViewModel() {
         
         // Change status
         ticket.status = TicketStatus.RECHAZADO
+        ticket.priority = TicketPriority.Rechazado.displayName
         
         // Move from pending to history
         pendingTickets.remove(ticket)
         historyTickets.add(0, ticket) // Add to the top of the history list for visibility
+    }
+
+    /**
+     * Closes a ticket. Changes its status to COMPLETADO and moves it
+     * from the pending list to the history list.
+     */
+    fun closeTicket(ticketId: String) {
+        val ticket = pendingTickets.find { it.id == ticketId } ?: return
+
+        // Change status
+        ticket.status = TicketStatus.COMPLETADO
+        ticket.priority = TicketPriority.Completado.displayName
+
+        // Move from pending to history
+        pendingTickets.remove(ticket)
+        historyTickets.add(0, ticket)
     }
 }
