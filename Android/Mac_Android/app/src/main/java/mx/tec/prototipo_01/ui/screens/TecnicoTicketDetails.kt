@@ -66,10 +66,8 @@ fun TecnicoTicketDetails(
     viewModel: TecnicoSharedViewModel,
     ticketId: String
 ) {
-    // Get the ticket from the ViewModel. This is reactive and will update if the ticket changes.
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
 
-    // If the ticket is null for any reason (e.g., it was rejected and removed), just go back.
     if (ticket == null) {
         navController.popBackStack()
         return
@@ -94,7 +92,17 @@ fun TecnicoTicketDetails(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary) },
+                title = {
+                    Row(verticalAlignment = Alignment.Bottom) { // Changed alignment
+                        Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary)
+                        Box(
+                            modifier = Modifier
+                                .padding(start = 4.dp, bottom = 4.dp) // Added padding
+                                .size(7.dp)
+                                .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)

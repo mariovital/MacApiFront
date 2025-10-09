@@ -80,7 +80,7 @@ fun TecnicoHome(
                         )
                         Box(
                             modifier = Modifier
-                                .padding(start = 4.dp, bottom = 6.dp)
+                                .padding(start = 4.dp, bottom = 4.dp) // Adjusted position
                                 .size(7.dp)
                                 .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
                         )

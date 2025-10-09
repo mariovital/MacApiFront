@@ -1,6 +1,7 @@
 package mx.tec.prototipo_01.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,11 +12,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -94,21 +97,32 @@ fun TecnicoTicketChat(
     }
 
     val view = LocalView.current
-    val topBarColor = Color(0xFF424242)
+    val isDark = isSystemInDarkTheme()
+    val topBarColor = MaterialTheme.colorScheme.primary
     SideEffect {
         val window = (view.context as android.app.Activity).window
         window.statusBarColor = topBarColor.toArgb()
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
     }
 
     Scaffold(
-        containerColor = Color(0xFFF0F4F8),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Mensajes", fontWeight = FontWeight.SemiBold, color = Color.White) },
+                title = {
+                    Row(verticalAlignment = Alignment.Bottom) { // Changed alignment
+                        Text("Mensajes", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary)
+                        Box(
+                            modifier = Modifier
+                                .padding(start = 4.dp, bottom = 4.dp) // Added padding
+                                .size(7.dp)
+                                .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = topBarColor)
@@ -192,9 +206,9 @@ private fun TicketInfoCard(
                     Text(
                         text = id,
                         fontSize = 12.sp,
-                        color = Color.Gray,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier
-                            .background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
@@ -208,9 +222,9 @@ private fun TicketInfoCard(
                 Column {
                     Text(title, fontWeight = FontWeight.Bold, fontSize = 20.sp)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("·", color = Color.Gray, fontWeight = FontWeight.Bold)
+                        Text("·", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text(company, color = Color.Gray, fontSize = 14.sp)
+                        Text(company, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), fontSize = 14.sp)
                     }
                 }
             }
@@ -221,7 +235,7 @@ private fun TicketInfoCard(
 @Composable
 private fun MessageBubble(message: ChatMessage) {
     val alignment = if (message.isFromMe) Alignment.CenterEnd else Alignment.CenterStart
-    val backgroundColor = if (message.isFromMe) Color(0xFFBBDEFB) else Color(0xFFF0F4F8)
+    val backgroundColor = if (message.isFromMe) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceVariant
 
     Box(
         modifier = Modifier.fillMaxWidth(),
@@ -250,12 +264,12 @@ private fun MessageInput(value: String, onValueChange: (String) -> Unit, onSend:
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-        shape = RoundedCornerShape(0.dp)
+        shape = RoundedCornerShape(0.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(Color.White)
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -266,8 +280,8 @@ private fun MessageInput(value: String, onValueChange: (String) -> Unit, onSend:
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(24.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color(0xFFE0E0E0),
-                    unfocusedContainerColor = Color(0xFFE0E0E0),
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     disabledIndicatorColor = Color.Transparent

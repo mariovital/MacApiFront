@@ -1,6 +1,7 @@
 package mx.tec.prototipo_01.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,7 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -29,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
@@ -45,16 +46,17 @@ fun MesaAyudaHome(navController: NavController, viewModel: MesaAyudaSharedViewMo
     var selectedOption by remember { mutableStateOf(0) }
 
     val view = LocalView.current
-    val headerColor = Color(0xFF424242)
+    val isDark = isSystemInDarkTheme()
+    val headerColor = MaterialTheme.colorScheme.primary
 
     SideEffect {
         val window = (view.context as android.app.Activity).window
         window.statusBarColor = headerColor.toArgb()
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
     }
 
     Scaffold(
-        containerColor = Color(0xFFCFE3F3), // Set background for the content
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
                 modifier = Modifier.clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
@@ -66,13 +68,12 @@ fun MesaAyudaHome(navController: NavController, viewModel: MesaAyudaSharedViewMo
                         else -> ""
                     }
                     Row(verticalAlignment = Alignment.Bottom) {
-                        Text(text = titleText, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 28.sp)
-                        // Red dot
+                        Text(text = titleText, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Medium, fontSize = 28.sp)
                         Box(
                             modifier = Modifier
-                                .padding(start = 4.dp, bottom = 6.dp)
+                                .padding(start = 4.dp, bottom = 4.dp) // Adjusted position
                                 .size(7.dp)
-                                .background(color = Color(0xFFe10600), shape = CircleShape)
+                                .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
                         )
                     }
                 },
