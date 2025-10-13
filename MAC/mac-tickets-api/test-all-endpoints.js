@@ -39,7 +39,7 @@ let failedTests = 0;
 // Credenciales de prueba
 const TEST_CREDENTIALS = {
   email: 'admin@maccomputadoras.com',
-  password: 'admin123'
+  password: 'demo123'
 };
 
 // Helper: Log con color

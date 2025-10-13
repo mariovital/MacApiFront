@@ -65,7 +65,14 @@ import com.google.maps.android.compose.rememberCameraPositionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
+import mx.tec.prototipo_01.models.api.CreateTicketRequest
+import mx.tec.prototipo_01.models.api.CategoryDto
+import mx.tec.prototipo_01.models.api.PriorityDto
+import mx.tec.prototipo_01.models.api.TechnicianDto
+import mx.tec.prototipo_01.models.api.AssignTicketRequest
+import android.widget.Toast
 import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,11 +82,15 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     var compania by remember { mutableStateOf("") }
     var ubicacion by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
-    val priorities = listOf("Baja", "Media", "Alta")
-    var selectedPriority by remember { mutableStateOf(priorities[0]) }
-    val technicians = listOf("Juan Perez", "Maria Lopez", "Carlos Sanchez")
-    var selectedTechnician by remember { mutableStateOf(technicians[0]) }
+    // Catálogos reales desde backend
+    var priorities by remember { mutableStateOf(listOf<PriorityDto>()) }
+    var categories by remember { mutableStateOf(listOf<CategoryDto>()) }
+    var technicians by remember { mutableStateOf(listOf<TechnicianDto>()) }
+    var selectedPriority by remember { mutableStateOf<PriorityDto?>(null) }
+    var selectedCategory by remember { mutableStateOf<CategoryDto?>(null) }
+    var selectedTechnician by remember { mutableStateOf<TechnicianDto?>(null) }
     var isPriorityExpanded by remember { mutableStateOf(false) }
+    var isCategoryExpanded by remember { mutableStateOf(false) }
     var isTechnicianExpanded by remember { mutableStateOf(false) }
     var mapCoordinates by remember { mutableStateOf<LatLng?>(null) }
     val context = LocalContext.current
@@ -117,6 +128,29 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
             )
         },
     ) { paddingValues ->
+        // Cargar catálogos al entrar
+        LaunchedEffect(Unit) {
+            try {
+                val (pResp, cResp, tResp) = withContext(Dispatchers.IO) {
+                    val pr = RetrofitClient.instance.getPriorities()
+                    val cr = RetrofitClient.instance.getCategories()
+                    val tr = RetrofitClient.instance.getTechnicians()
+                    Triple(pr, cr, tr)
+                }
+                if (pResp.isSuccessful) {
+                    priorities = pResp.body()?.data ?: emptyList()
+                    selectedPriority = priorities.firstOrNull()
+                }
+                if (cResp.isSuccessful) {
+                    categories = cResp.body()?.data ?: emptyList()
+                    selectedCategory = categories.firstOrNull()
+                }
+                if (tResp.isSuccessful) {
+                    technicians = tResp.body()?.data ?: emptyList()
+                    // No seleccionamos técnico por defecto; es opcional
+                }
+            } catch (_: Exception) { /* silencioso */ }
+        }
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -201,7 +235,7 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                         onExpandedChange = { isPriorityExpanded = it }
                     ) {
                         TextField(
-                            value = selectedPriority,
+                            value = selectedPriority?.name ?: "",
                             onValueChange = {},
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isPriorityExpanded) },
@@ -220,7 +254,7 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                         ) {
                             priorities.forEach { priority ->
                                 androidx.compose.material3.DropdownMenuItem(
-                                    text = { Text(priority) },
+                                    text = { Text(priority.name) },
                                     onClick = {
                                         selectedPriority = priority
                                         isPriorityExpanded = false
@@ -231,13 +265,49 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                     }
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    Text("Asignar a técnico:", style = MaterialTheme.typography.bodySmall)
+                    Text("Categoría", style = MaterialTheme.typography.bodySmall)
+                    ExposedDropdownMenuBox(
+                        expanded = isCategoryExpanded,
+                        onExpandedChange = { isCategoryExpanded = it }
+                    ) {
+                        TextField(
+                            value = selectedCategory?.name ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isCategoryExpanded) },
+                            modifier = Modifier
+                                .menuAnchor()
+                                .fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ExposedDropdownMenuDefaults.textFieldColors(
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
+                        )
+                        ExposedDropdownMenu(
+                            expanded = isCategoryExpanded,
+                            onDismissRequest = { isCategoryExpanded = false }
+                        ) {
+                            categories.forEach { cat ->
+                                androidx.compose.material3.DropdownMenuItem(
+                                    text = { Text(cat.name) },
+                                    onClick = {
+                                        selectedCategory = cat
+                                        isCategoryExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text("Asignar técnico (opcional)", style = MaterialTheme.typography.bodySmall)
                     ExposedDropdownMenuBox(
                         expanded = isTechnicianExpanded,
                         onExpandedChange = { isTechnicianExpanded = it }
                     ) {
                         TextField(
-                            value = selectedTechnician,
+                            value = selectedTechnician?.let { listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" } } ?: "",
                             onValueChange = {},
                             readOnly = true,
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = isTechnicianExpanded) },
@@ -254,11 +324,11 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                             expanded = isTechnicianExpanded,
                             onDismissRequest = { isTechnicianExpanded = false }
                         ) {
-                            technicians.forEach { technician ->
+                            technicians.forEach { tech ->
                                 androidx.compose.material3.DropdownMenuItem(
-                                    text = { Text(technician) },
+                                    text = { Text(listOfNotNull(tech.first_name, tech.last_name).joinToString(" ").ifBlank { tech.username ?: "" }) },
                                     onClick = {
-                                        selectedTechnician = technician
+                                        selectedTechnician = tech
                                         isTechnicianExpanded = false
                                     }
                                 )
@@ -291,7 +361,62 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                         }
                         Button(
                             onClick = {
-                                navController.popBackStack()
+                                // Validaciones mínimas para evitar 500
+                                if (nombre.length < 5) {
+                                    Toast.makeText(context, "Título mínimo 5 caracteres", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                if (descripcion.length < 10) {
+                                    Toast.makeText(context, "Descripción mínima 10 caracteres", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+                                val priorityId = selectedPriority?.id
+                                val categoryId = selectedCategory?.id
+                                if (priorityId == null || categoryId == null) {
+                                    Toast.makeText(context, "Selecciona categoría y prioridad", Toast.LENGTH_LONG).show()
+                                    return@Button
+                                }
+
+                                val req = CreateTicketRequest(
+                                    title = nombre.ifBlank { "Ticket sin título" },
+                                    description = descripcion.ifBlank { "" },
+                                    category_id = categoryId,
+                                    priority_id = priorityId,
+                                    client_company = compania.ifBlank { null },
+                                    client_contact = nombre.ifBlank { null },
+                                    location = ubicacion.ifBlank { null },
+                                    priority_justification = null
+                                )
+
+                                coroutineScope.launch {
+                                    try {
+                                        val resp = RetrofitClient.instance.createTicket(req)
+                                        if (resp.isSuccessful && (resp.body()?.success == true)) {
+                                            val createdId = resp.body()?.data?.id
+                                            // Intentar asignación si se eligió técnico (nota: requiere rol admin)
+                                            if (createdId != null && selectedTechnician != null) {
+                                                try {
+                                                    val assignResp = RetrofitClient.instance.assignTicket(
+                                                        createdId,
+                                                        AssignTicketRequest(technician_id = selectedTechnician!!.id)
+                                                    )
+                                                    if (!assignResp.isSuccessful) {
+                                                        Toast.makeText(context, "Ticket creado, asignación falló (${assignResp.code()})", Toast.LENGTH_LONG).show()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Ticket creado, error al asignar: ${e.message}", Toast.LENGTH_LONG).show()
+                                                }
+                                            } else {
+                                                Toast.makeText(context, "Ticket creado", Toast.LENGTH_SHORT).show()
+                                            }
+                                            navController.popBackStack()
+                                        } else {
+                                            Toast.makeText(context, "Error al crear: ${resp.code()} ${resp.message()}", Toast.LENGTH_LONG).show()
+                                        }
+                                    } catch (e: Exception) {
+                                        Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                             },
                             modifier = Modifier.weight(1f),
                             colors = ButtonDefaults.buttonColors(

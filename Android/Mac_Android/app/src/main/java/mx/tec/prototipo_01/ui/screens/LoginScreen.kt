@@ -40,11 +40,13 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import mx.tec.prototipo_01.R
 import mx.tec.prototipo_01.viewmodels.LoginState
+import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import mx.tec.prototipo_01.viewmodels.LoginViewModel
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
     val loginViewModel: LoginViewModel = viewModel()
+    val tecnicoViewModel: TecnicoSharedViewModel = viewModel()
     val context = LocalContext.current
     val loginState = loginViewModel.loginState
 
@@ -62,9 +64,15 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
         when (loginState) {
             is LoginState.Success -> {
                 Toast.makeText(context, "Login Exitoso", Toast.LENGTH_SHORT).show()
+                val roleNorm = loginState.role.lowercase()
                 val destination = when {
-                    loginState.role.equals("tecnico", ignoreCase = true) -> "tecnico_home"
-                    loginState.role.equals("Mesa de Ayuda", ignoreCase = true) -> "mesa_ayuda_home"
+                    roleNorm == "tecnico" -> {
+                        // Precargar tickets para técnico
+                        tecnicoViewModel.loadTickets()
+                        "tecnico_home"
+                    }
+                    roleNorm == "mesa_trabajo" || roleNorm == "mesa de ayuda" -> "mesa_ayuda_home"
+                    roleNorm == "admin" -> "mesa_ayuda_home" // no hay home de admin aún; usa mesa_ayuda
                     else -> "client_home"
                 }
                 navController.navigate(destination) {

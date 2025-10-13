@@ -53,5 +53,17 @@ router.patch('/:id/status', ticketController.updateTicketStatus);
  */
 router.post('/:id/assign', ticketController.assignTicket);
 
+/**
+ * POST /api/tickets/:id/accept
+ * Aceptar ticket (técnico asignado)
+ */
+router.post('/:id/accept', ticketController.acceptTicket);
+
+/**
+ * POST /api/tickets/:id/reject
+ * Rechazar ticket (técnico asignado)
+ */
+router.post('/:id/reject', ticketController.rejectTicket);
+
 export default router;
 

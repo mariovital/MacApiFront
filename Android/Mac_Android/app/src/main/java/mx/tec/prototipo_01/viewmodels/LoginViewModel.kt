@@ -6,8 +6,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
+import com.google.gson.Gson
+import mx.tec.prototipo_01.api.RetrofitClient
+import mx.tec.prototipo_01.auth.TokenStore
+import mx.tec.prototipo_01.models.LoginRequest
 import kotlinx.coroutines.launch
+
+// Simple data class to hold the error response from the API
+data class ErrorResponse(val message: String)
 
 // Represents the different states of the Login screen
 sealed class LoginState {
@@ -43,49 +49,50 @@ class LoginViewModel : ViewModel() {
 
     // Performs the login operation
     fun login() {
-        // --- INICIO: CÓDIGO DE PRUEBA LOCAL (CON CONTRASEÑA) ---
-        viewModelScope.launch {
-            loginState = LoginState.Loading
-            delay(1000) // Simula un pequeño retraso de red
-
-            when {
-                email.equals("admin@test.com", ignoreCase = true) && password == "1234" -> {
-                    // Simula un login exitoso para el rol de Administrador
-                    loginState = LoginState.Success("Admin")
-                }
-                email.equals("tech@test.com", ignoreCase = true) && password == "1234" -> {
-                    // Simula un login exitoso para el rol de Técnico
-                    loginState = LoginState.Success("tecnico")
-                }
-                email.equals("ayuda@test.com", ignoreCase = true) && password == "1234" -> {
-                    // Simula un login exitoso para el rol de Mesa de Ayuda
-                    loginState = LoginState.Success("Mesa de Ayuda")
-                }
-                else -> {
-                    // Para cualquier otra combinación, simula un error de credenciales
-                    loginState = LoginState.Error("Credenciales de prueba incorrectas.")
-                }
-            }
-        }
-
-        /* DESCOMENTAR CUANDO SE CONECTE A AWS
         viewModelScope.launch {
             loginState = LoginState.Loading
             try {
-                val request = LoginRequest(email, password)
+                // Normalizar entradas
+                val normalizedEmail = email.trim().lowercase()
+                val normalizedPassword = password.trim()
+
+                val request = LoginRequest(email = normalizedEmail, password = normalizedPassword)
                 val response = RetrofitClient.instance.login(request)
 
-                if (response.isSuccessful && response.body() != null) {
-                    val userRole = response.body()!!.user.role
-                    loginState = LoginState.Success(userRole)
+                if (response.isSuccessful) {
+                    val body = response.body()
+                    if (body?.success == true && body.data != null) {
+                        val token = body.data.token
+                        val refresh = body.data.refresh_token
+                        val role = body.data.user.role
+                        // Guardar token en memoria
+                        TokenStore.save(token, refresh)
+                        loginState = LoginState.Success(role)
+                    } else {
+                        loginState = LoginState.Error(body?.message ?: "Credenciales incorrectas.")
+                    }
                 } else {
-                    loginState = LoginState.Error("Credenciales incorrectas. Inténtalo de nuevo.")
+                    // Intentar leer mensaje del backend { success, message, code }
+                    val errorMsg = try {
+                        val errBody = response.errorBody()?.string()
+                        if (!errBody.isNullOrBlank()) {
+                            val errorResponse = Gson().fromJson(errBody, ErrorResponse::class.java)
+                            errorResponse.message
+                        } else null
+                    } catch (e: Exception) { null }
+
+                    val message = when (response.code()) {
+                        401 -> errorMsg ?: "Credenciales inválidas o cuenta bloqueada."
+                        429 -> "Demasiados intentos. Intenta más tarde."
+                        else -> errorMsg ?: "Error ${response.code()} al iniciar sesión."
+                    }
+                    loginState = LoginState.Error(message)
                 }
             } catch (e: Exception) {
                 Log.e("LoginViewModel", "Error de red: ${e.message}")
                 loginState = LoginState.Error("Error de red: ${e.message}")
             }
-        } */
+        }
     }
 
     fun resetLoginState() {

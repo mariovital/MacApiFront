@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -118,6 +119,12 @@ fun TecnicoHome(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Cargar tickets al entrar a Mis Tickets o Tickets Pasados
+            LaunchedEffect(selectedOption) {
+                if (selectedOption == 0 || selectedOption == 1) {
+                    viewModel.loadTickets()
+                }
+            }
             when (selectedOption) {
                 0 -> TecnicoTickets(navController = navController, viewModel = viewModel)
                 1 -> TecnicoHistorial(navController = navController, viewModel = viewModel)

@@ -1,7 +1,7 @@
 package mx.tec.prototipo_01.models
 
 /**
- * Clase de datos para enviar las credenciales en el body de la petición de login.
+ * Body del login
  */
 data class LoginRequest(
     val email: String,
@@ -9,10 +9,16 @@ data class LoginRequest(
 )
 
 /**
- * Clase de datos para recibir la respuesta del servidor al hacer login.
- * Normalmente incluye un token de autenticación y los datos del usuario.
+ * Respuesta del backend: { success, message, data: { user, token, refresh_token } }
  */
 data class LoginResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: LoginData?
+)
+
+data class LoginData(
+    val user: User,
     val token: String,
-    val user: User
+    val refresh_token: String
 )

@@ -286,6 +286,77 @@ export const assignTicket = async (req, res) => {
 };
 
 /**
+ * Aceptar ticket por el técnico asignado
+ * POST /api/tickets/:id/accept
+ */
+export const acceptTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updatedTicket = await ticketService.acceptTicket(
+      id,
+      req.user.id,
+      req.user.role
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Ticket aceptado exitosamente',
+      data: updatedTicket
+    });
+
+  } catch (error) {
+    console.error('Error en ticketController.acceptTicket:', error);
+
+    if (error.message === 'Ticket no encontrado') {
+      return res.status(404).json({ success: false, message: error.message });
+    }
+
+    if (error.message.includes('Solo el técnico') || error.message.includes('no está en estado asignado')) {
+      return res.status(403).json({ success: false, message: error.message });
+    }
+
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Rechazar ticket por el técnico asignado
+ * POST /api/tickets/:id/reject
+ */
+export const rejectTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body || {};
+
+    const updatedTicket = await ticketService.rejectTicket(
+      id,
+      reason,
+      req.user.id,
+      req.user.role
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Ticket rechazado exitosamente',
+      data: updatedTicket
+    });
+
+  } catch (error) {
+    console.error('Error en ticketController.rejectTicket:', error);
+
+    if (error.message === 'Ticket no encontrado') {
+      return res.status(404).json({ success: false, message: error.message });
+    }
+
+    if (error.message.includes('Solo el técnico') || error.message.includes('Solo se puede rechazar')) {
+      return res.status(403).json({ success: false, message: error.message });
+    }
+
+    res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+/**
  * Obtener estadísticas de tickets
  * GET /api/tickets/stats
  */
@@ -318,6 +389,8 @@ export default {
   updateTicket,
   updateTicketStatus,
   assignTicket,
+  acceptTicket,
+  rejectTicket,
   getTicketStats
 };
 

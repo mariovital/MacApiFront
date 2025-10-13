@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 
@@ -58,6 +60,13 @@ fun AppNavigation(isDark: Boolean, onThemeChange: () -> Unit) {
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("mesa_ayuda_home") }
                 val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
                 CreateTicketScreen(navController, viewModel)
+            }
+            composable(
+                route = "assign_ticket/{ticketId}",
+                arguments = listOf(navArgument("ticketId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("ticketId") ?: return@composable
+                AssignTicketScreen(navController, id)
             }
         }
 

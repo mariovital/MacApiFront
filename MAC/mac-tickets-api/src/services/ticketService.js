@@ -380,18 +380,133 @@ export const updateTicketStatus = async (ticketId, statusId, userId, userRole) =
 };
 
 /**
- * Asignar ticket a un técnico (solo admin)
+ * Aceptar ticket por el técnico asignado
  */
-export const assignTicket = async (ticketId, technicianId, userId, userRole) => {
+export const acceptTicket = async (ticketId, userId, userRole) => {
   try {
-    if (userRole !== 'admin') {
-      throw new Error('Solo administradores pueden asignar tickets');
-    }
-
     const ticket = await Ticket.findByPk(ticketId);
 
     if (!ticket) {
       throw new Error('Ticket no encontrado');
+    }
+
+    // Solo el técnico asignado puede aceptar
+    if (userRole !== 'tecnico' || ticket.assigned_to !== userId) {
+      throw new Error('Solo el técnico asignado puede aceptar este ticket');
+    }
+
+    // Debe estar en estado Asignado (2) para poder aceptar
+    if (ticket.status_id !== 2) {
+      throw new Error('El ticket no está en estado asignado');
+    }
+
+    await ticket.update({
+      accepted_at: new Date(),
+      first_response_at: ticket.first_response_at || new Date(),
+      status_id: 3 // En Proceso
+    });
+
+    const updated = await Ticket.findByPk(ticketId, {
+      include: [
+        { model: Category, as: 'category' },
+        { model: Priority, as: 'priority' },
+        { model: TicketStatus, as: 'status' },
+        { model: User, as: 'creator', attributes: ['id', 'first_name', 'last_name'] },
+        { model: User, as: 'assignee', attributes: ['id', 'first_name', 'last_name'] }
+      ]
+    });
+
+    return updated;
+  } catch (error) {
+    console.error('Error en ticketService.acceptTicket:', error);
+    throw error;
+  }
+};
+
+/**
+ * Rechazar ticket por el técnico asignado
+ */
+export const rejectTicket = async (ticketId, reason, userId, userRole) => {
+  try {
+    const ticket = await Ticket.findByPk(ticketId);
+
+    if (!ticket) {
+      throw new Error('Ticket no encontrado');
+    }
+
+    // Solo el técnico asignado puede rechazar
+    if (userRole !== 'tecnico' || ticket.assigned_to !== userId) {
+      throw new Error('Solo el técnico asignado puede rechazar este ticket');
+    }
+
+    // Solo se puede rechazar cuando está asignado
+    if (ticket.status_id !== 2) {
+      throw new Error('Solo se puede rechazar un ticket en estado asignado');
+    }
+
+    await ticket.update({
+      assigned_to: null,
+      assigned_by: null,
+      assigned_at: null,
+      accepted_at: null,
+      status_id: 1 // Vuelve a Nuevo para que Mesa lo reasigne
+    });
+
+    // Nota: por simplicidad no persistimos "reason" (no hay columna). Se podría registrar en comentarios.
+
+    const updated = await Ticket.findByPk(ticketId, {
+      include: [
+        { model: Category, as: 'category' },
+        { model: Priority, as: 'priority' },
+        { model: TicketStatus, as: 'status' },
+        { model: User, as: 'creator', attributes: ['id', 'first_name', 'last_name'] },
+        { model: User, as: 'assignee', attributes: ['id', 'first_name', 'last_name'] }
+      ]
+    });
+
+    return updated;
+  } catch (error) {
+    console.error('Error en ticketService.rejectTicket:', error);
+    throw error;
+  }
+};
+/**
+ * Asignar ticket a un técnico (solo admin)
+ */
+export const assignTicket = async (ticketId, technicianId, userId, userRole) => {
+  try {
+    // Buscar ticket primero para validar permisos con creador
+    const ticket = await Ticket.findByPk(ticketId);
+
+    if (!ticket) {
+      throw new Error('Ticket no encontrado');
+    }
+
+    const currentAssignee = ticket.assigned_to;
+
+    // Permisos y reglas de asignación vs. reasignación
+    // - Si NO hay asignado aún (currentAssignee null):
+    //     admin puede asignar; mesa_trabajo puede asignar si es el creador; técnico no puede
+    // - Si YA hay asignado:
+    //     si se intenta cambiar a OTRO técnico -> solo admin puede reasignar
+    //     si se asigna al MISMO técnico -> no-op permitido para todos los roles con acceso
+
+    if (currentAssignee == null) {
+      if (userRole === 'admin') {
+        // permitido
+      } else if (userRole === 'mesa_trabajo' && ticket.created_by === userId) {
+        // permitido
+      } else {
+        throw new Error('No tienes permiso para asignar este ticket');
+      }
+    } else {
+      if (technicianId !== currentAssignee) {
+        if (userRole !== 'admin') {
+          throw new Error('Solo administradores pueden reasignar tickets');
+        }
+      } else {
+        // Mismo técnico -> permitir no-op devolviendo ticket actualizado
+      }
     }
 
     // Verificar que el técnico existe y tiene rol de técnico
@@ -405,7 +520,21 @@ export const assignTicket = async (ticketId, technicianId, userId, userRole) => 
       throw new Error('El usuario seleccionado no es un técnico');
     }
 
-    // Asignar ticket
+    // Si es no-op (mismo técnico), regresamos el ticket con include
+    if (currentAssignee !== null && technicianId === currentAssignee) {
+      const sameAssigneeTicket = await Ticket.findByPk(ticketId, {
+        include: [
+          { model: Category, as: 'category' },
+          { model: Priority, as: 'priority' },
+          { model: TicketStatus, as: 'status' },
+          { model: User, as: 'creator', attributes: ['id', 'first_name', 'last_name'] },
+          { model: User, as: 'assignee', attributes: ['id', 'first_name', 'last_name'] }
+        ]
+      });
+      return sameAssigneeTicket;
+    }
+
+    // Asignar o reasignar ticket
     await ticket.update({
       assigned_to: technicianId,
       assigned_by: userId,
@@ -484,6 +613,8 @@ export default {
   updateTicket,
   updateTicketStatus,
   assignTicket,
+  acceptTicket,
+  rejectTicket,
   getTicketStats
 };
 
