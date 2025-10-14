@@ -118,7 +118,7 @@ import catalogRoutes from './routes/catalog.js';
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api', catalogRoutes); // Categories, Priorities, Statuses, Technicians
+app.use('/api/catalog', catalogRoutes); // Categories, Priorities, Statuses, Technicians
 
 // =====================================================================
 // MIDDLEWARE DE MANEJO DE ERRORES

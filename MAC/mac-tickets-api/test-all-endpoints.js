@@ -277,7 +277,7 @@ async function testTickets() {
   if (createdTicketId) {
     log('\n4.6 Assign Ticket', 'yellow');
     const assignData = {
-      assigned_to: 2, // ID de un técnico
+      technician_id: 3, // ID de un técnico válido (Juan Pérez)
       reason: 'Asignación automática para testing'
     };
     const assignResult = await makeRequest('POST', `/api/tickets/${createdTicketId}/assign`, assignData, true);
