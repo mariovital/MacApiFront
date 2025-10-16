@@ -7,6 +7,7 @@ import Category from './Category.js';
 import Priority from './Priority.js';
 import TicketStatus from './TicketStatus.js';
 import Ticket from './Ticket.js';
+import TicketAttachment from './TicketAttachment.js';
 
 // =====================================================================
 // DEFINIR ASOCIACIONES ENTRE MODELOS
@@ -42,6 +43,14 @@ Ticket.belongsTo(Priority, { foreignKey: 'priority_id', as: 'priority' });
 TicketStatus.hasMany(Ticket, { foreignKey: 'status_id', as: 'tickets' });
 Ticket.belongsTo(TicketStatus, { foreignKey: 'status_id', as: 'status' });
 
+// Ticket <-> TicketAttachment
+Ticket.hasMany(TicketAttachment, { foreignKey: 'ticket_id', as: 'attachments' });
+TicketAttachment.belongsTo(Ticket, { foreignKey: 'ticket_id', as: 'ticket' });
+
+// User <-> TicketAttachment (quien sube)
+User.hasMany(TicketAttachment, { foreignKey: 'user_id', as: 'uploadedAttachments' });
+TicketAttachment.belongsTo(User, { foreignKey: 'user_id', as: 'uploader' });
+
 // =====================================================================
 // EXPORTAR MODELOS Y SEQUELIZE
 // =====================================================================
@@ -56,7 +65,8 @@ const db = {
   Category,
   Priority,
   TicketStatus,
-  Ticket
+  Ticket,
+  TicketAttachment
 };
 
 export default db;
@@ -67,6 +77,7 @@ export {
   Category,
   Priority,
   TicketStatus,
-  Ticket
+  Ticket,
+  TicketAttachment
 };
 

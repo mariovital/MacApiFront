@@ -178,3 +178,30 @@ data class TicketDetailResponse(
 data class UpdateStatusRequest(
     val status_id: Int
 )
+
+// Adjuntos
+data class TicketAttachment(
+    val id: Int,
+    val ticket_id: Int,
+    val user_id: Int,
+    val original_name: String,
+    val file_name: String,
+    val file_size: Long,
+    val file_type: String,
+    val s3_url: String,
+    val s3_key: String,
+    val is_image: Boolean,
+    val description: String?,
+    val created_at: String
+)
+
+data class AttachmentResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: TicketAttachment?
+)
+
+data class AttachmentListResponse(
+    val success: Boolean,
+    val data: List<TicketAttachment>
+)

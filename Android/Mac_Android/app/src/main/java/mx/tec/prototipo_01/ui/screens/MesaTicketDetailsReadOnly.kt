@@ -227,7 +227,12 @@ fun MesaTicketDetailsReadOnly(
                             if (ticket.status == mx.tec.prototipo_01.models.TicketStatus.RECHAZADO && !ticket.rejectionReason.isNullOrBlank()) {
                                 Text("Motivo del rechazo:", fontWeight = FontWeight.Medium, fontSize = 14.sp)
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text(ticket.rejectionReason!!, color = Color(0xFFD32F2F), fontSize = 14.sp, lineHeight = 20.sp)
+                                Text(
+                                    ticket.rejectionReason!!,
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontSize = 14.sp,
+                                    lineHeight = 20.sp
+                                )
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
                             if (!ticket.categoryName.isNullOrBlank()) {

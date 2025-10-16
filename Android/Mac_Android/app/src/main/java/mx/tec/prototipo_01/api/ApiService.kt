@@ -16,6 +16,8 @@ import mx.tec.prototipo_01.models.api.AcceptTicketResponse
 import mx.tec.prototipo_01.models.api.RejectTicketRequest
 import mx.tec.prototipo_01.models.api.RejectTicketResponse
 import mx.tec.prototipo_01.models.api.UpdateStatusRequest
+import mx.tec.prototipo_01.models.api.AttachmentResponse
+import mx.tec.prototipo_01.models.api.AttachmentListResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -25,6 +27,9 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 import retrofit2.http.PATCH
+import retrofit2.http.Multipart
+import retrofit2.http.Part
+import okhttp3.MultipartBody
 
 /**
  * Interfaz que define las rutas del API para Retrofit.
@@ -123,4 +128,12 @@ interface ApiService {
     // Cambiar estado del ticket
     @PATCH("tickets/{id}/status")
     suspend fun updateTicketStatus(@Path("id") ticketId: Int, @Body body: UpdateStatusRequest): Response<TicketDetailResponse>
+
+    // Adjuntos
+    @Multipart
+    @POST("tickets/{id}/attachments")
+    suspend fun uploadAttachment(@Path("id") ticketId: Int, @Part file: MultipartBody.Part): Response<AttachmentResponse>
+
+    @GET("tickets/{id}/attachments")
+    suspend fun listAttachments(@Path("id") ticketId: Int): Response<AttachmentListResponse>
 }

@@ -2,6 +2,9 @@
 
 import express from 'express';
 import * as ticketController from '../controllers/ticketController.js';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -64,6 +67,34 @@ router.post('/:id/accept', ticketController.acceptTicket);
  * Rechazar ticket (técnico asignado)
  */
 router.post('/:id/reject', ticketController.rejectTicket);
+
+// =========================
+// Adjuntos de ticket
+// =========================
+const uploadDir = path.resolve(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+	destination: (_req, _file, cb) => cb(null, uploadDir),
+	filename: (_req, file, cb) => {
+		const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+		const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+		cb(null, unique + '-' + safe);
+	}
+});
+const upload = multer({ storage });
+
+/**
+ * POST /api/tickets/:id/attachments
+ * Subir un archivo adjunto al ticket
+ */
+router.post('/:id/attachments', upload.single('file'), ticketController.uploadTicketAttachment);
+
+/**
+ * GET /api/tickets/:id/attachments
+ * Listar adjuntos del ticket
+ */
+router.get('/:id/attachments', ticketController.getTicketAttachments);
 
 export default router;
 

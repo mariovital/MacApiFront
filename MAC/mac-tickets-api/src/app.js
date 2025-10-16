@@ -1,6 +1,7 @@
 // /src/app.js - Configuración de Express App
 
 import express from 'express';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -119,6 +120,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/catalog', catalogRoutes); // Categories, Priorities, Statuses, Technicians
+
+// Archivos estáticos: adjuntos
+app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
 // =====================================================================
 // MIDDLEWARE DE MANEJO DE ERRORES

@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +27,7 @@ fun MesaAyudaConfig(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFCFE3F3)), // Set the background color here
+            .background(MaterialTheme.colorScheme.background),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -36,14 +37,14 @@ fun MesaAyudaConfig(
             modifier = Modifier.padding(horizontal = 32.dp)
         ) {
             // Theme Toggle Button
-            Button(
+        Button(
                 onClick = onThemeToggle,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color.Gray
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 4.dp
@@ -59,14 +60,14 @@ fun MesaAyudaConfig(
             }
 
             // Logout Button
-            Button(
+        Button(
                 onClick = onLogout,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.White,
-                    contentColor = Color(0xFFe10600)
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.error
                 ),
                 elevation = ButtonDefaults.buttonElevation(
                     defaultElevation = 4.dp

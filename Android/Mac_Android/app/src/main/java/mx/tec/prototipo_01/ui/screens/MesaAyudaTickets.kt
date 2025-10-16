@@ -62,10 +62,10 @@ fun MesaAyudaTickets(navController: NavController, viewModel: MesaAyudaSharedVie
             }
         }
     ) {
-        Column(
+    Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0xFFCFE3F3))
+        .background(MaterialTheme.colorScheme.background)
                 .padding(it)
         ) {
             if (tickets.isEmpty()) {
@@ -82,7 +82,7 @@ private fun EmptyTicketsState() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
 
     ) {
@@ -91,13 +91,13 @@ private fun EmptyTicketsState() {
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(32.dp)
         ) {
-            Icon(
+                        Icon(
                 imageVector = Icons.Default.Create,
                 contentDescription = "Sin tickets",
                 modifier = Modifier
                     .size(80.dp)
                     .padding(bottom = 24.dp),
-                tint = Color.Gray.copy(alpha = 0.6f)
+                            tint = Color.Gray.copy(alpha = 0.6f)
             )
             Text(
                 text = "No hay tickets por el momento",
@@ -149,18 +149,18 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
+            Box(
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)
-                            .background(Color.Gray.copy(alpha = 0.3f)),
+                .background(Color.Gray.copy(alpha = 0.3f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Person,
                             contentDescription = "User",
                             modifier = Modifier.size(20.dp),
-                            tint = Color.Gray
+                tint = Color.Gray
                         )
                     }
                     Spacer(modifier = Modifier.width(8.dp))
@@ -192,10 +192,10 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
-                    Text(
+                        Text(
                         text = ticket.id,
                         fontSize = 12.sp,
-                        color = Color.Gray
+                            color = Color.Gray
                     )
                     val priorityEnum = TicketPriority.values().find { it.displayName == ticket.priority }
                     if (priorityEnum != null) {
@@ -253,11 +253,11 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                 }
             }
             Spacer(modifier = Modifier.height(8.dp))
-            if (ticket.description.isNotEmpty()) {
+        if (ticket.description.isNotEmpty()) {
                 Text(
                     text = ticket.description,
                     fontSize = 14.sp,
-                    color = Color.Gray,
+            color = Color.Gray,
                     lineHeight = 18.sp
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -269,13 +269,14 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                 },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5C6BC0)
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
                 Text(
                     text = "Ver Detalles",
-                    color = Color.White
+                    color = MaterialTheme.colorScheme.onSecondary
                 )
             }
         }

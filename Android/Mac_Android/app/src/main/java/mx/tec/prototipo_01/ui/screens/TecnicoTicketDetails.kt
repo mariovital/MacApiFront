@@ -381,13 +381,13 @@ fun TecnicoTicketDetails(
                                             val encodedAssignedToNav = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
                                             val encodedStatusNav = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
                                             val encodedPriorityNav = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
-                                            navController.navigate("tecnico_ticket_chat/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
+                                            navController.navigate("tecnico_ticket_attachments/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
                                         },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp),
                                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                                     ) {
-                                        Text("Ir a chat", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                        Text("Adjuntar evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                     }
                                     Button(
                                         onClick = { showCloseConfirmationDialog = true },
@@ -408,13 +408,13 @@ fun TecnicoTicketDetails(
                                         val encodedAssignedToNav = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
                                         val encodedStatusNav = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
                                         val encodedPriorityNav = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
-                                        navController.navigate("tecnico_ticket_chat/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
+                                        navController.navigate("tecnico_ticket_attachments/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
                                     },
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(12.dp),
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
                                 ) {
-                                    Text("Ir a chat", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                    Text("Adjuntar evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                 }
                             }
                         }

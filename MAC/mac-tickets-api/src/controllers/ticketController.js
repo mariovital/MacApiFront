@@ -1,6 +1,8 @@
 // /controllers/ticketController.js
 
 import * as ticketService from '../services/ticketService.js';
+import { Ticket, TicketAttachment } from '../models/index.js';
+import path from 'path';
 
 /**
  * Obtener lista de tickets con filtros y paginación
@@ -375,6 +377,72 @@ export const rejectTicket = async (req, res) => {
     }
 
     res.status(500).json({ success: false, message: 'Error interno del servidor' });
+  }
+};
+
+/**
+ * Subir adjunto a un ticket
+ * POST /api/tickets/:id/attachments
+ */
+export const uploadTicketAttachment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findByPk(id);
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket no encontrado' });
+
+    // Permisos: admin, técnico asignado o creador (mesa)
+    const isAdmin = req.user.role === 'admin';
+    const isAssignee = ticket.assigned_to === req.user.id;
+    const isCreator = ticket.created_by === req.user.id;
+    if (!isAdmin && !isAssignee && !isCreator) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para adjuntar archivos a este ticket' });
+    }
+
+    if (!req.file) return res.status(400).json({ success: false, message: 'Archivo requerido (campo: file)' });
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    const record = await TicketAttachment.create({
+      ticket_id: ticket.id,
+      user_id: req.user.id,
+      original_name: req.file.originalname,
+      file_name: req.file.filename,
+      file_size: req.file.size,
+      file_type: req.file.mimetype,
+      s3_url: fileUrl,
+      s3_key: req.file.filename,
+      is_image: req.file.mimetype.startsWith('image/'),
+      description: req.body?.description || null,
+      ip_address: req.ip || req.connection?.remoteAddress,
+      user_agent: req.headers['user-agent']
+    });
+
+    res.status(201).json({ success: true, message: 'Archivo adjuntado', data: record });
+  } catch (error) {
+    console.error('Error en uploadTicketAttachment:', error);
+    res.status(500).json({ success: false, message: 'Error subiendo adjunto' });
+  }
+};
+
+/**
+ * Listar adjuntos del ticket
+ * GET /api/tickets/:id/attachments
+ */
+export const getTicketAttachments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const ticket = await Ticket.findByPk(id);
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket no encontrado' });
+
+    // Permisos: mismo criterio que detalle
+    const isAdmin = req.user.role === 'admin';
+    const canView = isAdmin || ticket.assigned_to === req.user.id || ticket.created_by === req.user.id;
+    if (!canView) return res.status(403).json({ success: false, message: 'No tienes permiso' });
+
+    const items = await TicketAttachment.findAll({ where: { ticket_id: id, deleted_at: null }, order: [['created_at', 'DESC']] });
+    res.json({ success: true, data: items });
+  } catch (error) {
+    console.error('Error en getTicketAttachments:', error);
+    res.status(500).json({ success: false, message: 'Error obteniendo adjuntos' });
   }
 };
 /**

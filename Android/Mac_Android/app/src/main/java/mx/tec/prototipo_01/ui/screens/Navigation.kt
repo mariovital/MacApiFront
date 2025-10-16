@@ -54,7 +54,12 @@ fun AppNavigation(isDark: Boolean, onThemeChange: () -> Unit) {
                 // Scoped ViewModel for Mesa de Ayuda
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("mesa_ayuda_home") }
                 val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
-                MesaAyudaHome(navController = navController, viewModel = viewModel)
+                MesaAyudaHome(
+                    navController = navController,
+                    viewModel = viewModel,
+                    isDark = isDark,
+                    onThemeChange = onThemeChange
+                )
             }
             composable("create_ticket") { backStackEntry ->
                 val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("mesa_ayuda_home") }
@@ -83,8 +88,8 @@ fun AppNavigation(isDark: Boolean, onThemeChange: () -> Unit) {
             }
         }
 
-        composable("tecnico_ticket_chat/{id}/{title}/{company}/{assignedTo}/{status}/{priority}") { backStackEntry ->
-            TecnicoTicketChat(
+        composable("tecnico_ticket_attachments/{id}/{title}/{company}/{assignedTo}/{status}/{priority}") { backStackEntry ->
+            TecnicoTicketAttachments(
                 navController = navController,
                 id = backStackEntry.arguments?.getString("id"),
                 title = backStackEntry.arguments?.getString("title"),
