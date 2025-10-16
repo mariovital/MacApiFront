@@ -273,7 +273,7 @@ const Reports = () => {
                     </div>
                     <LinearProgress 
                       variant="determinate" 
-                      value={category.percentage * 2} 
+                      value={category.percentage} 
                       sx={{
                         height: 6,
                         borderRadius: 3,
@@ -315,7 +315,7 @@ const Reports = () => {
                     </div>
                     <LinearProgress 
                       variant="determinate" 
-                      value={priority.percentage * 2} 
+                      value={priority.percentage} 
                       sx={{
                         height: 8,
                         borderRadius: 4,
