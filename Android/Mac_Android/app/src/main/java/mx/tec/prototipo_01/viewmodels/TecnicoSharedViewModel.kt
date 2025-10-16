@@ -100,13 +100,24 @@ class TecnicoSharedViewModel : ViewModel() {
         }
     }
 
-    fun rejectTicket(ticketId: String) {
+    fun rejectTicket(ticketId: String, reason: String?) {
         viewModelScope.launch {
             try {
                 val backendId = ticketIdMap[ticketId] ?: return@launch
-                val res = RetrofitClient.instance.rejectTicket(backendId, mx.tec.prototipo_01.models.api.RejectTicketRequest())
+                val res = RetrofitClient.instance.rejectTicket(
+                    backendId,
+                    mx.tec.prototipo_01.models.api.RejectTicketRequest(reason = reason)
+                )
                 if (res.isSuccessful) {
-                    refreshTicketDetail(ticketId)
+                    // Mover a historial con estado RECHAZADO para feedback inmediato
+                    val idx = pendingTickets.indexOfFirst { it.id == ticketId }
+                    if (idx >= 0) {
+                        val t = pendingTickets.removeAt(idx)
+                        t.status = TicketStatus.RECHAZADO
+                        historyTickets.add(0, t)
+                    } else {
+                        loadTickets()
+                    }
                 } else {
                     loadTickets()
                 }
@@ -166,13 +177,25 @@ private fun TicketItem.toUiModel(): TecnicoTicket {
         listOfNotNull(fn, ln).joinToString(" ")
     }
 
-    // Mapear status_id a TicketStatus de UI
-    val uiStatus = when (status_id) {
-        1 -> TicketStatus.PENDIENTE
-        2 -> TicketStatus.PENDIENTE // Asignado se muestra como Pendiente hasta aceptar
-        3, 4 -> TicketStatus.EN_PROCESO // En Proceso/En Espera
-        5, 6 -> TicketStatus.COMPLETADO
-        else -> TicketStatus.PENDIENTE
+    // Mapear estado por id y hacer fallback por nombre para mayor robustez
+    val uiStatus = (
+        when (status_id) {
+            1 -> TicketStatus.PENDIENTE
+            2 -> TicketStatus.PENDIENTE // Asignado
+            3, 4 -> TicketStatus.EN_PROCESO // En Proceso/En Espera
+            5, 6 -> TicketStatus.COMPLETADO // Resuelto/Cerrado
+            7 -> TicketStatus.RECHAZADO // Rechazado
+            else -> null
+        }
+    ) ?: run {
+        val n = status?.name?.lowercase().orEmpty()
+        when {
+            n.contains("rechaz") || n.contains("reject") -> TicketStatus.RECHAZADO
+            n.contains("resuel") || n.contains("cerrad") || n.contains("closed") || n.contains("resolved") -> TicketStatus.COMPLETADO
+            n.contains("proceso") || n.contains("espera") || n.contains("progress") || n.contains("hold") -> TicketStatus.EN_PROCESO
+            n.contains("pend") || n.contains("asign") || n.contains("assign") || n.contains("pending") -> TicketStatus.PENDIENTE
+            else -> TicketStatus.PENDIENTE
+        }
     }
 
     // Mapear prioridad
@@ -193,6 +216,7 @@ private fun TicketItem.toUiModel(): TecnicoTicket {
         date = created_at ?: "",
         location = location,
         priorityJustification = priority_justification,
+    rejectionReason = reopen_reason,
         clientContact = client_contact,
         clientEmail = client_email,
         clientPhone = client_phone,

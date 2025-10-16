@@ -110,6 +110,12 @@ fun MesaAyudaHome(navController: NavController, viewModel: MesaAyudaSharedViewMo
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Cargar/Refrescar tickets de Mesa al cambiar de pestaña
+            androidx.compose.runtime.LaunchedEffect(selectedOption) {
+                if (selectedOption == 0 || selectedOption == 1) {
+                    viewModel.loadTickets()
+                }
+            }
             when(selectedOption) {
                 0 -> MesaAyudaTickets(navController = navController, viewModel = viewModel)
                 1 -> MesaAyudaHistorial(navController = navController, viewModel = viewModel)

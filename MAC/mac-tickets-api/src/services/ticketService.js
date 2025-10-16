@@ -444,17 +444,29 @@ export const rejectTicket = async (ticketId, reason, userId, userRole) => {
       throw new Error('Solo se puede rechazar un ticket en estado asignado');
     }
 
+    // Obtener o crear estado "Rechazado"
+    let rejectedStatus = await TicketStatus.findOne({ where: { name: 'Rechazado' } });
+    if (!rejectedStatus) {
+      rejectedStatus = await TicketStatus.create({
+        name: 'Rechazado',
+        description: 'Ticket rechazado por el técnico asignado',
+        color: '#D32F2F',
+        is_final: false,
+        order_index: 2
+      });
+    }
+
     await ticket.update({
       assigned_to: null,
       assigned_by: null,
       assigned_at: null,
       accepted_at: null,
-      status_id: 1 // Vuelve a Nuevo para que Mesa lo reasigne
+      status_id: rejectedStatus.id,
+      // Persistimos el motivo en reopen_reason como campo reutilizable para mostrarlo en el frontend
+      reopen_reason: reason || null
     });
 
-    // Nota: por simplicidad no persistimos "reason" (no hay columna). Se podría registrar en comentarios.
-
-    const updated = await Ticket.findByPk(ticketId, {
+  const updated = await Ticket.findByPk(ticketId, {
       include: [
         { model: Category, as: 'category' },
         { model: Priority, as: 'priority' },

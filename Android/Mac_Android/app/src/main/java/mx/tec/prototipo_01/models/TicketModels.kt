@@ -15,6 +15,7 @@ data class TecnicoTicket(
     val date: String,
     val location: String?,
     val priorityJustification: String?,
+    val rejectionReason: String? = null,
     val clientContact: String? = null,
     val clientEmail: String? = null,
     val clientPhone: String? = null,

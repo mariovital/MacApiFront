@@ -32,7 +32,9 @@ class MesaAyudaSharedViewModel : ViewModel() {
                     historyTickets.clear()
                     mapped.forEach { t ->
                         when (t.status) {
-                            TicketStatus.COMPLETADO, TicketStatus.RECHAZADO -> historyTickets.add(t)
+                            TicketStatus.COMPLETADO -> historyTickets.add(t)
+                            // Tickets rechazados quedan en la lista principal para permitir reasignación
+                            TicketStatus.RECHAZADO -> pendingTickets.add(t)
                             else -> pendingTickets.add(t)
                         }
                     }
@@ -84,12 +86,24 @@ private fun TicketItem.toUiModel(): TecnicoTicket {
         listOfNotNull(fn, ln).joinToString(" ")
     }
 
-    val uiStatus = when (status_id) {
-        1 -> TicketStatus.PENDIENTE
-        2 -> TicketStatus.PENDIENTE
-        3, 4 -> TicketStatus.EN_PROCESO
-        5, 6 -> TicketStatus.COMPLETADO
-        else -> TicketStatus.PENDIENTE
+    val uiStatus = (
+        when (status_id) {
+            1 -> TicketStatus.PENDIENTE
+            2 -> TicketStatus.PENDIENTE
+            3, 4 -> TicketStatus.EN_PROCESO
+            5, 6 -> TicketStatus.COMPLETADO
+            7 -> TicketStatus.RECHAZADO
+            else -> null
+        }
+    ) ?: run {
+        val n = status?.name?.lowercase().orEmpty()
+        when {
+            n.contains("rechaz") || n.contains("reject") -> TicketStatus.RECHAZADO
+            n.contains("resuel") || n.contains("cerrad") || n.contains("closed") || n.contains("resolved") -> TicketStatus.COMPLETADO
+            n.contains("proceso") || n.contains("espera") || n.contains("progress") || n.contains("hold") -> TicketStatus.EN_PROCESO
+            n.contains("pend") || n.contains("asign") || n.contains("assign") || n.contains("pending") -> TicketStatus.PENDIENTE
+            else -> TicketStatus.PENDIENTE
+        }
     }
 
     val uiPriority = (priority?.name ?: TicketPriority.NA.displayName).let { name ->
@@ -109,6 +123,7 @@ private fun TicketItem.toUiModel(): TecnicoTicket {
         date = created_at ?: "",
         location = location,
         priorityJustification = priority_justification,
+    rejectionReason = reopen_reason,
         clientContact = client_contact,
         clientEmail = client_email,
         clientPhone = client_phone,

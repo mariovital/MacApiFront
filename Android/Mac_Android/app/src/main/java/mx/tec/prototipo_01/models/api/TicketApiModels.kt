@@ -25,6 +25,7 @@ data class TicketItem(
     val ticket_number: String,
     val title: String,
     val description: String?,
+    val reopen_reason: String? = null,
     val priority_justification: String?,
     val location: String?,
     val client_company: String?,

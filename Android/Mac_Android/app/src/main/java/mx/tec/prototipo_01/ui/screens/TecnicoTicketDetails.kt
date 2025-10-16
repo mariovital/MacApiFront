@@ -87,6 +87,8 @@ fun TecnicoTicketDetails(
     // Get the ticket from the ViewModel. This is reactive and will update if the ticket changes.
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
     var showCloseConfirmationDialog by remember { mutableStateOf(false) }
+    var showRejectDialog by remember { mutableStateOf(false) }
+    var rejectReason by remember { mutableStateOf("") }
 
     // Intentar refrescar detalle desde backend cuando se abre la pantalla
     LaunchedEffect(ticketId) {
@@ -119,6 +121,37 @@ fun TecnicoTicketDetails(
                 Button(onClick = { showCloseConfirmationDialog = false }) {
                     Text("Cancelar")
                 }
+            }
+        )
+    }
+
+    if (showRejectDialog) {
+        AlertDialog(
+            onDismissRequest = { showRejectDialog = false },
+            title = { Text("Rechazar ticket") },
+            text = {
+                Column {
+                    Text("Por favor describe el motivo del rechazo:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.material3.OutlinedTextField(
+                        value = rejectReason,
+                        onValueChange = { rejectReason = it },
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 5,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.rejectTicket(ticket.id, rejectReason.ifBlank { null })
+                    showRejectDialog = false
+                    navController.popBackStack()
+                }) { Text("Enviar y rechazar") }
+            },
+            dismissButton = {
+                Button(onClick = { showRejectDialog = false }) { Text("Cancelar") }
             }
         )
     }
@@ -331,8 +364,8 @@ fun TecnicoTicketDetails(
                                         Text("Aceptar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                     }
                                     Button(onClick = {
-                                        viewModel.rejectTicket(ticket.id)
-                                        navController.popBackStack()
+                                        rejectReason = ""
+                                        showRejectDialog = true
                                     }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
                                         Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
                                     }

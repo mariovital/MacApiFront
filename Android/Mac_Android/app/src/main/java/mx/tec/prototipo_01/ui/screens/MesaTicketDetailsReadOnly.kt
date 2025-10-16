@@ -24,6 +24,12 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -60,13 +66,19 @@ import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import java.io.IOException
 import java.net.URLDecoder
+import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.net.HttpURLConnection
 import java.net.URL
 import org.json.JSONArray
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
+import mx.tec.prototipo_01.api.RetrofitClient
+import mx.tec.prototipo_01.models.TicketStatus
+import mx.tec.prototipo_01.models.api.AssignTicketRequest
+import mx.tec.prototipo_01.models.api.TechnicianDto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +134,17 @@ fun MesaTicketDetailsReadOnly(
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary) },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .size(8.dp)
+                                .background(MaterialTheme.colorScheme.error, CircleShape)
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
@@ -202,6 +224,12 @@ fun MesaTicketDetailsReadOnly(
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
+                            if (ticket.status == mx.tec.prototipo_01.models.TicketStatus.RECHAZADO && !ticket.rejectionReason.isNullOrBlank()) {
+                                Text("Motivo del rechazo:", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(ticket.rejectionReason!!, color = Color(0xFFD32F2F), fontSize = 14.sp, lineHeight = 20.sp)
+                                Spacer(modifier = Modifier.height(8.dp))
+                            }
                             if (!ticket.categoryName.isNullOrBlank()) {
                                 Text("Categoría: ${ticket.categoryName}", color = Color.Gray, fontSize = 14.sp)
                             }
@@ -252,6 +280,78 @@ fun MesaTicketDetailsReadOnly(
                         if (geocodeTried && geocodeFailed) {
                             Text(text = "No se pudo ubicar la dirección en el mapa", color = Color.Gray, fontSize = 12.sp)
                         }
+
+                        // Si el ticket está rechazado, permitir reasignar a un técnico
+                        if (ticket.status == TicketStatus.RECHAZADO) {
+                            Spacer(modifier = Modifier.height(24.dp))
+                            Text("Reasignar a técnico:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            var technicians by remember { mutableStateOf(listOf<TechnicianDto>()) }
+                            var selectedTech by remember { mutableStateOf<TechnicianDto?>(null) }
+                            var expanded by remember { mutableStateOf(false) }
+
+                            LaunchedEffect(Unit) {
+                                val resp = RetrofitClient.instance.getTechnicians()
+                                if (resp.isSuccessful) {
+                                    technicians = resp.body()?.data ?: emptyList()
+                                }
+                            }
+
+                            ExposedDropdownMenuBox(
+                                expanded = expanded,
+                                onExpandedChange = { expanded = it }
+                            ) {
+                                OutlinedTextField(
+                                    value = selectedTech?.let { listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" } } ?: "",
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    label = { Text("Selecciona técnico") },
+                                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                                    modifier = Modifier
+                                        .menuAnchor()
+                                        .fillMaxWidth()
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = expanded,
+                                    onDismissRequest = { expanded = false }
+                                ) {
+                                    technicians.forEach { tech ->
+                                        val label = listOfNotNull(tech.first_name, tech.last_name).joinToString(" ").ifBlank { tech.username ?: "" }
+                                        DropdownMenuItem(text = { Text(label) }, onClick = {
+                                            selectedTech = tech
+                                            expanded = false
+                                        })
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Button(
+                                onClick = {
+                                    val idNum = ticket.backendId
+                                    val techId = selectedTech?.id
+                                    if (techId != null) {
+                                        // Llamar al endpoint de asignación
+                                        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                                            try {
+                                                val res = RetrofitClient.instance.assignTicket(idNum, AssignTicketRequest(technician_id = techId))
+                                                withContext(Dispatchers.Main) {
+                                                    if (res.isSuccessful) {
+                                                        // Refrescar detalle y listas
+                                                        viewModel.refreshTicketDetail(ticket.id)
+                                                        viewModel.loadTickets()
+                                                    }
+                                                }
+                                            } catch (_: Exception) { }
+                                        }
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text("Reasignar")
+                            }
+                        }
                     }
                 }
             }
@@ -259,20 +359,8 @@ fun MesaTicketDetailsReadOnly(
     }
 }
 
-private fun cleanDescription(description: String): String {
-    return description
-        .lines()
-        .filterNot { line ->
-            val normalized = line.trim().replaceFirst("^[\\-•\\s]+".toRegex(), "")
-            normalized.equals("Hardware:", ignoreCase = true) ||
-            normalized.startsWith("Dispositivo:", ignoreCase = true) ||
-            normalized.startsWith("S/N:", ignoreCase = true) ||
-            normalized.startsWith("Serie:", ignoreCase = true) ||
-            normalized.startsWith("Serial:", ignoreCase = true)
-        }
-        .joinToString("\n")
-        .replace("\n\n\n", "\n\n")
-        .trim()
+private fun sanitizeAddress(address: String): String {
+    return address.replace("-", " ")
 }
 
 private fun getCoordinatesFromAddress(context: Context, address: String): LatLng? {
@@ -282,7 +370,9 @@ private fun getCoordinatesFromAddress(context: Context, address: String): LatLng
         val addresses = geocoder.getFromLocationName(address, 1)
         if (addresses?.isNotEmpty() == true) {
             LatLng(addresses[0].latitude, addresses[0].longitude)
-        } else null
+        } else {
+            null
+        }
     } catch (e: IOException) {
         null
     }
@@ -290,37 +380,45 @@ private fun getCoordinatesFromAddress(context: Context, address: String): LatLng
 
 private fun getCoordinatesFromNominatim(address: String): LatLng? {
     return try {
-        val urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + java.net.URLEncoder.encode(address, "UTF-8") + "&limit=1&addressdetails=0"
-        val url = URL(urlStr)
-        val conn = (url.openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            setRequestProperty("User-Agent", "MAC-Tickets/1.0 (android-app)")
-            connectTimeout = 8000
-            readTimeout = 8000
+        val url = URL("https://nominatim.openstreetmap.org/search?q=${URLEncoder.encode(address, "UTF-8")}&format=json&limit=1")
+        val connection = url.openConnection() as HttpURLConnection
+        connection.requestMethod = "GET"
+        connection.connect()
+
+        val responseCode = connection.responseCode
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            val reader = connection.inputStream.bufferedReader()
+            val response = reader.readText()
+            reader.close()
+            val jsonArray = JSONArray(response)
+            if (jsonArray.length() > 0) {
+                val jsonObject = jsonArray.getJSONObject(0)
+                val lat = jsonObject.getDouble("lat")
+                val lon = jsonObject.getDouble("lon")
+                LatLng(lat, lon)
+            } else {
+                null
+            }
+        } else {
+            null
         }
-        conn.inputStream.use { stream ->
-            val body = stream.bufferedReader().readText()
-            val arr = JSONArray(body)
-            if (arr.length() > 0) {
-                val obj = arr.getJSONObject(0)
-                val lat = obj.getString("lat").toDoubleOrNull()
-                val lon = obj.getString("lon").toDoubleOrNull()
-                if (lat != null && lon != null) LatLng(lat, lon) else null
-            } else null
-        }
-    } catch (_: Exception) {
+    } catch (e: Exception) {
         null
     }
 }
 
-private fun sanitizeAddress(raw: String): String {
-    if (raw.isBlank()) return raw
-    val firstLine = raw.lineSequence().firstOrNull()?.trim() ?: raw.trim()
-    val cleaned = firstLine
-        .removePrefix("Ubicación:")
-        .removePrefix("Ubicacion:")
-        .removePrefix("Location:")
+private fun cleanDescription(description: String): String {
+    return description
+        .lines()
+        .filterNot { line ->
+            val normalized = line.trim().replaceFirst("^[-•\\s]+".toRegex(), "")
+            normalized.equals("Hardware:", ignoreCase = true) ||
+                    normalized.startsWith("Dispositivo:", ignoreCase = true) ||
+                    normalized.startsWith("S/N:", ignoreCase = true) ||
+                    normalized.startsWith("Serie:", ignoreCase = true) ||
+                    normalized.startsWith("Serial:", ignoreCase = true)
+        }
+        .joinToString("\n")
+        .replace("\n\n\n", "\n\n")
         .trim()
-        .replace(Regex("\n+"), " ")
-    return cleaned
 }
