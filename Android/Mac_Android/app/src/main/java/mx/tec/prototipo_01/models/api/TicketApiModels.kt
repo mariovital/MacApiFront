@@ -172,3 +172,8 @@ data class TicketDetailResponse(
     val message: String?,
     val data: TicketItem?
 )
+
+// Actualizar estado
+data class UpdateStatusRequest(
+    val status_id: Int
+)

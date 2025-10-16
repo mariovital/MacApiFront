@@ -1,5 +1,7 @@
 package mx.tec.prototipo_01.ui.screens
 
+import android.content.Context
+import android.location.Geocoder
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -45,12 +48,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import android.content.Intent
+import android.net.Uri
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.GoogleMap
@@ -63,6 +70,12 @@ import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import java.net.URLDecoder
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.io.IOException
+import java.net.HttpURLConnection
+import java.net.URL
+import org.json.JSONArray
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +126,29 @@ fun TecnicoTicketDetails(
     val (dispositivo, serialNumber) = remember(ticket.description) { parseHardwareFromDescription(ticket.description) }
     val problema = ticket.title
     val ubicacion = ticket.location ?: "—"
-    val mapLocation = LatLng(19.4056, -99.0965)
+    val cleanAddress = remember(ubicacion) { sanitizeAddress(ubicacion) }
+    val context = LocalContext.current
+    var mapCoordinates by remember(ubicacion) { mutableStateOf<LatLng?>(null) }
+    var geocodeTried by remember(ubicacion) { mutableStateOf(false) }
+    var geocodeFailed by remember(ubicacion) { mutableStateOf(false) }
+
+    // Geocodificar la dirección del ticket y actualizar el mapa cuando cambie
+    LaunchedEffect(cleanAddress) {
+        if (cleanAddress.isNotBlank() && cleanAddress != "—") {
+            // 1) Intento con Geocoder del dispositivo
+            mapCoordinates = withContext(Dispatchers.IO) { getCoordinatesFromAddress(context, cleanAddress) }
+            // 2) Fallback con Nominatim si falla
+            if (mapCoordinates == null) {
+                mapCoordinates = withContext(Dispatchers.IO) { getCoordinatesFromNominatim(cleanAddress) }
+            }
+            geocodeTried = true
+            geocodeFailed = mapCoordinates == null
+        } else {
+            mapCoordinates = null
+            geocodeTried = true
+            geocodeFailed = true
+        }
+    }
 
     val view = LocalView.current
     val isDark = isSystemInDarkTheme()
@@ -239,21 +274,48 @@ fun TecnicoTicketDetails(
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Ubicación:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(ubicacion, color = Color.Gray, fontSize = 14.sp, lineHeight = 20.sp)
+                            Text(cleanAddress, color = Color.Gray, fontSize = 14.sp, lineHeight = 20.sp)
+                            Spacer(modifier = Modifier.height(8.dp))
+                            OutlinedButton(
+                                onClick = { openInMaps(context, cleanAddress) },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Abrir en Maps")
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
+                        // Mostrar siempre el mapa como antes; centrar en un punto por defecto y mover si obtenemos coordenadas
+                        val defaultTarget = remember { LatLng(19.4056, -99.0965) }
                         val cameraPositionState = rememberCameraPositionState {
-                            position = CameraPosition.fromLatLngZoom(mapLocation, 15f)
+                            position = CameraPosition.fromLatLngZoom(defaultTarget, 15f)
                         }
+
+                        // Si ya tenemos coordenadas, animar la cámara a esa ubicación
+                        LaunchedEffect(mapCoordinates) {
+                            mapCoordinates?.let { target ->
+                                cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(target, 15f))
+                            }
+                        }
+
                         GoogleMap(
                             modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)),
                             cameraPositionState = cameraPositionState
                         ) {
-                            Marker(
-                                state = MarkerState(position = mapLocation),
-                                title = "Ubicación del Ticket"
+                            mapCoordinates?.let { target ->
+                                Marker(
+                                    state = MarkerState(position = target),
+                                    title = "Ubicación del Ticket"
+                                )
+                            }
+                        }
+
+                        if (geocodeTried && geocodeFailed) {
+                            Text(
+                                text = "No se pudo ubicar la dirección en el mapa",
+                                color = Color.Gray,
+                                fontSize = 12.sp
                             )
                         }
 
@@ -364,3 +426,67 @@ fun TecnicoTicketDetails(
         return device to serial
     }
 // Usa StatusBadge y PriorityBadge compartidos en TicketComponents.kt
+
+private fun getCoordinatesFromAddress(context: Context, address: String): LatLng? {
+    return try {
+        val geocoder = Geocoder(context)
+        @Suppress("DEPRECATION")
+        val addresses = geocoder.getFromLocationName(address, 1)
+        if (addresses?.isNotEmpty() == true) {
+            LatLng(addresses[0].latitude, addresses[0].longitude)
+        } else null
+    } catch (e: IOException) {
+        null
+    }
+}
+
+private fun getCoordinatesFromNominatim(address: String): LatLng? {
+    return try {
+        val urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + URLEncoder.encode(address, "UTF-8") + "&limit=1&addressdetails=0"
+        val url = URL(urlStr)
+        val conn = (url.openConnection() as HttpURLConnection).apply {
+            requestMethod = "GET"
+            setRequestProperty("User-Agent", "MAC-Tickets/1.0 (android-app)")
+            connectTimeout = 8000
+            readTimeout = 8000
+        }
+        conn.inputStream.use { stream ->
+            val body = stream.bufferedReader().readText()
+            val arr = JSONArray(body)
+            if (arr.length() > 0) {
+                val obj = arr.getJSONObject(0)
+                val lat = obj.getString("lat").toDoubleOrNull()
+                val lon = obj.getString("lon").toDoubleOrNull()
+                if (lat != null && lon != null) LatLng(lat, lon) else null
+            } else null
+        }
+    } catch (_: Exception) {
+        null
+    }
+}
+
+private fun openInMaps(context: Context, address: String) {
+    try {
+        val uri = Uri.parse("geo:0,0?q=" + Uri.encode(address))
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        intent.setPackage("com.google.android.apps.maps")
+        if (intent.resolveActivity(context.packageManager) == null) {
+            // Fallback sin paquete específico
+            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
+        } else {
+            context.startActivity(intent)
+        }
+    } catch (_: Exception) { /* ignorar */ }
+}
+
+private fun sanitizeAddress(raw: String): String {
+    if (raw.isBlank()) return raw
+    val firstLine = raw.lineSequence().firstOrNull()?.trim() ?: raw.trim()
+    val cleaned = firstLine
+        .removePrefix("Ubicación:")
+        .removePrefix("Ubicacion:")
+        .removePrefix("Location:")
+        .trim()
+        .replace(Regex("\n+"), " ")
+    return cleaned
+}

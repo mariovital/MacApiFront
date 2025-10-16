@@ -15,6 +15,7 @@ import mx.tec.prototipo_01.models.api.TicketListResponse
 import mx.tec.prototipo_01.models.api.AcceptTicketResponse
 import mx.tec.prototipo_01.models.api.RejectTicketRequest
 import mx.tec.prototipo_01.models.api.RejectTicketResponse
+import mx.tec.prototipo_01.models.api.UpdateStatusRequest
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -23,6 +24,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import retrofit2.http.PATCH
 
 /**
  * Interfaz que define las rutas del API para Retrofit.
@@ -117,4 +119,8 @@ interface ApiService {
     // Rechazar ticket (técnico)
     @POST("tickets/{id}/reject")
     suspend fun rejectTicket(@Path("id") ticketId: Int, @Body body: RejectTicketRequest): Response<RejectTicketResponse>
+
+    // Cambiar estado del ticket
+    @PATCH("tickets/{id}/status")
+    suspend fun updateTicketStatus(@Path("id") ticketId: Int, @Body body: UpdateStatusRequest): Response<TicketDetailResponse>
 }

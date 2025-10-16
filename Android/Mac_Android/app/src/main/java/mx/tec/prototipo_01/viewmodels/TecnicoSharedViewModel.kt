@@ -117,10 +117,42 @@ class TecnicoSharedViewModel : ViewModel() {
     }
 
     fun closeTicket(ticketId: String) {
-        val ticket = pendingTickets.find { it.id == ticketId } ?: return
-        ticket.status = TicketStatus.COMPLETADO
-        pendingTickets.remove(ticket)
-        historyTickets.add(0, ticket)
+        viewModelScope.launch {
+            val backendId = ticketIdMap[ticketId] ?: return@launch
+            try {
+                // Intentar cerrar (6)
+                val resClose = RetrofitClient.instance.updateTicketStatus(backendId, mx.tec.prototipo_01.models.api.UpdateStatusRequest(status_id = 6))
+                if (resClose.isSuccessful) {
+                    // mover a historial
+                    val idx = pendingTickets.indexOfFirst { it.id == ticketId }
+                    if (idx >= 0) {
+                        val t = pendingTickets.removeAt(idx)
+                        t.status = TicketStatus.COMPLETADO
+                        historyTickets.add(0, t)
+                    } else {
+                        loadTickets()
+                    }
+                    return@launch
+                }
+
+                // Si no se permite cerrar (403), intentar resolver (5)
+                val resResolve = RetrofitClient.instance.updateTicketStatus(backendId, mx.tec.prototipo_01.models.api.UpdateStatusRequest(status_id = 5))
+                if (resResolve.isSuccessful) {
+                    val idx = pendingTickets.indexOfFirst { it.id == ticketId }
+                    if (idx >= 0) {
+                        val t = pendingTickets.removeAt(idx)
+                        t.status = TicketStatus.COMPLETADO
+                        historyTickets.add(0, t)
+                    } else {
+                        loadTickets()
+                    }
+                } else {
+                    loadTickets()
+                }
+            } catch (_: Exception) {
+                loadTickets()
+            }
+        }
     }
 }
 

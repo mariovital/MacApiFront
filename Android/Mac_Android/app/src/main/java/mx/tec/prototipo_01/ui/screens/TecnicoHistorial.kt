@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +49,11 @@ import java.nio.charset.StandardCharsets
 fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewModel) { // viewModel passed in
     // The list now comes directly from the viewModel, so it's always in sync
     val tickets = viewModel.historyTickets
+
+    // Cargar tickets al entrar en la pantalla para asegurar datos actualizados
+    LaunchedEffect(Unit) {
+        viewModel.loadTickets()
+    }
 
     Column(
         modifier = Modifier
