@@ -18,6 +18,9 @@ class TecnicoSharedViewModel : ViewModel() {
     // 'Historial' (tickets finalizados por el técnico)
     val historyTickets = mutableStateListOf<TecnicoTicket>()
 
+    // Mapa ticket_number -> id interno backend
+    private val ticketIdMap = mutableMapOf<String, Int>()
+
     // Cargar tickets desde el backend, ya filtrados por rol (JWT)
     fun loadTickets() {
         viewModelScope.launch {
@@ -27,6 +30,8 @@ class TecnicoSharedViewModel : ViewModel() {
                     val body = response.body()
                     val items = body?.data?.items ?: emptyList()
                     // Mapear a UI y separar por estado
+                    ticketIdMap.clear()
+                    items.forEach { ticketIdMap[it.ticket_number] = it.id }
                     val mapped = items.map { it.toUiModel() }
                     pendingTickets.clear()
                     historyTickets.clear()
@@ -53,15 +58,42 @@ class TecnicoSharedViewModel : ViewModel() {
         return (pendingTickets + historyTickets).find { it.id == id }
     }
 
-    fun acceptTicket(ticketId: String) {
-        // ticketId es el ticket_number en UI; necesitamos ID numérico? usamos endpoint por número a futuro.
+    // Refrescar detalle desde backend usando el id numérico mapeado
+    fun refreshTicketDetail(ticketNumber: String) {
         viewModelScope.launch {
             try {
-                // Por simplicidad, recargamos lista tras aceptar
-                val numericId = pendingTickets.find { it.id == ticketId }?.let { _ -> null }
-                // El backend espera ID interno; como no lo tenemos aquí, pedimos lista y no usamos numericId.
-                // Workaround: no-op si no tenemos mapping; futuro: incluir id interno en UI model.
-                loadTickets()
+                val backendId = ticketIdMap[ticketNumber] ?: return@launch
+                val res = RetrofitClient.instance.getTicketById(backendId)
+                if (res.isSuccessful) {
+                    val apiItem = res.body()?.data ?: return@launch
+                    val updated = apiItem.toUiModel()
+                    // Reemplazar en pending o history según corresponda
+                    val idxPending = pendingTickets.indexOfFirst { it.id == ticketNumber }
+                    if (idxPending >= 0) {
+                        pendingTickets[idxPending] = updated
+                        return@launch
+                    }
+                    val idxHistory = historyTickets.indexOfFirst { it.id == ticketNumber }
+                    if (idxHistory >= 0) {
+                        historyTickets[idxHistory] = updated
+                    }
+                }
+            } catch (_: Exception) { }
+        }
+    }
+
+    fun acceptTicket(ticketId: String) {
+        // ticketId es el ticket_number en UI
+        viewModelScope.launch {
+            try {
+                val backendId = ticketIdMap[ticketId] ?: return@launch
+                val res = RetrofitClient.instance.acceptTicket(backendId)
+                if (res.isSuccessful) {
+                    // Refrescar ese ticket
+                    refreshTicketDetail(ticketId)
+                } else {
+                    loadTickets()
+                }
             } catch (e: Exception) {
                 // ignorar
             }
@@ -71,7 +103,13 @@ class TecnicoSharedViewModel : ViewModel() {
     fun rejectTicket(ticketId: String) {
         viewModelScope.launch {
             try {
-                loadTickets()
+                val backendId = ticketIdMap[ticketId] ?: return@launch
+                val res = RetrofitClient.instance.rejectTicket(backendId, mx.tec.prototipo_01.models.api.RejectTicketRequest())
+                if (res.isSuccessful) {
+                    refreshTicketDetail(ticketId)
+                } else {
+                    loadTickets()
+                }
             } catch (e: Exception) {
                 // ignorar
             }
@@ -91,28 +129,29 @@ class TecnicoSharedViewModel : ViewModel() {
 private fun TicketItem.toUiModel(): TecnicoTicket {
     val assignedName = listOfNotNull(assignee?.first_name, assignee?.last_name)
         .joinToString(" ").ifBlank { assignee?.username ?: "" }
-    val companyName = client_company ?: (creator?.first_name?.let { fn ->
-        val ln = creator.last_name ?: ""
-        "$fn $ln"
-    } ?: "")
+    val companyName = client_company ?: run {
+        val fn = creator?.first_name
+        val ln = creator?.last_name
+        listOfNotNull(fn, ln).joinToString(" ")
+    }
 
     // Mapear status_id a TicketStatus de UI
     val uiStatus = when (status_id) {
         1 -> TicketStatus.PENDIENTE
-        2, 3, 4 -> TicketStatus.EN_PROCESO // Asignado/En Proceso/En Espera
-        5 -> TicketStatus.COMPLETADO
-        6 -> TicketStatus.COMPLETADO // Cerrar como completado en UI
+        2 -> TicketStatus.PENDIENTE // Asignado se muestra como Pendiente hasta aceptar
+        3, 4 -> TicketStatus.EN_PROCESO // En Proceso/En Espera
+        5, 6 -> TicketStatus.COMPLETADO
         else -> TicketStatus.PENDIENTE
     }
 
     // Mapear prioridad
     val uiPriority = (priority?.name ?: TicketPriority.NA.displayName).let { name ->
-        // Asegurar que coincida con displayName conocido, si no, usar valor crudo
         val match = TicketPriority.values().find { it.displayName.equals(name, true) }
         match?.displayName ?: name
     }
 
     return TecnicoTicket(
+        backendId = id,
         id = ticket_number,
         title = title,
         company = companyName,
@@ -120,6 +159,13 @@ private fun TicketItem.toUiModel(): TecnicoTicket {
         status = uiStatus,
         priority = uiPriority,
         description = description ?: "",
-        date = created_at ?: ""
+        date = created_at ?: "",
+        location = location,
+        priorityJustification = priority_justification,
+        clientContact = client_contact,
+        clientEmail = client_email,
+        clientPhone = client_phone,
+        clientDepartment = client_department,
+        categoryName = category?.name
     )
 }

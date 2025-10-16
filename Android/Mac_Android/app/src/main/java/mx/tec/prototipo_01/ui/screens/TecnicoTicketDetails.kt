@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,6 +75,11 @@ fun TecnicoTicketDetails(
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
     var showCloseConfirmationDialog by remember { mutableStateOf(false) }
 
+    // Intentar refrescar detalle desde backend cuando se abre la pantalla
+    LaunchedEffect(ticketId) {
+        viewModel.refreshTicketDetail(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString()))
+    }
+
     // If the ticket is null for any reason (e.g., it was rejected and removed), just go back.
     if (ticket == null) {
         navController.popBackStack()
@@ -104,10 +110,9 @@ fun TecnicoTicketDetails(
         )
     }
 
-    val dispositivo = "Dell Latitude 5420"
-    val serialNumber = "000000000000"
-    val problema = "La pantalla tiene un golpe el cual dejó inutilizable el dispositivo"
-    val ubicacion = "Granjas México, Iztacalco, 08400 Ciudad de México, CDMX"
+    val (dispositivo, serialNumber) = remember(ticket.description) { parseHardwareFromDescription(ticket.description) }
+    val problema = ticket.title
+    val ubicacion = ticket.location ?: "—"
     val mapLocation = LatLng(19.4056, -99.0965)
 
     val view = LocalView.current
@@ -194,7 +199,8 @@ fun TecnicoTicketDetails(
                                 Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color.LightGray))
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                            Text(ticket.description, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp, color = Color.Gray)
+                                val descripcionLimpia = remember(ticket.description) { cleanDescription(ticket.description) }
+                                Text(descripcionLimpia, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp, color = Color.Gray)
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -202,8 +208,36 @@ fun TecnicoTicketDetails(
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("Dispositivo: $dispositivo", color = Color.Gray, fontSize = 14.sp)
-                            Text("S/N: $serialNumber", color = Color.Gray, fontSize = 14.sp)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text("Prioridad:", color = Color.Gray, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                PriorityBadge(priority = ticket.priority)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            if (!ticket.categoryName.isNullOrBlank()) {
+                                Text("Categoría: ${ticket.categoryName}", color = Color.Gray, fontSize = 14.sp)
+                            }
+                            if (!ticket.clientDepartment.isNullOrBlank()) {
+                                Text("Departamento: ${ticket.clientDepartment}", color = Color.Gray, fontSize = 14.sp)
+                            }
+                            if (!ticket.clientContact.isNullOrBlank()) {
+                                Text("Contacto: ${ticket.clientContact}", color = Color.Gray, fontSize = 14.sp)
+                            }
+                            if (!ticket.clientEmail.isNullOrBlank()) {
+                                Text("Email: ${ticket.clientEmail}", color = Color.Gray, fontSize = 14.sp)
+                            }
+                            if (!ticket.clientPhone.isNullOrBlank()) {
+                                Text("Teléfono: ${ticket.clientPhone}", color = Color.Gray, fontSize = 14.sp)
+                            }
+                            if (!ticket.priorityJustification.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Justificación de prioridad:", fontWeight = FontWeight.Medium, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(ticket.priorityJustification!!, color = Color.Gray, fontSize = 14.sp, lineHeight = 20.sp)
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text("Dispositivo: ${dispositivo ?: "—"}", color = Color.Gray, fontSize = 14.sp)
+                            Text("S/N: ${serialNumber ?: "—"}", color = Color.Gray, fontSize = 14.sp)
                             Text("Problema: $problema", color = Color.Gray, fontSize = 14.sp, lineHeight = 20.sp)
                         }
 
@@ -303,22 +337,43 @@ fun TecnicoTicketDetails(
     }
 }
 
-@Composable
-private fun StatusBadge(status: String) {
-    val statusEnum = TicketStatus.values().find { it.displayName.equals(status, ignoreCase = true) }
-    if (statusEnum != null) {
-        Box(modifier = Modifier.background(statusEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-            Text(statusEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
-        }
+    private fun cleanDescription(description: String): String {
+        // Remueve líneas del bloque de hardware (con o sin guiones/bullets) para evitar duplicados en la UI
+        return description
+            .lines()
+            .filterNot { line ->
+                val normalized = line.trim().replaceFirst("^[\\-•\\s]+".toRegex(), "")
+                normalized.equals("Hardware:", ignoreCase = true) ||
+                normalized.startsWith("Dispositivo:", ignoreCase = true) ||
+                normalized.startsWith("S/N:", ignoreCase = true) ||
+                normalized.startsWith("Serie:", ignoreCase = true) ||
+                normalized.startsWith("Serial:", ignoreCase = true)
+            }
+            .joinToString("\n")
+            .replace("\n\n\n", "\n\n") // compactar saltos extra
+            .trim()
     }
-}
 
-@Composable
-private fun PriorityBadge(priority: String) {
-    val priorityEnum = TicketPriority.values().find { it.displayName.equals(priority, ignoreCase = true) }
-    if (priorityEnum != null) {
-        Box(modifier = Modifier.background(priorityEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-            Text(priorityEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
+    private fun parseHardwareFromDescription(description: String): Pair<String?, String?> {
+        var device: String? = null
+        var serial: String? = null
+        description.lines().forEach { raw ->
+            val line = raw.trim().replaceFirst("^[\\-•\\s]+".toRegex(), "")
+            when {
+                line.startsWith("Dispositivo:", ignoreCase = true) -> {
+                    device = line.substringAfter(":").trim().ifBlank { null }
+                }
+                line.startsWith("S/N:", ignoreCase = true) || line.startsWith("Serie:", ignoreCase = true) || line.startsWith("Serial:", ignoreCase = true) -> {
+                    serial = line.substringAfter(":").trim().ifBlank { null }
+                }
+            }
         }
+        return sanitize(device) to sanitize(serial)
     }
-}
+    
+    private fun sanitize(value: String?): String? {
+        val v = value?.trim()?.removePrefix("$")?.removePrefix("{")?.removeSuffix("}")?.trim()
+        // Si originalmente era un placeholder ($algo) o quedó vacío, regresar null
+        return if (value == null) null else if (value.startsWith("$") || v.isNullOrBlank()) null else value.trim()
+    }
+// Usa StatusBadge y PriorityBadge compartidos en TicketComponents.kt

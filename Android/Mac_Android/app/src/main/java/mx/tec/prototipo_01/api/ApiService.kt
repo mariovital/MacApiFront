@@ -8,6 +8,7 @@ import mx.tec.prototipo_01.models.api.CreateTicketResponse
 import mx.tec.prototipo_01.models.api.CategoriesResponse
 import mx.tec.prototipo_01.models.api.PrioritiesResponse
 import mx.tec.prototipo_01.models.api.TechniciansResponse
+import mx.tec.prototipo_01.models.api.TicketDetailResponse
 import mx.tec.prototipo_01.models.api.AssignTicketRequest
 import mx.tec.prototipo_01.models.api.AssignTicketResponse
 import mx.tec.prototipo_01.models.api.TicketListResponse
@@ -89,6 +90,10 @@ interface ApiService {
     // POST /api/tickets
     @POST("tickets")
     suspend fun createTicket(@Body body: CreateTicketRequest): Response<CreateTicketResponse>
+
+    // GET /api/tickets/{id}
+    @GET("tickets/{id}")
+    suspend fun getTicketById(@Path("id") ticketId: Int): Response<TicketDetailResponse>
 
     // =====================================================================
     // CATÁLOGOS

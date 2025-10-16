@@ -55,8 +55,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
-import mx.tec.prototipo_01.models.TicketPriority
-import mx.tec.prototipo_01.models.TicketStatus
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
@@ -291,26 +289,6 @@ private fun MessageInput(value: String, onValueChange: (String) -> Unit, onSend:
             IconButton(onClick = onSend) {
                 Icon(Icons.Default.Send, contentDescription = "Enviar", tint = MaterialTheme.colorScheme.primary)
             }
-        }
-    }
-}
-
-@Composable
-private fun StatusBadge(status: String) {
-    val statusEnum = TicketStatus.values().find { it.displayName.equals(status, ignoreCase = true) }
-    if (statusEnum != null) {
-        Box(modifier = Modifier.background(statusEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-            Text(statusEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
-        }
-    }
-}
-
-@Composable
-private fun PriorityBadge(priority: String) {
-    val priorityEnum = TicketPriority.values().find { it.displayName.equals(priority, ignoreCase = true) }
-    if (priorityEnum != null) {
-        Box(modifier = Modifier.background(priorityEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
-            Text(priorityEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
         }
     }
 }

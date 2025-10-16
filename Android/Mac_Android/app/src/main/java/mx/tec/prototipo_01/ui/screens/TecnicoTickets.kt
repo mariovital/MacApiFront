@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import mx.tec.prototipo_01.models.TecnicoTicket
-import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -157,21 +157,7 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    color = ticket.status.color,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = ticket.status.displayName,
-                                fontSize = 10.sp,
-                                color = Color.White,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
+                        StatusBadge(status = ticket.status.displayName)
                     }
                 }
                 Column(
@@ -182,23 +168,8 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                         fontSize = 12.sp,
                         color = Color.Gray
                     )
-                    val priorityEnum = TicketPriority.values().find { it.displayName == ticket.priority }
-                    if (priorityEnum != null) {
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    color = priorityEnum.color,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = ticket.priority,
-                                fontSize = 10.sp,
-                                color = Color.White
-                            )
-                        }
-                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    PriorityBadge(priority = ticket.priority)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -239,8 +210,9 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
             }
             Spacer(modifier = Modifier.height(8.dp))
             if (ticket.description.isNotEmpty()) {
+                val descripcionLimpia = remember(ticket.description) { cleanDescription(ticket.description) }
                 Text(
-                    text = ticket.description,
+                    text = descripcionLimpia,
                     fontSize = 14.sp,
                     color = Color.Gray,
                     lineHeight = 18.sp
@@ -266,4 +238,21 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
             }
         }
     }
+}
+
+// Mantener consistente con la limpieza usada en detalles
+private fun cleanDescription(description: String): String {
+    return description
+        .lines()
+        .filterNot { line ->
+            val normalized = line.trim().replaceFirst("^[-•\\s]+".toRegex(), "")
+            normalized.equals("Hardware:", ignoreCase = true) ||
+            normalized.startsWith("Dispositivo:", ignoreCase = true) ||
+            normalized.startsWith("S/N:", ignoreCase = true) ||
+            normalized.startsWith("Serie:", ignoreCase = true) ||
+            normalized.startsWith("Serial:", ignoreCase = true)
+        }
+        .joinToString("\n")
+        .replace("\n\n\n", "\n\n")
+        .trim()
 }

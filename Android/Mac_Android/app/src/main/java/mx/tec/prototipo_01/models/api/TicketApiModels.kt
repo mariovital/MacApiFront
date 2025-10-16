@@ -25,8 +25,13 @@ data class TicketItem(
     val ticket_number: String,
     val title: String,
     val description: String?,
+    val priority_justification: String?,
+    val location: String?,
     val client_company: String?,
     val client_contact: String?,
+    val client_email: String?,
+    val client_phone: String?,
+    val client_department: String?,
     val created_at: String?,
     val updated_at: String?,
     val resolved_at: String?,
@@ -155,6 +160,13 @@ data class CreateTicketRequest(
 )
 
 data class CreateTicketResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: TicketItem?
+)
+
+// Detalle de ticket
+data class TicketDetailResponse(
     val success: Boolean,
     val message: String?,
     val data: TicketItem?

@@ -82,6 +82,9 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     var compania by remember { mutableStateOf("") }
     var ubicacion by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
+    // Hardware (opcional)
+    var dispositivo by remember { mutableStateOf("") }
+    var serie by remember { mutableStateOf("") }
     // Catálogos reales desde backend
     var priorities by remember { mutableStateOf(listOf<PriorityDto>()) }
     var categories by remember { mutableStateOf(listOf<CategoryDto>()) }
@@ -348,6 +351,28 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                     )
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // Sección opcional de Hardware
+                    Text("Detalles de hardware (opcional)", style = MaterialTheme.typography.bodySmall)
+                    OutlinedTextField(
+                        value = dispositivo,
+                        onValueChange = { dispositivo = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        placeholder = { Text("Dispositivo / Modelo") }
+                    )
+                    OutlinedTextField(
+                        value = serie,
+                        onValueChange = { serie = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        placeholder = { Text("Número de serie") }
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
@@ -377,9 +402,20 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                                     return@Button
                                 }
 
+                                // Armar descripción final incluyendo hardware si aplica
+                                val fullDescription = buildString {
+                                    if (dispositivo.isNotBlank() || serie.isNotBlank()) {
+                                        appendLine("Hardware:")
+                                        if (dispositivo.isNotBlank()) appendLine("- Dispositivo: $dispositivo")
+                                        if (serie.isNotBlank()) appendLine("- S/N: $serie")
+                                        appendLine()
+                                    }
+                                    append(descripcion.ifBlank { "" })
+                                }
+
                                 val req = CreateTicketRequest(
                                     title = nombre.ifBlank { "Ticket sin título" },
-                                    description = descripcion.ifBlank { "" },
+                                    description = fullDescription,
                                     category_id = categoryId,
                                     priority_id = priorityId,
                                     client_company = compania.ifBlank { null },
@@ -392,6 +428,10 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                                     try {
                                         val resp = RetrofitClient.instance.createTicket(req)
                                         if (resp.isSuccessful && (resp.body()?.success == true)) {
+                                            val returnedLocation = resp.body()?.data?.location
+                                            if ((ubicacion.ifBlank { null }) != returnedLocation) {
+                                                Toast.makeText(context, "Aviso: ubicación guardada difiere: ${'$'}returnedLocation", Toast.LENGTH_LONG).show()
+                                            }
                                             val createdId = resp.body()?.data?.id
                                             // Intentar asignación si se eligió técnico (nota: requiere rol admin)
                                             if (createdId != null && selectedTechnician != null) {

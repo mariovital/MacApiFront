@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 // Data classes for the ticket system
 data class TecnicoTicket(
+    val backendId: Int,
     val id: String,
     val title: String,
     val company: String,
@@ -11,7 +12,14 @@ data class TecnicoTicket(
     var status: TicketStatus, // Changed to var to allow modification
     var priority: String,
     val description: String,
-    val date: String
+    val date: String,
+    val location: String?,
+    val priorityJustification: String?,
+    val clientContact: String? = null,
+    val clientEmail: String? = null,
+    val clientPhone: String? = null,
+    val clientDepartment: String? = null,
+    val categoryName: String? = null
 )
 
 public enum class TicketStatus(val displayName: String, val color: Color) {
