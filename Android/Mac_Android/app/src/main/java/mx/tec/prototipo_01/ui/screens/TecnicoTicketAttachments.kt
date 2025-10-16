@@ -25,6 +25,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import android.os.SystemClock
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.font.FontWeight
@@ -76,7 +77,14 @@ fun TecnicoTicketAttachments(
             CenterAlignedTopAppBar(
                 title = { Text("Adjuntar evidencias", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    val lastBackClick = remember { mutableStateOf(0L) }
+                    IconButton(onClick = {
+                        val now = SystemClock.elapsedRealtime()
+                        if (now - lastBackClick.value > 700) {
+                            lastBackClick.value = now
+                            navController.navigateUp()
+                        }
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás")
                     }
                 }

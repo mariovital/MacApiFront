@@ -78,6 +78,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
+import android.os.SystemClock
 import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.TicketStatus
@@ -147,7 +148,14 @@ fun MesaTicketDetailsReadOnly(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    val lastBackClick = remember { mutableStateOf(0L) }
+                    IconButton(onClick = {
+                        val now = SystemClock.elapsedRealtime()
+                        if (now - lastBackClick.value > 700) {
+                            lastBackClick.value = now
+                            navController.navigateUp()
+                        }
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },

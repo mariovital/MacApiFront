@@ -72,6 +72,10 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
 
     val view = LocalView.current
     val headerColor = Color(0xFF424242)
+    // Mostrar campos de hardware solo si la categoría seleccionada es "Hardware"
+    val isHardwareSelected by remember(selectedCategory) {
+        derivedStateOf { selectedCategory?.name?.contains("hardware", ignoreCase = true) == true }
+    }
 
     SideEffect {
         val window = (view.context as android.app.Activity).window
@@ -144,7 +148,7 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                     // Dropdowns
                     Dropdown(label = "Prioridad", expanded = isPriorityExpanded, onExpandedChange = { isPriorityExpanded = it }, selectedValue = selectedPriority?.name ?: "", options = priorities.map { it.name }, onSelect = { priorityName -> priorities.find { it.name == priorityName }?.let { selectedPriority = it } })
                     Dropdown(label = "Categoría", expanded = isCategoryExpanded, onExpandedChange = { isCategoryExpanded = it }, selectedValue = selectedCategory?.name ?: "", options = categories.map { it.name }, onSelect = { categoryName -> categories.find { it.name == categoryName }?.let { selectedCategory = it } })
-                    Dropdown(label = "Asignar técnico (opcional)", expanded = isTechnicianExpanded, onExpandedChange = { isTechnicianExpanded = it }, selectedValue = selectedTechnician?.let { listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" } } ?: "", options = technicians.map { tech -> listOfNotNull(tech.first_name, tech.last_name).joinToString(" ").ifBlank { tech.username ?: "" } }, onSelect = { techName -> technicians.find { (listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" }) == techName }?.let { selectedTechnician = it } })
+                    Dropdown(label = "Asignar técnico", expanded = isTechnicianExpanded, onExpandedChange = { isTechnicianExpanded = it }, selectedValue = selectedTechnician?.let { listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" } } ?: "", options = technicians.map { tech -> listOfNotNull(tech.first_name, tech.last_name).joinToString(" ").ifBlank { tech.username ?: "" } }, onSelect = { techName -> technicians.find { (listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" }) == techName }?.let { selectedTechnician = it } })
 
                     OutlinedTextField(value = ubicacion, onValueChange = { ubicacion = it }, label = { Text("Ubicación") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp), shape = RoundedCornerShape(8.dp), trailingIcon = { IconButton(onClick = { coroutineScope.launch { mapCoordinates = getCoordinatesFromAddress(context, ubicacion) } }) { Icon(Icons.Default.LocationOn, "Mostrar en mapa") } })
                     mapCoordinates?.let {
@@ -153,14 +157,16 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                     }
                     OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción del problema") }, modifier = Modifier.fillMaxWidth().height(120.dp), shape = RoundedCornerShape(8.dp))
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Hardware (Opcional)", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
-                    OutlinedTextField(value = dispositivo, onValueChange = { dispositivo = it }, label = { Text("Dispositivo") }, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), shape = RoundedCornerShape(8.dp))
-                    OutlinedTextField(value = serie, onValueChange = { serie = it }, label = { Text("Número de Serie") }, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), shape = RoundedCornerShape(8.dp))
+                    if (isHardwareSelected) {
+                        Text("Hardware", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
+                        OutlinedTextField(value = dispositivo, onValueChange = { dispositivo = it }, label = { Text("Dispositivo") }, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp), shape = RoundedCornerShape(8.dp))
+                        OutlinedTextField(value = serie, onValueChange = { serie = it }, label = { Text("Número de Serie") }, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), shape = RoundedCornerShape(8.dp))
+                    }
 
                     Button(onClick = {
                         coroutineScope.launch {
                             val fullDescription = buildString {
-                                if (dispositivo.isNotBlank() || serie.isNotBlank()) {
+                                if (isHardwareSelected && (dispositivo.isNotBlank() || serie.isNotBlank())) {
                                     appendLine("Hardware:")
                                     if (dispositivo.isNotBlank()) appendLine("- Dispositivo: $dispositivo")
                                     if (serie.isNotBlank()) appendLine("- S/N: $serie")

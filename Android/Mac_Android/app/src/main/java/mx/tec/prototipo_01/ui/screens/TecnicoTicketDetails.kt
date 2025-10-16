@@ -80,6 +80,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withTimeoutOrNull
+import android.os.SystemClock
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -197,7 +198,15 @@ fun TecnicoTicketDetails(
             CenterAlignedTopAppBar(
                 title = { Text("Detalles del Ticket", fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimary) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    val lastBackClick = remember { mutableStateOf(0L) }
+                    IconButton(onClick = {
+                        val now = SystemClock.elapsedRealtime()
+                        if (now - lastBackClick.value > 700) {
+                            lastBackClick.value = now
+                            // Usa navigateUp para no hacer pop extra cuando ya no hay back stack
+                            navController.navigateUp()
+                        }
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
                     }
                 },
