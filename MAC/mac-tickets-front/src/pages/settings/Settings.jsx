@@ -30,7 +30,6 @@ import {
   FiMail,
   FiSave,
   FiEdit,
-  FiCamera,
   FiKey,
   FiGlobe,
   FiMoon,
@@ -150,19 +149,11 @@ const Settings = () => {
             <div className="space-y-6 px-6">
               {/* Foto de perfil */}
               <div className="flex items-center space-x-6">
-                <div className="relative">
-                  <Avatar
-                    className="w-20 h-20 bg-blue-500 text-white text-2xl"
-                  >
-                    {getInitials(profile.firstName, profile.lastName)}
-                  </Avatar>
-                  <Button
-                    className="absolute -bottom-1 -right-1 min-w-0 w-8 h-8 p-0 bg-gray-100 hover:bg-gray-200 text-gray-600"
-                    style={{ borderRadius: '50%' }}
-                  >
-                    <FiCamera size={16} />
-                  </Button>
-                </div>
+                <Avatar
+                  className="w-20 h-20 bg-blue-500 text-white text-2xl"
+                >
+                  {getInitials(profile.firstName, profile.lastName)}
+                </Avatar>
                 <div>
                   <Typography variant="h6" className="font-bold">
                     {profile.firstName} {profile.lastName}
