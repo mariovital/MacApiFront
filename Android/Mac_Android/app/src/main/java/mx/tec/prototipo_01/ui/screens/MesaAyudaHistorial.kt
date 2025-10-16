@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +46,11 @@ import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 @Composable
 fun MesaAyudaHistorial(navController: NavController, viewModel: MesaAyudaSharedViewModel) {
     val tickets = viewModel.historyTickets
+
+    // Garantizar que haya datos cargados al entrar
+    LaunchedEffect(Unit) {
+        viewModel.loadTickets()
+    }
 
     Column(
         modifier = Modifier
@@ -234,7 +240,10 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
             }
 
             Button(
-                onClick = { /* TODO: Navigate to ticket details */ },
+                onClick = {
+                    val encoded = java.net.URLEncoder.encode(ticket.id, java.nio.charset.StandardCharsets.UTF_8.toString())
+                    navController.navigate("mesa_ticket_details/$encoded")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF5C6BC0)

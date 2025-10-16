@@ -61,6 +61,19 @@ fun AppNavigation(isDark: Boolean, onThemeChange: () -> Unit) {
                 val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
                 CreateTicketScreen(navController, viewModel)
             }
+            // Detalles solo lectura para Mesa de Ayuda
+            composable("mesa_ticket_details/{id}") { backStackEntry ->
+                val parentEntry = remember(backStackEntry) { navController.getBackStackEntry("mesa_ayuda_home") }
+                val viewModel: MesaAyudaSharedViewModel = viewModel(parentEntry)
+                val ticketId = backStackEntry.arguments?.getString("id")
+                if (ticketId != null) {
+                    MesaTicketDetailsReadOnly(
+                        navController = navController,
+                        viewModel = viewModel,
+                        ticketId = ticketId
+                    )
+                }
+            }
             composable(
                 route = "assign_ticket/{ticketId}",
                 arguments = listOf(navArgument("ticketId") { type = NavType.IntType })

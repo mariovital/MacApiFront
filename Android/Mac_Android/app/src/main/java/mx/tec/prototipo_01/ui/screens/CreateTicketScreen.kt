@@ -210,6 +210,10 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                                         }
                                     }
                                     navController.popBackStack()
+                                    // Intentar refrescar la lista de Mesa de Ayuda si existe en el back stack
+                                    try {
+                                        viewModel.loadTickets()
+                                    } catch (_: Exception) { }
                                 } else {
                                     Toast.makeText(context, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
                                 }
