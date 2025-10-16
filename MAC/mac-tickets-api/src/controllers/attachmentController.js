@@ -47,20 +47,29 @@ export const uploadAttachment = async (req, res) => {
     // Generar nombre único para el archivo
     const fileExtension = path.extname(file.originalname);
     const uniqueFileName = `${uuidv4()}${fileExtension}`;
+    const s3Key = `tickets/${ticketId}/${uniqueFileName}`;
 
     // TODO: Subir a AWS S3
     // Por ahora, simulamos la URL (en producción usarías AWS SDK)
-    const fileUrl = `/uploads/${uniqueFileName}`;
+    const s3Url = `/uploads/${uniqueFileName}`;
+    
+    // Determinar si es imagen
+    const isImage = file.mimetype.startsWith('image/');
     
     // Crear registro en la base de datos
     const attachment = await Attachment.create({
       ticket_id: ticketId,
-      uploaded_by: req.user.id,
-      file_name: file.originalname,
-      file_path: fileUrl,
+      user_id: req.user.id,
+      original_name: file.originalname,
+      file_name: uniqueFileName,
       file_size: file.size,
       file_type: file.mimetype,
-      description: description || null
+      s3_url: s3Url,
+      s3_key: s3Key,
+      is_image: isImage,
+      description: description || null,
+      ip_address: req.ip || req.connection.remoteAddress,
+      user_agent: req.get('user-agent')
     });
 
     // Obtener attachment con relaciones
@@ -135,16 +144,23 @@ export const uploadMultipleAttachments = async (req, res) => {
     for (const file of files) {
       const fileExtension = path.extname(file.originalname);
       const uniqueFileName = `${uuidv4()}${fileExtension}`;
-      const fileUrl = `/uploads/${uniqueFileName}`;
+      const s3Key = `tickets/${ticketId}/${uniqueFileName}`;
+      const s3Url = `/uploads/${uniqueFileName}`;
+      const isImage = file.mimetype.startsWith('image/');
       
       const attachment = await Attachment.create({
         ticket_id: ticketId,
-        uploaded_by: req.user.id,
-        file_name: file.originalname,
-        file_path: fileUrl,
+        user_id: req.user.id,
+        original_name: file.originalname,
+        file_name: uniqueFileName,
         file_size: file.size,
         file_type: file.mimetype,
-        description: description || null
+        s3_url: s3Url,
+        s3_key: s3Key,
+        is_image: isImage,
+        description: description || null,
+        ip_address: req.ip || req.connection.remoteAddress,
+        user_agent: req.get('user-agent')
       });
 
       uploadedAttachments.push(attachment);
@@ -346,12 +362,13 @@ export const downloadAttachment = async (req, res) => {
       success: true,
       message: 'URL de descarga generada',
       data: {
-        file_name: attachment.file_name,
-        file_url: attachment.file_path,
+        file_name: attachment.original_name,
+        file_url: attachment.s3_url,
         file_size: attachment.file_size,
         file_type: attachment.file_type,
+        is_image: attachment.is_image,
         // En producción: signed_url con expiración
-        download_url: `${process.env.API_URL || 'http://localhost:3001'}${attachment.file_path}`
+        download_url: `${process.env.API_URL || 'http://localhost:3001'}${attachment.s3_url}`
       }
     });
 
