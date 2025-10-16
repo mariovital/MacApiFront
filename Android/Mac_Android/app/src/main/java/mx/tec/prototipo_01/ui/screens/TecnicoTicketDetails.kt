@@ -73,9 +73,13 @@ import java.nio.charset.StandardCharsets
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 import org.json.JSONArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -165,15 +169,10 @@ fun TecnicoTicketDetails(
     var geocodeTried by remember(ubicacion) { mutableStateOf(false) }
     var geocodeFailed by remember(ubicacion) { mutableStateOf(false) }
 
-    // Geocodificar la dirección del ticket y actualizar el mapa cuando cambie
+    // Geocodificar con estrategia rápida: caché + carreras en paralelo (device + web) con timeouts cortos
     LaunchedEffect(cleanAddress) {
         if (cleanAddress.isNotBlank() && cleanAddress != "—") {
-            // 1) Intento con Geocoder del dispositivo
-            mapCoordinates = withContext(Dispatchers.IO) { getCoordinatesFromAddress(context, cleanAddress) }
-            // 2) Fallback con Nominatim si falla
-            if (mapCoordinates == null) {
-                mapCoordinates = withContext(Dispatchers.IO) { getCoordinatesFromNominatim(cleanAddress) }
-            }
+            mapCoordinates = geocodeAddressFast(context, cleanAddress)
             geocodeTried = true
             geocodeFailed = mapCoordinates == null
         } else {
@@ -460,41 +459,72 @@ fun TecnicoTicketDetails(
     }
 // Usa StatusBadge y PriorityBadge compartidos en TicketComponents.kt
 
-private fun getCoordinatesFromAddress(context: Context, address: String): LatLng? {
-    return try {
-        val geocoder = Geocoder(context)
-        @Suppress("DEPRECATION")
-        val addresses = geocoder.getFromLocationName(address, 1)
-        if (addresses?.isNotEmpty() == true) {
-            LatLng(addresses[0].latitude, addresses[0].longitude)
-        } else null
-    } catch (e: IOException) {
-        null
+private suspend fun geocodeAddressFast(context: Context, address: String): LatLng? {
+    // 0) caché en memoria
+    GeocodeCache[address]?.let { return it }
+    return coroutineScope {
+        val deviceJob = async(Dispatchers.IO) { deviceGeocode(context, address) }
+        val webJob = async(Dispatchers.IO) { webGeocode(address) }
+
+        // Espera corta al geocoder del dispositivo
+        val deviceFirst = withTimeoutOrNull(1800) { deviceJob.await() }
+        var result = deviceFirst ?: withTimeoutOrNull(2500) { webJob.await() }
+        // Cancela el otro job si sigue vivo
+        if (!deviceJob.isCompleted) deviceJob.cancel()
+        if (!webJob.isCompleted) webJob.cancel()
+
+        // Fallback: intenta con ", México" si no hubo resultado
+        if (result == null) {
+            val alt = "$address, México"
+            val altDevice = withTimeoutOrNull(1200) { deviceGeocode(context, alt) }
+            result = altDevice ?: withTimeoutOrNull(2000) { webGeocode(alt) }
+        }
+
+        result?.also { GeocodeCache[address] = it }
     }
 }
 
-private fun getCoordinatesFromNominatim(address: String): LatLng? {
-    return try {
-        val urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + URLEncoder.encode(address, "UTF-8") + "&limit=1&addressdetails=0"
-        val url = URL(urlStr)
-        val conn = (url.openConnection() as HttpURLConnection).apply {
-            requestMethod = "GET"
-            setRequestProperty("User-Agent", "MAC-Tickets/1.0 (android-app)")
-            connectTimeout = 8000
-            readTimeout = 8000
+private fun deviceGeocode(context: Context, address: String): LatLng? = try {
+    val geocoder = Geocoder(context, Locale("es", "MX"))
+    @Suppress("DEPRECATION")
+    val addresses = geocoder.getFromLocationName(address, 1)
+    if (addresses?.isNotEmpty() == true) LatLng(addresses[0].latitude, addresses[0].longitude) else null
+} catch (_: Exception) { null }
+
+private fun webGeocode(address: String): LatLng? = try {
+    val urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + URLEncoder.encode(address, "UTF-8") + "&limit=1&addressdetails=0&countrycodes=mx"
+    val url = URL(urlStr)
+    val conn = (url.openConnection() as HttpURLConnection).apply {
+        requestMethod = "GET"
+        setRequestProperty("User-Agent", "MAC-Tickets/1.0 (android-app)")
+        setRequestProperty("Accept-Language", "es-MX,es;q=0.9")
+        connectTimeout = 3500
+        readTimeout = 3500
+    }
+    conn.inputStream.use { stream ->
+        val body = stream.bufferedReader().readText()
+        val arr = JSONArray(body)
+        if (arr.length() > 0) {
+            val obj = arr.getJSONObject(0)
+            val lat = obj.optString("lat").toDoubleOrNull()
+            val lon = obj.optString("lon").toDoubleOrNull()
+            if (lat != null && lon != null) LatLng(lat, lon) else null
+        } else null
+    }
+} catch (_: Exception) { null }
+
+private object GeocodeCache {
+    private val map = LinkedHashMap<String, LatLng>(64, 0.75f, true)
+    private const val MAX = 100
+    operator fun get(key: String): LatLng? = synchronized(map) { map[key] }
+    operator fun set(key: String, value: LatLng) {
+        synchronized(map) {
+            map[key] = value
+            if (map.size > MAX) {
+                val firstKey = map.entries.firstOrNull()?.key
+                if (firstKey != null) map.remove(firstKey)
+            }
         }
-        conn.inputStream.use { stream ->
-            val body = stream.bufferedReader().readText()
-            val arr = JSONArray(body)
-            if (arr.length() > 0) {
-                val obj = arr.getJSONObject(0)
-                val lat = obj.getString("lat").toDoubleOrNull()
-                val lon = obj.getString("lon").toDoubleOrNull()
-                if (lat != null && lon != null) LatLng(lat, lon) else null
-            } else null
-        }
-    } catch (_: Exception) {
-        null
     }
 }
 
@@ -514,12 +544,13 @@ private fun openInMaps(context: Context, address: String) {
 
 private fun sanitizeAddress(raw: String): String {
     if (raw.isBlank()) return raw
-    val firstLine = raw.lineSequence().firstOrNull()?.trim() ?: raw.trim()
-    val cleaned = firstLine
+    // Mantener toda la dirección en una sola línea con más contexto para mejorar geocodificación
+    val cleaned = raw.trim()
         .removePrefix("Ubicación:")
         .removePrefix("Ubicacion:")
         .removePrefix("Location:")
         .trim()
-        .replace(Regex("\n+"), " ")
+        .replace(Regex("[\n\r]+"), " ")
+        .replace("  ", " ")
     return cleaned
 }

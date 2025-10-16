@@ -70,10 +70,14 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 import org.json.JSONArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withTimeoutOrNull
 import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.TicketStatus
@@ -108,10 +112,7 @@ fun MesaTicketDetailsReadOnly(
 
     LaunchedEffect(cleanAddress) {
         if (cleanAddress.isNotBlank() && cleanAddress != "—") {
-            mapCoordinates = withContext(Dispatchers.IO) { getCoordinatesFromAddress(context, cleanAddress) }
-            if (mapCoordinates == null) {
-                mapCoordinates = withContext(Dispatchers.IO) { getCoordinatesFromNominatim(cleanAddress) }
-            }
+            mapCoordinates = geocodeAddressFastMesa(context, cleanAddress)
             geocodeTried = true
             geocodeFailed = mapCoordinates == null
         } else {
@@ -370,50 +371,72 @@ fun MesaTicketDetailsReadOnly(
 }
 
 private fun sanitizeAddress(address: String): String {
-    return address.replace("-", " ")
+    if (address.isBlank()) return address
+    return address.trim()
+        .removePrefix("Ubicación:")
+        .removePrefix("Ubicacion:")
+        .removePrefix("Location:")
+        .trim()
+        .replace(Regex("[\n\r]+"), " ")
+        .replace("  ", " ")
 }
 
-private fun getCoordinatesFromAddress(context: Context, address: String): LatLng? {
-    return try {
-        val geocoder = Geocoder(context)
-        @Suppress("DEPRECATION")
-        val addresses = geocoder.getFromLocationName(address, 1)
-        if (addresses?.isNotEmpty() == true) {
-            LatLng(addresses[0].latitude, addresses[0].longitude)
-        } else {
-            null
+private suspend fun geocodeAddressFastMesa(context: Context, address: String): LatLng? {
+    GeocodeCacheMesa[address]?.let { return it }
+    return coroutineScope {
+        val deviceJob = async(Dispatchers.IO) { deviceGeocodeMesa(context, address) }
+        val webJob = async(Dispatchers.IO) { webGeocodeMesa(address) }
+        val deviceFirst = withTimeoutOrNull(1800) { deviceJob.await() }
+        var result = deviceFirst ?: withTimeoutOrNull(2500) { webJob.await() }
+        if (!deviceJob.isCompleted) deviceJob.cancel()
+        if (!webJob.isCompleted) webJob.cancel()
+        if (result == null) {
+            val alt = "$address, México"
+            val altDevice = withTimeoutOrNull(1200) { deviceGeocodeMesa(context, alt) }
+            result = altDevice ?: withTimeoutOrNull(2000) { webGeocodeMesa(alt) }
         }
-    } catch (e: IOException) {
-        null
+        result?.also { GeocodeCacheMesa[address] = it }
     }
 }
 
-private fun getCoordinatesFromNominatim(address: String): LatLng? {
-    return try {
-        val url = URL("https://nominatim.openstreetmap.org/search?q=${URLEncoder.encode(address, "UTF-8")}&format=json&limit=1")
-        val connection = url.openConnection() as HttpURLConnection
-        connection.requestMethod = "GET"
-        connection.connect()
+private fun deviceGeocodeMesa(context: Context, address: String): LatLng? = try {
+    val geocoder = Geocoder(context, Locale("es", "MX"))
+    @Suppress("DEPRECATION")
+    val addresses = geocoder.getFromLocationName(address, 1)
+    if (addresses?.isNotEmpty() == true) LatLng(addresses[0].latitude, addresses[0].longitude) else null
+} catch (_: Exception) { null }
 
-        val responseCode = connection.responseCode
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            val reader = connection.inputStream.bufferedReader()
-            val response = reader.readText()
-            reader.close()
-            val jsonArray = JSONArray(response)
-            if (jsonArray.length() > 0) {
-                val jsonObject = jsonArray.getJSONObject(0)
-                val lat = jsonObject.getDouble("lat")
-                val lon = jsonObject.getDouble("lon")
-                LatLng(lat, lon)
-            } else {
-                null
+private fun webGeocodeMesa(address: String): LatLng? = try {
+    val url = URL("https://nominatim.openstreetmap.org/search?q=${URLEncoder.encode(address, "UTF-8")}&format=json&limit=1&addressdetails=0&countrycodes=mx")
+    val connection = (url.openConnection() as HttpURLConnection).apply {
+        requestMethod = "GET"
+        setRequestProperty("User-Agent", "MAC-Tickets/1.0 (android-app)")
+        setRequestProperty("Accept-Language", "es-MX,es;q=0.9")
+        connectTimeout = 3500
+        readTimeout = 3500
+    }
+    val response = connection.inputStream.bufferedReader().use { it.readText() }
+    val jsonArray = JSONArray(response)
+    if (jsonArray.length() > 0) {
+        val obj = jsonArray.getJSONObject(0)
+        val lat = obj.optString("lat").toDoubleOrNull()
+        val lon = obj.optString("lon").toDoubleOrNull()
+        if (lat != null && lon != null) LatLng(lat, lon) else null
+    } else null
+} catch (_: Exception) { null }
+
+private object GeocodeCacheMesa {
+    private val map = LinkedHashMap<String, LatLng>(64, 0.75f, true)
+    private const val MAX = 100
+    operator fun get(key: String): LatLng? = synchronized(map) { map[key] }
+    operator fun set(key: String, value: LatLng) {
+        synchronized(map) {
+            map[key] = value
+            if (map.size > MAX) {
+                val firstKey = map.entries.firstOrNull()?.key
+                if (firstKey != null) map.remove(firstKey)
             }
-        } else {
-            null
         }
-    } catch (e: Exception) {
-        null
     }
 }
 

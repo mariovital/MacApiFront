@@ -12,14 +12,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +41,11 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
+import coil.compose.AsyncImage
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,6 +62,7 @@ fun TecnicoTicketAttachments(
     var loading by remember { mutableStateOf(false) }
     var items by remember { mutableStateOf(listOf<TicketAttachment>()) }
     val ctx = LocalContext.current
+    var previewImageUrl by remember { mutableStateOf<String?>(null) }
 
     // Mapeo ticket_number -> backend id no disponible aquí; pedimos lista general y filtramos por ticket_number
     // Para simplificar, exigen backendId; si no lo tenemos, mostramos instrucción.
@@ -118,17 +129,64 @@ fun TecnicoTicketAttachments(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Listado de adjuntos
+            // Listado de adjuntos con miniaturas
             if (loading) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
             LazyColumn {
                 items(items) { att ->
+                    val isImage = att.is_image || att.file_type.startsWith("image/")
+                    val fileUrl = absoluteUrl(att.s3_url)
                     ListItem(
+                        leadingContent = {
+                            if (isImage) {
+                                AsyncImage(
+                                    model = fileUrl,
+                                    contentDescription = "miniatura",
+                                    modifier = Modifier.size(48.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else if (att.file_type == "application/pdf" || att.original_name.endsWith(".pdf", true)) {
+                                Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color(0xFFD32F2F))
+                            } else {
+                                Icon(Icons.Default.AttachFile, contentDescription = null)
+                            }
+                        },
                         headlineContent = { Text(att.original_name) },
-                        supportingContent = { Text("${att.file_type} • ${(att.file_size / 1024)} KB") }
+                        supportingContent = { Text("${att.file_type} • ${(att.file_size / 1024)} KB") },
+                        modifier = Modifier.clickable {
+                            if (isImage) {
+                                previewImageUrl = fileUrl
+                            } else {
+                                // Abrir con visor externo (PDF o genérico)
+                                openExternal(ctx, fileUrl, att.file_type)
+                            }
+                        }
                     )
                     Divider()
+                }
+            }
+
+            // Diálogo de previsualización de imagen
+            val currentPreview = previewImageUrl
+            if (currentPreview != null) {
+                Dialog(onDismissRequest = { previewImageUrl = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                    Surface(color = Color.Black.copy(alpha = 0.8f)) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)) {
+                            AsyncImage(
+                                model = currentPreview,
+                                contentDescription = "vista previa",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(400.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            OutlinedButton(onClick = { previewImageUrl = null }) { Text("Cerrar") }
+                        }
+                    }
                 }
             }
         }
@@ -188,6 +246,27 @@ private suspend fun refreshList(ticketNumber: String?, onLoaded: (List<TicketAtt
             withContext(Dispatchers.Main) { onLoaded(res.body()?.data ?: emptyList()) }
         }
     }
+}
+
+private fun absoluteUrl(pathOrUrl: String): String {
+    return if (pathOrUrl.startsWith("http")) pathOrUrl else RetrofitClientBase() + pathOrUrl.removePrefix("/")
+}
+
+private fun RetrofitClientBase(): String {
+    // BASE_URL en RetrofitClient termina con /api/
+    // Los archivos se exponen en /uploads, así que base debe ser http://10.0.2.2:3001/
+    return "http://10.0.2.2:3001/"
+}
+
+private fun openExternal(ctx: android.content.Context, url: String, mime: String?) {
+    try {
+        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+            data = android.net.Uri.parse(url)
+            if (!mime.isNullOrBlank()) setDataAndType(android.net.Uri.parse(url), mime)
+            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        ctx.startActivity(intent)
+    } catch (_: Exception) { }
 }
 
 private fun createTempFileFromUri(cr: ContentResolver, uri: Uri): File? {

@@ -1,6 +1,6 @@
 // /controllers/attachmentController.js - Lógica para manejo de archivos adjuntos
 
-import { Ticket, Attachment, User } from '../models/index.js';
+import { Ticket, TicketAttachment, User } from '../models/index.js';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 
@@ -44,27 +44,28 @@ export const uploadAttachment = async (req, res) => {
       });
     }
 
-    // Generar nombre único para el archivo
-    const fileExtension = path.extname(file.originalname);
-    const uniqueFileName = `${uuidv4()}${fileExtension}`;
+    // Usar nombre generado por multer (file.filename) y exponer como URL estática
+    const storedName = file.filename || `${uuidv4()}${path.extname(file.originalname)}`;
+    const fileUrl = `/uploads/${storedName}`;
 
-    // TODO: Subir a AWS S3
-    // Por ahora, simulamos la URL (en producción usarías AWS SDK)
-    const fileUrl = `/uploads/${uniqueFileName}`;
-    
-    // Crear registro en la base de datos
-    const attachment = await Attachment.create({
+    // Crear registro en la base de datos (alineado al modelo TicketAttachment)
+    const attachment = await TicketAttachment.create({
       ticket_id: ticketId,
-      uploaded_by: req.user.id,
-      file_name: file.originalname,
-      file_path: fileUrl,
+      user_id: req.user.id,
+      original_name: file.originalname,
+      file_name: storedName,
       file_size: file.size,
       file_type: file.mimetype,
-      description: description || null
+      s3_url: fileUrl,   // usando almacenamiento local expuesto como /uploads
+      s3_key: storedName,
+      is_image: (file.mimetype || '').startsWith('image/'),
+      description: description || null,
+      ip_address: req.ip || null,
+      user_agent: req.get('user-agent') || null
     });
 
     // Obtener attachment con relaciones
-    const attachmentWithUser = await Attachment.findByPk(attachment.id, {
+    const attachmentWithUser = await TicketAttachment.findByPk(attachment.id, {
       include: [
         {
           model: User,
@@ -98,7 +99,7 @@ export const uploadMultipleAttachments = async (req, res) => {
   try {
     const { ticketId } = req.params;
     const { description } = req.body;
-    const files = req.files;
+  const files = req.files;
 
     if (!files || files.length === 0) {
       return res.status(400).json({
@@ -130,28 +131,31 @@ export const uploadMultipleAttachments = async (req, res) => {
     }
 
     // Procesar cada archivo
-    const uploadedAttachments = [];
+  const uploadedAttachments = [];
     
     for (const file of files) {
-      const fileExtension = path.extname(file.originalname);
-      const uniqueFileName = `${uuidv4()}${fileExtension}`;
-      const fileUrl = `/uploads/${uniqueFileName}`;
-      
-      const attachment = await Attachment.create({
+      const storedName = file.filename || `${uuidv4()}${path.extname(file.originalname)}`;
+      const fileUrl = `/uploads/${storedName}`;
+      const attachment = await TicketAttachment.create({
         ticket_id: ticketId,
-        uploaded_by: req.user.id,
-        file_name: file.originalname,
-        file_path: fileUrl,
+        user_id: req.user.id,
+        original_name: file.originalname,
+        file_name: storedName,
         file_size: file.size,
         file_type: file.mimetype,
-        description: description || null
+        s3_url: fileUrl,
+        s3_key: storedName,
+        is_image: (file.mimetype || '').startsWith('image/'),
+        description: description || null,
+        ip_address: req.ip || null,
+        user_agent: req.get('user-agent') || null
       });
 
       uploadedAttachments.push(attachment);
     }
 
     // Obtener attachments con relaciones
-    const attachmentsWithUser = await Attachment.findAll({
+    const attachmentsWithUser = await TicketAttachment.findAll({
       where: {
         id: uploadedAttachments.map(a => a.id)
       },
@@ -210,7 +214,7 @@ export const getTicketAttachments = async (req, res) => {
       });
     }
 
-    const attachments = await Attachment.findAll({
+    const attachments = await TicketAttachment.findAll({
       where: {
         ticket_id: ticketId,
         deleted_at: null
@@ -225,14 +229,11 @@ export const getTicketAttachments = async (req, res) => {
       order: [['created_at', 'DESC']]
     });
 
+    // Devolver lista directa para alinearse con Android (AttachmentListResponse.data = List)
     res.status(200).json({
       success: true,
       message: 'Archivos obtenidos exitosamente',
-      data: {
-        ticket_id: ticketId,
-        count: attachments.length,
-        attachments: attachments
-      }
+      data: attachments
     });
 
   } catch (error) {
@@ -252,7 +253,7 @@ export const getAttachmentById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const attachment = await Attachment.findByPk(id, {
+  const attachment = await TicketAttachment.findByPk(id, {
       include: [
         {
           model: User,
@@ -310,7 +311,7 @@ export const downloadAttachment = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const attachment = await Attachment.findByPk(id, {
+  const attachment = await TicketAttachment.findByPk(id, {
       include: [
         {
           model: Ticket,
@@ -342,16 +343,16 @@ export const downloadAttachment = async (req, res) => {
 
     // TODO: En producción, generar URL firmada de S3 o servir desde S3
     // Por ahora, retornamos la información del archivo
-    res.status(200).json({
+  res.status(200).json({
       success: true,
       message: 'URL de descarga generada',
       data: {
-        file_name: attachment.file_name,
-        file_url: attachment.file_path,
+    file_name: attachment.file_name,
+    file_url: attachment.s3_url,
         file_size: attachment.file_size,
         file_type: attachment.file_type,
         // En producción: signed_url con expiración
-        download_url: `${process.env.API_URL || 'http://localhost:3001'}${attachment.file_path}`
+    download_url: `${process.env.API_URL || 'http://localhost:3001'}${attachment.s3_url}`
       }
     });
 
@@ -372,7 +373,7 @@ export const deleteAttachment = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const attachment = await Attachment.findByPk(id, {
+  const attachment = await TicketAttachment.findByPk(id, {
       include: [
         {
           model: Ticket,
