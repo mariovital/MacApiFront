@@ -96,17 +96,24 @@ const Sidebar = ({ collapsed, onToggle }) => {
       <div className="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-700">
         {!collapsed ? (
           <div className="text-center">
-            {/* TODO: Agregar logo de MAC Computadoras */}
-            <div className="w-12 h-12 bg-[#E31E24] rounded-xl flex items-center justify-center mx-auto mb-2">
-              <span className="font-bold text-white text-xl">M</span>
+            <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-2 p-2 shadow-md">
+              <img 
+                src="/maccomputadoras_logo.png" 
+                alt="MAC Computadoras" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <span className="font-bold text-gray-900 dark:text-white text-sm">
               MAC Computadoras
             </span>
           </div>
         ) : (
-          <div className="w-10 h-10 bg-[#E31E24] rounded-xl flex items-center justify-center">
-            <span className="font-bold text-white text-lg">M</span>
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-md">
+            <img 
+              src="/maccomputadoras_logo.png" 
+              alt="MAC" 
+              className="w-full h-full object-contain"
+            />
           </div>
         )}
       </div>

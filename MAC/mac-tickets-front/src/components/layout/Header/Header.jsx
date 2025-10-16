@@ -70,8 +70,12 @@ const Header = ({ onMenuClick }) => {
 
         {/* Logo mobile */}
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-[#E31E24] rounded-lg flex items-center justify-center">
-            <span className="font-bold text-white text-sm">M</span>
+          <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm">
+            <img 
+              src="/maccomputadoras_logo.png" 
+              alt="MAC" 
+              className="w-full h-full object-contain"
+            />
           </div>
           <span className="ml-2 font-bold text-gray-900 dark:text-white text-sm">
             MAC
