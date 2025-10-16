@@ -119,7 +119,6 @@ class TecnicoSharedViewModel : ViewModel() {
     fun closeTicket(ticketId: String) {
         val ticket = pendingTickets.find { it.id == ticketId } ?: return
         ticket.status = TicketStatus.COMPLETADO
-        ticket.priority = TicketPriority.Completado.displayName
         pendingTickets.remove(ticket)
         historyTickets.add(0, ticket)
     }

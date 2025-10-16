@@ -32,13 +32,13 @@ fun StatusBadge(status: String) {
 @Composable
 fun PriorityBadge(priority: String) {
     val priorityEnum = remember(priority) { TicketPriority.values().find { it.displayName.equals(priority, ignoreCase = true) } }
-    if (priorityEnum != null) {
-        Box(
-            modifier = Modifier
-                .background(priorityEnum.color, RoundedCornerShape(8.dp))
-                .padding(horizontal = 10.dp, vertical = 4.dp)
-        ) {
-            Text(priorityEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
-        }
+    val color = priorityEnum?.color ?: Color(0xFF69696E)
+    val label = priorityEnum?.displayName ?: (priority.ifBlank { "N/A" })
+    Box(
+        modifier = Modifier
+            .background(color, RoundedCornerShape(8.dp))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Text(label, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
     }
 }

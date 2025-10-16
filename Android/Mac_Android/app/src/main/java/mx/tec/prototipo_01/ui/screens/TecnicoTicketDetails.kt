@@ -208,20 +208,13 @@ fun TecnicoTicketDetails(
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Prioridad:", color = Color.Gray, fontSize = 14.sp)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                PriorityBadge(priority = ticket.priority)
-                            }
+                            // Prioridad ya se muestra en el encabezado; se omite aquí para evitar duplicado
                             Spacer(modifier = Modifier.height(8.dp))
                             if (!ticket.categoryName.isNullOrBlank()) {
                                 Text("Categoría: ${ticket.categoryName}", color = Color.Gray, fontSize = 14.sp)
                             }
                             if (!ticket.clientDepartment.isNullOrBlank()) {
                                 Text("Departamento: ${ticket.clientDepartment}", color = Color.Gray, fontSize = 14.sp)
-                            }
-                            if (!ticket.clientContact.isNullOrBlank()) {
-                                Text("Contacto: ${ticket.clientContact}", color = Color.Gray, fontSize = 14.sp)
                             }
                             if (!ticket.clientEmail.isNullOrBlank()) {
                                 Text("Email: ${ticket.clientEmail}", color = Color.Gray, fontSize = 14.sp)
@@ -368,12 +361,6 @@ fun TecnicoTicketDetails(
                 }
             }
         }
-        return sanitize(device) to sanitize(serial)
-    }
-    
-    private fun sanitize(value: String?): String? {
-        val v = value?.trim()?.removePrefix("$")?.removePrefix("{")?.removeSuffix("}")?.trim()
-        // Si originalmente era un placeholder ($algo) o quedó vacío, regresar null
-        return if (value == null) null else if (value.startsWith("$") || v.isNullOrBlank()) null else value.trim()
+        return device to serial
     }
 // Usa StatusBadge y PriorityBadge compartidos en TicketComponents.kt

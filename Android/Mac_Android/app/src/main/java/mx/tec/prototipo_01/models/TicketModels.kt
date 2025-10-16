@@ -31,7 +31,8 @@ public enum class TicketStatus(val displayName: String, val color: Color) {
 
 enum class TicketPriority(val displayName: String, val color: Color) {
     NA("N/A", Color(0xFF69696E)),
-    Activo("Activo", Color(0xFF1EC40A)),
-    Completado("Completado", Color(0xFFF50D0D)),
-    Rechazado("Rechazado", Color(0xFFD32F2F))
+    Baja("Baja", Color(0xFF4CAF50)),
+    Media("Media", Color(0xFFFF9800)),
+    Alta("Alta", Color(0xFFFF5722)),
+    Crítica("Crítica", Color(0xFFF44336))
 }

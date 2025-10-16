@@ -156,7 +156,8 @@ data class CreateTicketRequest(
     val client_phone: String? = null,
     val client_department: String? = null,
     val location: String? = null,
-    val priority_justification: String? = null
+    val priority_justification: String? = null,
+    val technician_id: Int? = null
 )
 
 data class CreateTicketResponse(

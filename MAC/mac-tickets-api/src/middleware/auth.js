@@ -53,10 +53,16 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     // 4. Determinar rol del usuario
+    // Preferir el nombre del rol desde la relación para evitar depender de IDs fijos
     let roleName = 'unknown';
-    if (user.role_id === 1) roleName = 'admin';
-    else if (user.role_id === 2) roleName = 'tecnico';
-    else if (user.role_id === 3) roleName = 'mesa_trabajo';
+    if (user.role && user.role.name) {
+      roleName = String(user.role.name).toLowerCase();
+    } else {
+      // Fallback por IDs conocidos si no viene la relación
+      if (user.role_id === 1) roleName = 'admin';
+      else if (user.role_id === 2) roleName = 'tecnico';
+      else if (user.role_id === 3) roleName = 'mesa_trabajo';
+    }
 
     // 5. Adjuntar usuario al request
     req.user = {

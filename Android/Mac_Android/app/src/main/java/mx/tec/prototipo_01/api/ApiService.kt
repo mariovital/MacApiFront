@@ -98,13 +98,13 @@ interface ApiService {
     // =====================================================================
     // CATÁLOGOS
     // =====================================================================
-    @GET("categories")
+    @GET("catalog/categories")
     suspend fun getCategories(): Response<CategoriesResponse>
 
-    @GET("priorities")
+    @GET("catalog/priorities")
     suspend fun getPriorities(): Response<PrioritiesResponse>
 
-    @GET("technicians")
+    @GET("catalog/technicians")
     suspend fun getTechnicians(): Response<TechniciansResponse>
 
     @POST("tickets/{id}/assign")

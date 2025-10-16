@@ -105,10 +105,26 @@ export const createTicket = async (req, res) => {
       user_agent: req.headers['user-agent']
     };
 
-    const newTicket = await ticketService.createTicket(
+    let newTicket = await ticketService.createTicket(
       ticketData,
       req.user.id
     );
+
+    // Si viene technician_id en el body, intentar asignar inmediatamente
+    const technician_id = req.body?.technician_id;
+    if (technician_id) {
+      try {
+        newTicket = await ticketService.assignTicket(
+          newTicket.id,
+          technician_id,
+          req.user.id,
+          req.user.role
+        );
+      } catch (assignErr) {
+        // No bloquear la creación por fallo de asignación; responder con 201 y mensaje informativo
+        console.warn('Advertencia: ticket creado pero no asignado:', assignErr?.message || assignErr);
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -271,7 +287,12 @@ export const assignTicket = async (req, res) => {
       });
     }
 
-    if (error.message.includes('Solo administradores') || error.message.includes('no es un técnico')) {
+    if (
+      error.message.includes('Solo administradores') ||
+      error.message.includes('no es un técnico') ||
+      error.message.includes('Permisos') ||
+      error.message.includes('No tienes permiso')
+    ) {
       return res.status(403).json({
         success: false,
         message: error.message
