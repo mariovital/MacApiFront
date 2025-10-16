@@ -132,8 +132,12 @@ const Login = () => {
                   <div className="relative z-10">
                     {/* Logo */}
                     <div className="mb-12">
-                      <div className="w-24 h-24 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-xl transform hover:scale-105 transition-transform">
-                        <span className="text-[#E31E24] font-black text-4xl">M</span>
+                      <div className="w-32 h-32 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-xl transform hover:scale-105 transition-transform p-4">
+                        <img 
+                          src="/maccomputadoras_logo.png" 
+                          alt="MAC Computadoras" 
+                          className="w-full h-full object-contain"
+                        />
                       </div>
                       <Typography variant="h3" className="text-white font-black mb-2">
                         MAC Computadoras
@@ -410,7 +414,7 @@ const Login = () => {
                           Email: admin@maccomputadoras.com
                         </Typography>
                         <Typography variant="caption" className="text-blue-700 dark:text-blue-400 block font-mono">
-                          Password: admin123
+                          Password: demo123
                         </Typography>
                       </div>
                     </div>
