@@ -51,6 +51,10 @@ TicketAttachment.belongsTo(Ticket, { foreignKey: 'ticket_id', as: 'ticket' });
 User.hasMany(TicketAttachment, { foreignKey: 'user_id', as: 'uploadedAttachments' });
 TicketAttachment.belongsTo(User, { foreignKey: 'user_id', as: 'uploader' });
 
+// User <-> TicketAttachment (quien elimina - soft delete)
+User.hasMany(TicketAttachment, { foreignKey: 'deleted_by', as: 'deletedAttachments' });
+TicketAttachment.belongsTo(User, { foreignKey: 'deleted_by', as: 'deleter' });
+
 // =====================================================================
 // EXPORTAR MODELOS Y SEQUELIZE
 // =====================================================================
@@ -78,6 +82,7 @@ export {
   Priority,
   TicketStatus,
   Ticket,
-  TicketAttachment
+  TicketAttachment,
+  TicketAttachment as Attachment // Alias para facilitar el uso
 };
 

@@ -44,24 +44,23 @@ export const uploadAttachment = async (req, res) => {
       });
     }
 
-    // Usar nombre generado por multer (file.filename) y exponer como URL estática
-    const storedName = file.filename || `${uuidv4()}${path.extname(file.originalname)}`;
-    const fileUrl = `/uploads/${storedName}`;
+    // Generar nombre único para el archivo
+    const fileExtension = path.extname(file.originalname);
+    const uniqueFileName = `${uuidv4()}${fileExtension}`;
 
-    // Crear registro en la base de datos (alineado al modelo TicketAttachment)
-    const attachment = await TicketAttachment.create({
+    // TODO: Subir a AWS S3
+    // Por ahora, simulamos la URL (en producción usarías AWS SDK)
+    const fileUrl = `/uploads/${uniqueFileName}`;
+    
+    // Crear registro en la base de datos
+    const attachment = await Attachment.create({
       ticket_id: ticketId,
-      user_id: req.user.id,
-      original_name: file.originalname,
-      file_name: storedName,
+      uploaded_by: req.user.id,
+      file_name: file.originalname,
+      file_path: fileUrl,
       file_size: file.size,
       file_type: file.mimetype,
-      s3_url: fileUrl,   // usando almacenamiento local expuesto como /uploads
-      s3_key: storedName,
-      is_image: (file.mimetype || '').startsWith('image/'),
-      description: description || null,
-      ip_address: req.ip || null,
-      user_agent: req.get('user-agent') || null
+      description: description || null
     });
 
     // Obtener attachment con relaciones
@@ -134,21 +133,18 @@ export const uploadMultipleAttachments = async (req, res) => {
   const uploadedAttachments = [];
     
     for (const file of files) {
-      const storedName = file.filename || `${uuidv4()}${path.extname(file.originalname)}`;
-      const fileUrl = `/uploads/${storedName}`;
-      const attachment = await TicketAttachment.create({
+      const fileExtension = path.extname(file.originalname);
+      const uniqueFileName = `${uuidv4()}${fileExtension}`;
+      const fileUrl = `/uploads/${uniqueFileName}`;
+      
+      const attachment = await Attachment.create({
         ticket_id: ticketId,
-        user_id: req.user.id,
-        original_name: file.originalname,
-        file_name: storedName,
+        uploaded_by: req.user.id,
+        file_name: file.originalname,
+        file_path: fileUrl,
         file_size: file.size,
         file_type: file.mimetype,
-        s3_url: fileUrl,
-        s3_key: storedName,
-        is_image: (file.mimetype || '').startsWith('image/'),
-        description: description || null,
-        ip_address: req.ip || null,
-        user_agent: req.get('user-agent') || null
+        description: description || null
       });
 
       uploadedAttachments.push(attachment);
@@ -347,12 +343,13 @@ export const downloadAttachment = async (req, res) => {
       success: true,
       message: 'URL de descarga generada',
       data: {
-    file_name: attachment.file_name,
-    file_url: attachment.s3_url,
+        file_name: attachment.file_name,
+        file_url: attachment.file_path,
         file_size: attachment.file_size,
         file_type: attachment.file_type,
+        is_image: attachment.is_image,
         // En producción: signed_url con expiración
-    download_url: `${process.env.API_URL || 'http://localhost:3001'}${attachment.s3_url}`
+        download_url: `${process.env.API_URL || 'http://localhost:3001'}${attachment.file_path}`
       }
     });
 

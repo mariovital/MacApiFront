@@ -165,7 +165,8 @@ const TicketList = () => {
           {filteredTickets.map((ticket) => (
             <Card 
               key={ticket.id}
-              className="shadow-lg hover:shadow-xl transition-shadow"
+              className="shadow-lg hover:shadow-xl transition-shadow cursor-pointer"
+              onClick={() => navigate(`/tickets/${ticket.id}`)}
               sx={{ 
                 borderRadius: '20px',
                 overflow: 'visible'
@@ -294,6 +295,7 @@ const TicketList = () => {
                         ...selectedTechnician,
                         [ticket.id]: e.target.value
                       })}
+                      onClick={(e) => e.stopPropagation()}
                       displayEmpty
                       disabled={ticket.assigned_to !== null}
                       sx={{
@@ -318,7 +320,10 @@ const TicketList = () => {
                   <Button
                     fullWidth
                     variant="contained"
-                    onClick={() => handleAcceptTicket(ticket.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAcceptTicket(ticket.id);
+                    }}
                     disabled={!selectedTechnician[ticket.id] || ticket.assigned_to !== null}
                     sx={{
                       backgroundColor: '#4F46E5',
