@@ -1,5 +1,9 @@
 # 📚 Documentación de Deployment AWS - MAC Tickets
 
+> **🎓 ¿Estás usando AWS Academy?** → **[GUÍA ESPECÍFICA PARA AWS ACADEMY](./01-GUIA-AWS-ACADEMY.md)** (sin AWS CLI)
+>
+> **💼 ¿Tienes cuenta AWS normal?** → **[GUÍA COMPLETA AWS](./01-GUIA-COMPLETA-AWS.md)** (con AWS CLI)
+
 Documentación completa para desplegar el sistema MAC Tickets en AWS.
 
 ---
@@ -8,8 +12,19 @@ Documentación completa para desplegar el sistema MAC Tickets en AWS.
 
 ### 📘 Guías Principales
 
-1. **[01-GUIA-COMPLETA-AWS.md](01-GUIA-COMPLETA-AWS.md)**
-   - ✅ Guía paso a paso completa
+1. **[01-GUIA-AWS-ACADEMY.md](01-GUIA-AWS-ACADEMY.md)** 🎓 **NUEVO**
+   - ✅ Específica para **AWS Academy** (entorno educativo)
+   - ✅ **Sin AWS CLI** - Todo por consola web
+   - ✅ Configuración de RDS, EC2, S3
+   - ✅ Credenciales temporales (3-4 horas)
+   - ✅ Sin dominio personalizado (solo IPs)
+   - ✅ Testing y troubleshooting
+   - ⏱️ **Tiempo estimado**: 2-3 horas para setup completo
+   - 📊 **Nivel**: Principiante
+   - 💰 **Costo**: $0 (gratis con Academy)
+
+2. **[01-GUIA-COMPLETA-AWS.md](01-GUIA-COMPLETA-AWS.md)**
+   - ✅ Guía paso a paso completa para **AWS normal**
    - ✅ Configuración de RDS, EC2, S3, CloudFront
    - ✅ Dominio y SSL
    - ✅ Variables de entorno
