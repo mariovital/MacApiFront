@@ -160,7 +160,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900">
       {/* Header estilo Figma */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 dark:border-gray-700 px-6 py-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">
           <div>
             <Typography variant="h4" className="font-bold text-gray-900 dark:text-white">
@@ -224,7 +224,7 @@ const Dashboard = () => {
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 dark:bg-blue-900/30 rounded-xl">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
                   <FiTag className="text-blue-600 dark:text-blue-400" size={24} />
                 </div>
                 <div className="flex items-center space-x-1">
@@ -245,12 +245,12 @@ const Dashboard = () => {
 
           {/* En Proceso */}
           <Card 
-            className="shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-gray-800"
+            className="shadow-lg hover:shadow-xl transition-shadow"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+                <div className="p-3 bg-orange-100 rounded-xl">
                   <FiClock className="text-orange-600" size={24} />
                 </div>
                 <Typography variant="caption" className="text-gray-600 font-medium">
@@ -260,7 +260,7 @@ const Dashboard = () => {
               <Typography variant="body2" className="text-gray-600 font-medium mb-1">
                 En Proceso
               </Typography>
-              <Typography variant="h3" className="font-bold text-gray-900 dark:text-white">
+              <Typography variant="h3" className="font-bold text-gray-900">
                 {dashboardStats.inProgress}
               </Typography>
             </CardContent>
@@ -268,12 +268,12 @@ const Dashboard = () => {
 
           {/* Resueltos */}
           <Card 
-            className="shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-gray-800"
+            className="shadow-lg hover:shadow-xl transition-shadow"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                <div className="p-3 bg-green-100 rounded-xl">
                   <FiTarget className="text-green-600" size={24} />
                 </div>
                 <div className="flex items-center space-x-1">
@@ -286,7 +286,7 @@ const Dashboard = () => {
               <Typography variant="body2" className="text-gray-600 font-medium mb-1">
                 Resueltos
               </Typography>
-              <Typography variant="h3" className="font-bold text-gray-900 dark:text-white">
+              <Typography variant="h3" className="font-bold text-gray-900">
                 {dashboardStats.resolved}
               </Typography>
             </CardContent>
@@ -294,12 +294,12 @@ const Dashboard = () => {
 
           {/* Críticos */}
           <Card 
-            className="shadow-lg hover:shadow-xl transition-shadow bg-white dark:bg-gray-800"
+            className="shadow-lg hover:shadow-xl transition-shadow"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
+                <div className="p-3 bg-red-100 rounded-xl">
                   <FiActivity className="text-red-600" size={24} />
                 </div>
                 <Chip 
@@ -316,7 +316,7 @@ const Dashboard = () => {
               <Typography variant="body2" className="text-gray-600 font-medium mb-1">
                 Críticos
               </Typography>
-              <Typography variant="h3" className="font-bold text-gray-900 dark:text-white">
+              <Typography variant="h3" className="font-bold text-gray-900">
                 {dashboardStats.critical}
               </Typography>
             </CardContent>
@@ -333,7 +333,7 @@ const Dashboard = () => {
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-6">
-                  <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                  <Typography variant="h6" className="font-bold text-gray-900">
                     Tickets Recientes
                   </Typography>
                   <Button
@@ -355,19 +355,19 @@ const Dashboard = () => {
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
-                      <TableRow className="bg-gray-50 dark:bg-gray-800">
-                        <TableCell className="font-bold text-gray-700 dark:text-gray-300">Ticket</TableCell>
-                        <TableCell className="font-bold text-gray-700 dark:text-gray-300">Prioridad</TableCell>
-                        <TableCell className="font-bold text-gray-700 dark:text-gray-300">Estado</TableCell>
-                        <TableCell className="font-bold text-gray-700 dark:text-gray-300">Asignado</TableCell>
-                        <TableCell className="font-bold text-gray-700 dark:text-gray-300">Acciones</TableCell>
+                      <TableRow className="bg-gray-50">
+                        <TableCell className="font-bold text-gray-700">Ticket</TableCell>
+                        <TableCell className="font-bold text-gray-700">Prioridad</TableCell>
+                        <TableCell className="font-bold text-gray-700">Estado</TableCell>
+                        <TableCell className="font-bold text-gray-700">Asignado</TableCell>
+                        <TableCell className="font-bold text-gray-700">Acciones</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {recentTickets.map((ticket) => (
                         <TableRow 
                           key={ticket.id} 
-                          className="hover:bg-gray-50 dark:bg-gray-800 transition-colors"
+                          className="hover:bg-gray-50 transition-colors"
                         >
                           <TableCell>
                             <div>
@@ -459,18 +459,18 @@ const Dashboard = () => {
                   {upcomingTasks.map((task, index) => (
                     <div 
                       key={index} 
-                      className="p-3 bg-gray-50 dark:bg-gray-800 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+                      className="p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
                     >
                       <div className="flex items-start space-x-3">
                         <div className={`p-2 rounded-lg ${
-                          task.priority === 'high' ? 'bg-red-100 dark:bg-red-900/30 text-red-600' : 
-                          task.priority === 'medium' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600' : 
-                          'bg-green-100 dark:bg-green-900/30 text-green-600'
+                          task.priority === 'high' ? 'bg-red-100 text-red-600' : 
+                          task.priority === 'medium' ? 'bg-orange-100 text-orange-600' : 
+                          'bg-green-100 text-green-600'
                         }`}>
                           {task.icon}
                         </div>
                         <div className="flex-1">
-                          <Typography variant="body2" className="font-semibold text-gray-900 dark:text-white">
+                          <Typography variant="body2" className="font-semibold text-gray-900">
                             {task.task}
                           </Typography>
                           <Typography variant="caption" className="text-gray-500 flex items-center mt-1">

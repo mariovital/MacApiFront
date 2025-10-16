@@ -25,6 +25,7 @@ export const AuthProvider = ({ children }) => {
         setUser(userData.data.user);
         localStorage.setItem('token', userData.data.token);
         localStorage.setItem('refreshToken', userData.data.refresh_token);
+        localStorage.setItem('user', JSON.stringify(userData.data.user));
         
         // Configurar header de autorización por defecto
         api.defaults.headers.Authorization = `Bearer ${userData.data.token}`;
@@ -52,6 +53,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
       delete api.defaults.headers.Authorization;
       
       // Redirigir al login
@@ -74,29 +76,44 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeAuth = async () => {
       const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
       
       if (token) {
         try {
           // Configurar header
           api.defaults.headers.Authorization = `Bearer ${token}`;
           
-          // Verificar token obteniendo perfil
-          const profileData = await authService.getProfile();
+          // Intentar restaurar usuario desde localStorage primero
+          if (storedUser) {
+            try {
+              setUser(JSON.parse(storedUser));
+            } catch (e) {
+              console.error('Error parseando usuario guardado:', e);
+            }
+          }
           
-          if (profileData.success) {
-            setUser(profileData.data);
-          } else {
-            // Token inválido
-            localStorage.removeItem('token');
-            localStorage.removeItem('refreshToken');
-            delete api.defaults.headers.Authorization;
+          // Intentar obtener perfil actualizado (opcional, no crítico)
+          try {
+            const profileData = await authService.getProfile();
+            if (profileData.success) {
+              setUser(profileData.data);
+              localStorage.setItem('user', JSON.stringify(profileData.data));
+            }
+          } catch (error) {
+            // Si falla el profile pero tenemos token, mantener sesión
+            console.warn('No se pudo obtener perfil, manteniendo sesión local:', error.message);
+            // No eliminar token, mantener sesión
           }
         } catch (error) {
-          console.error('Error verificando token:', error);
-          // Token inválido o expirado
-          localStorage.removeItem('token');
-          localStorage.removeItem('refreshToken');
-          delete api.defaults.headers.Authorization;
+          console.error('Error inicializando autenticación:', error);
+          // Solo limpiar si el error es crítico
+          if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
+            localStorage.removeItem('user');
+            delete api.defaults.headers.Authorization;
+            setUser(null);
+          }
         }
       }
       
