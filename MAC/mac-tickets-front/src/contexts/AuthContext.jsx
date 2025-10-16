@@ -5,7 +5,7 @@ import authService from '../services/authService';
 import api from '../services/api';
 
 // 1. CREAR CONTEXTO
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 // 2. PROVIDER COMPONENT
 export const AuthProvider = ({ children }) => {
@@ -142,11 +142,11 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// 3. CUSTOM HOOK
-export const useAuth = () => {
+// 3. CUSTOM HOOK - Exportado por separado
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth debe ser usado dentro de AuthProvider');
   }
   return context;
-};
+}

@@ -104,12 +104,12 @@ const TicketList = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900">
       {/* Header estilo Figma */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Typography variant="h4" className="font-bold text-gray-900">
+            <Typography variant="h4" className="font-bold text-gray-900 dark:text-white">
               Tickets<span className="text-[#E31E24]">.</span>
             </Typography>
           </div>
@@ -173,7 +173,7 @@ const TicketList = () => {
             >
               <CardContent className="p-0">
                 {/* Header de la card con badges */}
-                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200">
+                <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-3">
                     <Chip 
                       label={ticket.status.name}
@@ -349,7 +349,7 @@ const TicketList = () => {
         {filteredTickets.length === 0 && (
           <div className="text-center py-12">
             <FiTag className="mx-auto text-gray-400 mb-4" size={48} />
-            <Typography variant="h6" className="text-gray-600">
+            <Typography variant="h6" className="text-gray-600 dark:text-gray-400">
               No se encontraron tickets
             </Typography>
           </div>

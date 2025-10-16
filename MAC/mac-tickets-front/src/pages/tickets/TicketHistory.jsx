@@ -109,17 +109,17 @@ const TicketHistory = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900">
       {/* Header estilo Figma */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Typography variant="h4" className="font-bold text-gray-900">
+            <Typography variant="h4" className="font-bold text-gray-900 dark:text-white">
               Historial<span className="text-[#E31E24]">.</span>
             </Typography>
           </div>
           <div className="flex items-center space-x-4">
-            <Typography variant="body2" className="text-gray-600">
+            <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
               <strong>{filteredTickets.length}</strong> tickets completados
             </Typography>
           </div>
@@ -363,7 +363,7 @@ const TicketHistory = () => {
         {filteredTickets.length === 0 && (
           <div className="text-center py-12">
             <FiCheckCircle className="mx-auto text-gray-400 mb-4" size={48} />
-            <Typography variant="h6" className="text-gray-600">
+            <Typography variant="h6" className="text-gray-600 dark:text-gray-400">
               No se encontraron tickets en el historial
             </Typography>
           </div>
