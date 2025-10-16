@@ -114,6 +114,15 @@ fun MesaAyudaHome(
                 .fillMaxSize()
                 .padding(padding)
         ) {
+            // Capturar resultado desde detalles para volver a la pestaña de Tickets
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                navController.currentBackStackEntry
+                    ?.savedStateHandle
+                    ?.getLiveData<Int>("mesa_select_tab")
+                    ?.observeForever { tab ->
+                        if (tab == 0) selectedOption = 0
+                    }
+            }
             // Cargar/Refrescar tickets de Mesa al cambiar de pestaña
             androidx.compose.runtime.LaunchedEffect(selectedOption) {
                 if (selectedOption == 0 || selectedOption == 1) {

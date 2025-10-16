@@ -346,6 +346,11 @@ fun MesaTicketDetailsReadOnly(
                                                         // Refrescar detalle y listas
                                                         viewModel.refreshTicketDetail(ticket.id)
                                                         viewModel.loadTickets()
+                                                        // Indicar a la pantalla anterior que seleccione la pestaña de "Tickets" y cerrar
+                                                        navController.previousBackStackEntry
+                                                            ?.savedStateHandle
+                                                            ?.set("mesa_select_tab", 0)
+                                                        navController.popBackStack()
                                                     }
                                                 }
                                             } catch (_: Exception) { }
