@@ -205,3 +205,24 @@ data class AttachmentListResponse(
     val success: Boolean,
     val data: List<TicketAttachment>
 )
+
+// Password reset request
+data class PasswordResetRequest(
+    val email: String
+)
+
+data class PasswordResetCreateResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: PasswordResetItem?
+)
+
+data class PasswordResetItem(
+    val id: Long,
+    val email: String,
+    val status: String,
+    val created_at: String,
+    val processed_at: String?,
+    val processed_by: Int?,
+    val note: String?
+)

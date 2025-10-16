@@ -49,10 +49,7 @@ const upload = multer({
   }
 });
 
-/**
- * Todas las rutas requieren autenticación
- */
-router.use(authMiddleware);
+// Importante: No usar router.use(authMiddleware) global aquí, para no interceptar otras rutas /api
 
 /**
  * POST /api/tickets/:ticketId/attachments
@@ -63,6 +60,7 @@ router.use(authMiddleware);
  */
 router.post(
   '/tickets/:ticketId/attachments',
+  authMiddleware,
   upload.single('file'),
   attachmentController.uploadAttachment
 );
@@ -76,6 +74,7 @@ router.post(
  */
 router.post(
   '/tickets/:ticketId/attachments/multiple',
+  authMiddleware,
   upload.array('files', 5), // Máximo 5 archivos a la vez
   attachmentController.uploadMultipleAttachments
 );
@@ -86,6 +85,7 @@ router.post(
  */
 router.get(
   '/tickets/:ticketId/attachments',
+  authMiddleware,
   attachmentController.getTicketAttachments
 );
 
@@ -95,6 +95,7 @@ router.get(
  */
 router.get(
   '/attachments/:id',
+  authMiddleware,
   attachmentController.getAttachmentById
 );
 
@@ -105,6 +106,7 @@ router.get(
  */
 router.get(
   '/attachments/:id/download',
+  authMiddleware,
   attachmentController.downloadAttachment
 );
 
@@ -115,6 +117,7 @@ router.get(
  */
 router.delete(
   '/attachments/:id',
+  authMiddleware,
   attachmentController.deleteAttachment
 );
 

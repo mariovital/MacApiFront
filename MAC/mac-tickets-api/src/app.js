@@ -115,13 +115,16 @@ import ticketRoutes from './routes/tickets.js';
 import userRoutes from './routes/users.js';
 import catalogRoutes from './routes/catalog.js';
 import attachmentRoutes from './routes/attachments.js';
+import passwordResetRoutes from './routes/passwordResets.js';
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/catalog', catalogRoutes); // Categories, Priorities, Statuses, Technicians
-app.use('/api', attachmentRoutes); // Attachments (includes /api/tickets/:id/attachments and /api/attachments/:id)
+// Importante: montar primero password-resets para evitar interceptación por el router de adjuntos
+app.use('/api/password-resets', passwordResetRoutes); // Forgot password flow (público para crear)
+app.use('/api', attachmentRoutes); // Attachments (incluye /api/tickets/:id/attachments y /api/attachments/:id)
 
 // Archivos estáticos: adjuntos
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));

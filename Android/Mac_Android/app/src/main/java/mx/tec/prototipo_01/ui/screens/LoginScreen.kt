@@ -19,6 +19,9 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -42,6 +46,16 @@ import mx.tec.prototipo_01.R
 import mx.tec.prototipo_01.viewmodels.LoginState
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import mx.tec.prototipo_01.viewmodels.LoginViewModel
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.clickable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import mx.tec.prototipo_01.api.RetrofitClient
+import mx.tec.prototipo_01.models.api.PasswordResetRequest
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
@@ -49,6 +63,12 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
     val tecnicoViewModel: TecnicoSharedViewModel = viewModel()
     val context = LocalContext.current
     val loginState = loginViewModel.loginState
+
+    // Estado: Recuperación de contraseña
+    var showForgotDialog by remember { mutableStateOf(false) }
+    var forgotEmail by remember { mutableStateOf("") }
+    var forgotSending by remember { mutableStateOf(false) }
+    var forgotMessage by remember { mutableStateOf<String?>(null) }
 
     // --- Status Bar Color ---
     val view = LocalView.current
@@ -188,8 +208,13 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
             Text(
                 text = "¿Olvidaste tu contraseña?",
                 modifier = Modifier
-                    .offset(x = (0).dp, y = (170).dp),
-                color = Color.White
+                    .offset(x = (0).dp, y = (170).dp)
+                    .clickable { 
+                        forgotEmail = loginViewModel.email
+                        showForgotDialog = true 
+                    },
+                color = Color.White,
+                style = androidx.compose.ui.text.TextStyle(textDecoration = TextDecoration.Underline)
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -219,5 +244,61 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
                 }
             }
         }
+    }
+
+    if (showForgotDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!forgotSending) showForgotDialog = false },
+            title = { Text("Recuperar contraseña") },
+            text = {
+                Column {
+                    Text("Ingresa tu correo y enviaremos la solicitud al administrador.")
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = forgotEmail,
+                        onValueChange = { forgotEmail = it },
+                        label = { Text("Correo electrónico") },
+                        singleLine = true,
+                    )
+                    forgotMessage?.let { msg ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(msg, color = Color.Gray)
+                    }
+                }
+            },
+            confirmButton = {
+                OutlinedButton(enabled = !forgotSending, onClick = {
+                    if (forgotEmail.isBlank()) {
+                        forgotMessage = "Ingresa un correo válido"
+                        return@OutlinedButton
+                    }
+                    forgotSending = true
+                    forgotMessage = null
+                    CoroutineScope(Dispatchers.IO).launch {
+                        try {
+                            val res = RetrofitClient.instance.createPasswordReset(PasswordResetRequest(email = forgotEmail.trim()))
+                            val ok = res.isSuccessful
+                            val bodyMsg = res.body()?.message ?: if (ok) "Solicitud enviada" else (res.errorBody()?.string() ?: "Error")
+                            launch(Dispatchers.Main) {
+                                forgotMessage = bodyMsg
+                                if (ok) {
+                                    Toast.makeText(context, "Solicitud enviada", Toast.LENGTH_SHORT).show()
+                                    showForgotDialog = false
+                                }
+                                forgotSending = false
+                            }
+                        } catch (e: Exception) {
+                            launch(Dispatchers.Main) {
+                                forgotMessage = "Error de red"
+                                forgotSending = false
+                            }
+                        }
+                    }
+                }) { Text("Enviar") }
+            },
+            dismissButton = {
+                TextButton(enabled = !forgotSending, onClick = { showForgotDialog = false }) { Text("Cancelar") }
+            }
+        )
     }
 }

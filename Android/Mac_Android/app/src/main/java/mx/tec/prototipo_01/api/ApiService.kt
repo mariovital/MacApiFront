@@ -18,6 +18,8 @@ import mx.tec.prototipo_01.models.api.RejectTicketResponse
 import mx.tec.prototipo_01.models.api.UpdateStatusRequest
 import mx.tec.prototipo_01.models.api.AttachmentResponse
 import mx.tec.prototipo_01.models.api.AttachmentListResponse
+import mx.tec.prototipo_01.models.api.PasswordResetRequest
+import mx.tec.prototipo_01.models.api.PasswordResetCreateResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -80,6 +82,10 @@ interface ApiService {
     // POST /api/users/:id/reset-password
     @POST("users/{id}/reset-password")
     suspend fun resetPassword(@Path("id") userId: Int): Response<Void>
+
+    // Olvidaste tu contraseña: crear solicitud
+    @POST("password-resets")
+    suspend fun createPasswordReset(@Body body: PasswordResetRequest): Response<PasswordResetCreateResponse>
 
     // =====================================================================
     // RUTAS DE TICKETS
