@@ -46,11 +46,9 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @Composable
-fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewModel) { // viewModel passed in
-    // The list now comes directly from the viewModel, so it's always in sync
+fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewModel) { 
     val tickets = viewModel.historyTickets
 
-    // Cargar tickets al entrar en la pantalla para asegurar datos actualizados
     LaunchedEffect(Unit) {
         viewModel.loadTickets()
     }
@@ -58,7 +56,7 @@ fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewM
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // Use theme background color
+            .background(MaterialTheme.colorScheme.background)
     ) {
         if (tickets.isEmpty()) {
             EmptyTicketsState()
@@ -73,7 +71,7 @@ private fun EmptyTicketsState() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background), // Use theme background color
+            .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
 
     ) {
@@ -111,7 +109,7 @@ private fun TicketsList(tickets: List<TecnicoTicket>, navController: NavControll
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = PaddingValues(vertical = 16.dp)
     ) {
-        items(tickets, key = { it.id }) { ticket -> // Use key for better performance
+        items(tickets, key = { it.id }) { ticket ->
             TicketCard(ticket = ticket, navController = navController)
         }
     }
@@ -162,6 +160,22 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = ticket.status.color,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = ticket.status.displayName,
+                                fontSize = 10.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
                 Column(
@@ -244,7 +258,6 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
 
             Button(
                 onClick = {
-                    // Navigate to details using only the ID
                     val encodedId = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
                     navController.navigate("tecnico_ticket_details/$encodedId")
                 },

@@ -295,7 +295,6 @@ fun MesaTicketDetailsReadOnly(
                             Text(text = "No se pudo ubicar la dirección en el mapa", color = Color.Gray, fontSize = 12.sp)
                         }
 
-                        // Si el ticket está rechazado, permitir reasignar a un técnico
                         if (ticket.status == TicketStatus.RECHAZADO) {
                             Spacer(modifier = Modifier.height(24.dp))
                             Text("Reasignar a técnico:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -346,19 +345,13 @@ fun MesaTicketDetailsReadOnly(
                                     val idNum = ticket.backendId
                                     val techId = selectedTech?.id
                                     if (techId != null) {
-                                        // Llamar al endpoint de asignación
                                         kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
                                             try {
                                                 val res = RetrofitClient.instance.assignTicket(idNum, AssignTicketRequest(technician_id = techId))
                                                 withContext(Dispatchers.Main) {
                                                     if (res.isSuccessful) {
-                                                        // Refrescar detalle y listas
                                                         viewModel.refreshTicketDetail(ticket.id)
                                                         viewModel.loadTickets()
-                                                        // Indicar a la pantalla anterior que seleccione la pestaña de "Tickets" y cerrar
-                                                        navController.previousBackStackEntry
-                                                            ?.savedStateHandle
-                                                            ?.set("mesa_select_tab", 0)
                                                         navController.popBackStack()
                                                     }
                                                 }

@@ -26,7 +26,7 @@ data class TecnicoTicket(
 public enum class TicketStatus(val displayName: String, val color: Color) {
     PENDIENTE("Pendiente", Color(0xFFFFBE00)),
     EN_PROCESO("En proceso", Color(0xFF43A0EE)),
-    COMPLETADO("Completado", Color(0xFF808080)),
+    COMPLETADO("Completado", Color(0xFF25D366)), // Green for Completed
     RECHAZADO("Rechazado", Color(0xFFD32F2F))      // Red for Rejected
 }
 

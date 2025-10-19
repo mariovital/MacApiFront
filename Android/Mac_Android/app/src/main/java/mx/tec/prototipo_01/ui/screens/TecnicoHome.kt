@@ -23,10 +23,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +47,7 @@ fun TecnicoHome(
     isDark: Boolean,
     onThemeChange: () -> Unit
 ) {
-    var selectedOption by remember { mutableStateOf(0) }
+    var selectedOption by rememberSaveable { mutableStateOf(0) }
 
     val view = LocalView.current
     val headerColor = MaterialTheme.colorScheme.primary
@@ -119,12 +118,6 @@ fun TecnicoHome(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Cargar tickets al entrar a Mis Tickets o Tickets Pasados
-            LaunchedEffect(selectedOption) {
-                if (selectedOption == 0 || selectedOption == 1) {
-                    viewModel.loadTickets()
-                }
-            }
             when (selectedOption) {
                 0 -> TecnicoTickets(navController = navController, viewModel = viewModel)
                 1 -> TecnicoHistorial(navController = navController, viewModel = viewModel)

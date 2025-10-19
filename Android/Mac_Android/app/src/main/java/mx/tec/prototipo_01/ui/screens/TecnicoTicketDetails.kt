@@ -89,18 +89,15 @@ fun TecnicoTicketDetails(
     viewModel: TecnicoSharedViewModel,
     ticketId: String
 ) {
-    // Get the ticket from the ViewModel. This is reactive and will update if the ticket changes.
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
     var showCloseConfirmationDialog by remember { mutableStateOf(false) }
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("") }
 
-    // Intentar refrescar detalle desde backend cuando se abre la pantalla
     LaunchedEffect(ticketId) {
         viewModel.refreshTicketDetail(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString()))
     }
 
-    // If the ticket is null for any reason (e.g., it was rejected and removed), just go back.
     if (ticket == null) {
         navController.popBackStack()
         return
@@ -170,7 +167,6 @@ fun TecnicoTicketDetails(
     var geocodeTried by remember(ubicacion) { mutableStateOf(false) }
     var geocodeFailed by remember(ubicacion) { mutableStateOf(false) }
 
-    // Geocodificar con estrategia rápida: caché + carreras en paralelo (device + web) con timeouts cortos
     LaunchedEffect(cleanAddress) {
         if (cleanAddress.isNotBlank() && cleanAddress != "—") {
             mapCoordinates = geocodeAddressFast(context, cleanAddress)
@@ -203,7 +199,6 @@ fun TecnicoTicketDetails(
                         val now = SystemClock.elapsedRealtime()
                         if (now - lastBackClick.value > 700) {
                             lastBackClick.value = now
-                            // Usa navigateUp para no hacer pop extra cuando ya no hay back stack
                             navController.navigateUp()
                         }
                     }) {
@@ -284,7 +279,6 @@ fun TecnicoTicketDetails(
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            // Prioridad ya se muestra en el encabezado; se omite aquí para evitar duplicado
                             Spacer(modifier = Modifier.height(8.dp))
                             if (!ticket.categoryName.isNullOrBlank()) {
                                 Text("Categoría: ${ticket.categoryName}", color = Color.Gray, fontSize = 14.sp)
@@ -327,13 +321,11 @@ fun TecnicoTicketDetails(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Mostrar siempre el mapa como antes; centrar en un punto por defecto y mover si obtenemos coordenadas
                         val defaultTarget = remember { LatLng(19.4056, -99.0965) }
                         val cameraPositionState = rememberCameraPositionState {
                             position = CameraPosition.fromLatLngZoom(defaultTarget, 15f)
                         }
 
-                        // Si ya tenemos coordenadas, animar la cámara a esa ubicación
                         LaunchedEffect(mapCoordinates) {
                             mapCoordinates?.let { target ->
                                 cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(target, 15f))
@@ -401,9 +393,9 @@ fun TecnicoTicketDetails(
                                         onClick = { showCloseConfirmationDialog = true },
                                         modifier = Modifier.fillMaxWidth(),
                                         shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary) // Use theme colors
                                     ) {
-                                        Text("Cerrar Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
+                                        Text("Cerrar Ticket", color = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) // Use theme colors
                                     }
                                 }
                             }
@@ -434,7 +426,6 @@ fun TecnicoTicketDetails(
 }
 
     private fun cleanDescription(description: String): String {
-        // Remueve líneas del bloque de hardware (con o sin guiones/bullets) para evitar duplicados en la UI
         return description
             .lines()
             .filterNot { line ->
@@ -446,7 +437,7 @@ fun TecnicoTicketDetails(
                 normalized.startsWith("Serial:", ignoreCase = true)
             }
             .joinToString("\n")
-            .replace("\n\n\n", "\n\n") // compactar saltos extra
+            .replace("\n\n\n", "\n\n") 
             .trim()
     }
 
@@ -466,23 +457,18 @@ fun TecnicoTicketDetails(
         }
         return device to serial
     }
-// Usa StatusBadge y PriorityBadge compartidos en TicketComponents.kt
 
 private suspend fun geocodeAddressFast(context: Context, address: String): LatLng? {
-    // 0) caché en memoria
     GeocodeCache[address]?.let { return it }
     return coroutineScope {
         val deviceJob = async(Dispatchers.IO) { deviceGeocode(context, address) }
         val webJob = async(Dispatchers.IO) { webGeocode(address) }
 
-        // Espera corta al geocoder del dispositivo
         val deviceFirst = withTimeoutOrNull(1800) { deviceJob.await() }
         var result = deviceFirst ?: withTimeoutOrNull(2500) { webJob.await() }
-        // Cancela el otro job si sigue vivo
         if (!deviceJob.isCompleted) deviceJob.cancel()
         if (!webJob.isCompleted) webJob.cancel()
 
-        // Fallback: intenta con ", México" si no hubo resultado
         if (result == null) {
             val alt = "$address, México"
             val altDevice = withTimeoutOrNull(1200) { deviceGeocode(context, alt) }
@@ -543,7 +529,6 @@ private fun openInMaps(context: Context, address: String) {
         val intent = Intent(Intent.ACTION_VIEW, uri)
         intent.setPackage("com.google.android.apps.maps")
         if (intent.resolveActivity(context.packageManager) == null) {
-            // Fallback sin paquete específico
             context.startActivity(Intent(Intent.ACTION_VIEW, uri))
         } else {
             context.startActivity(intent)
@@ -553,7 +538,6 @@ private fun openInMaps(context: Context, address: String) {
 
 private fun sanitizeAddress(raw: String): String {
     if (raw.isBlank()) return raw
-    // Mantener toda la dirección en una sola línea con más contexto para mejorar geocodificación
     val cleaned = raw.trim()
         .removePrefix("Ubicación:")
         .removePrefix("Ubicacion:")

@@ -5,12 +5,15 @@ import android.location.Geocoder
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -70,9 +73,15 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     val coroutineScope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState()
 
+    val isFormValid by remember(nombre, descripcion, selectedTechnician, selectedPriority) {
+        derivedStateOf {
+            nombre.isNotBlank() && descripcion.isNotBlank() && selectedTechnician != null && selectedPriority != null
+        }
+    }
+
     val view = LocalView.current
-    val headerColor = Color(0xFF424242)
-    // Mostrar campos de hardware solo si la categoría seleccionada es "Hardware"
+    val isDark = isSystemInDarkTheme()
+    val headerColor = MaterialTheme.colorScheme.primary
     val isHardwareSelected by remember(selectedCategory) {
         derivedStateOf { selectedCategory?.name?.contains("hardware", ignoreCase = true) == true }
     }
@@ -80,10 +89,9 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     SideEffect {
         val window = (view.context as android.app.Activity).window
         window.statusBarColor = headerColor.toArgb()
-        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !isDark
     }
 
-    // Cargar catálogos
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             try {
@@ -96,13 +104,13 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                 }
                 if (pResp.isSuccessful) {
                     priorities = pResp.body()?.data ?: emptyList()
-                    selectedPriority = priorities.firstOrNull()
+                    // Do not autoselect, let the user choose.
                 } else {
                     Toast.makeText(context, "Error al cargar prioridades: ${pResp.message()}", Toast.LENGTH_SHORT).show()
                 }
                 if (cResp.isSuccessful) {
                     categories = cResp.body()?.data ?: emptyList()
-                    selectedCategory = categories.firstOrNull()
+                    selectedCategory = categories.firstOrNull() // Autoselect first category
                 } else {
                     Toast.makeText(context, "Error al cargar categorías: ${cResp.message()}", Toast.LENGTH_SHORT).show()
                 }
@@ -119,11 +127,15 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     }
 
     Scaffold(
-        containerColor = Color(0xFFCFE3F3),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             CenterAlignedTopAppBar(
-                modifier = Modifier.clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp)),
-                title = { Text("Crear Ticket", color = Color.White, fontWeight = FontWeight.Medium, fontSize = 28.sp) },
+                title = { Text("Crear Ticket", color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Medium, fontSize = 28.sp) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.popBackStack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = headerColor)
             )
         },
@@ -139,23 +151,52 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
-                    OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre del ticket") }, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), shape = RoundedCornerShape(8.dp))
+                    OutlinedTextField(
+                        value = nombre,
+                        onValueChange = { nombre = it },
+                        label = { Text("Nombre del ticket") },
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        trailingIcon = {
+                            if (nombre.isBlank()) {
+                                Icon(Icons.Filled.Error, "Campo requerido", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    )
                     OutlinedTextField(value = compania, onValueChange = { compania = it }, label = { Text("Compañía") }, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), shape = RoundedCornerShape(8.dp))
 
-                    // Dropdowns
-                    Dropdown(label = "Prioridad", expanded = isPriorityExpanded, onExpandedChange = { isPriorityExpanded = it }, selectedValue = selectedPriority?.name ?: "", options = priorities.map { it.name }, onSelect = { priorityName -> priorities.find { it.name == priorityName }?.let { selectedPriority = it } })
+                    Dropdown(label = "Prioridad", expanded = isPriorityExpanded, onExpandedChange = { isPriorityExpanded = it }, selectedValue = selectedPriority?.name ?: "", options = priorities.map { it.name }, onSelect = { priorityName -> priorities.find { it.name == priorityName }?.let { selectedPriority = it } }, isError = selectedPriority == null)
                     Dropdown(label = "Categoría", expanded = isCategoryExpanded, onExpandedChange = { isCategoryExpanded = it }, selectedValue = selectedCategory?.name ?: "", options = categories.map { it.name }, onSelect = { categoryName -> categories.find { it.name == categoryName }?.let { selectedCategory = it } })
-                    Dropdown(label = "Asignar técnico", expanded = isTechnicianExpanded, onExpandedChange = { isTechnicianExpanded = it }, selectedValue = selectedTechnician?.let { listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" } } ?: "", options = technicians.map { tech -> listOfNotNull(tech.first_name, tech.last_name).joinToString(" ").ifBlank { tech.username ?: "" } }, onSelect = { techName -> technicians.find { (listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" }) == techName }?.let { selectedTechnician = it } })
+                    Dropdown(
+                        label = "Asignar técnico",
+                        expanded = isTechnicianExpanded,
+                        onExpandedChange = { isTechnicianExpanded = it },
+                        selectedValue = selectedTechnician?.let { listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" } } ?: "",
+                        options = technicians.map { tech -> listOfNotNull(tech.first_name, tech.last_name).joinToString(" ").ifBlank { tech.username ?: "" } },
+                        onSelect = { techName -> technicians.find { (listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" }) == techName }?.let { selectedTechnician = it } },
+                        isError = selectedTechnician == null
+                    )
 
                     OutlinedTextField(value = ubicacion, onValueChange = { ubicacion = it }, label = { Text("Ubicación") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp), shape = RoundedCornerShape(8.dp), trailingIcon = { IconButton(onClick = { coroutineScope.launch { mapCoordinates = getCoordinatesFromAddress(context, ubicacion) } }) { Icon(Icons.Default.LocationOn, "Mostrar en mapa") } })
                     mapCoordinates?.let {
                         LaunchedEffect(it) { cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(it, 15f)) }
                         GoogleMap(modifier = Modifier.fillMaxWidth().height(200.dp).padding(vertical = 16.dp).clip(RoundedCornerShape(8.dp)), cameraPositionState = cameraPositionState) { Marker(state = MarkerState(position = it), title = ubicacion) }
                     }
-                    OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción del problema") }, modifier = Modifier.fillMaxWidth().height(120.dp), shape = RoundedCornerShape(8.dp))
+                    OutlinedTextField(
+                        value = descripcion,
+                        onValueChange = { descripcion = it },
+                        label = { Text("Descripción del problema") },
+                        modifier = Modifier.fillMaxWidth().height(120.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        trailingIcon = {
+                            if (descripcion.isBlank()) {
+                                Icon(Icons.Filled.Error, "Campo requerido", tint = MaterialTheme.colorScheme.error)
+                            }
+                        }
+                    )
                     Spacer(modifier = Modifier.height(16.dp))
                     if (isHardwareSelected) {
                         Text("Hardware", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(bottom = 8.dp))
@@ -163,71 +204,74 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                         OutlinedTextField(value = serie, onValueChange = { serie = it }, label = { Text("Número de Serie") }, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), shape = RoundedCornerShape(8.dp))
                     }
 
-                    Button(onClick = {
-                        coroutineScope.launch {
-                            val fullDescription = buildString {
-                                if (isHardwareSelected && (dispositivo.isNotBlank() || serie.isNotBlank())) {
-                                    appendLine("Hardware:")
-                                    if (dispositivo.isNotBlank()) appendLine("- Dispositivo: $dispositivo")
-                                    if (serie.isNotBlank()) appendLine("- S/N: $serie")
-                                    appendLine()
-                                }
-                                append("Problema: ")
-                                append(descripcion)
-                            }
-                            val request = CreateTicketRequest(
-                                title = nombre,
-                                description = fullDescription,
-                                category_id = selectedCategory?.id,
-                                priority_id = selectedPriority?.id,
-                                client_company = compania.ifBlank { null },
-                                client_contact = nombre.ifBlank { null },
-                                location = ubicacion.ifBlank { null },
-                                technician_id = selectedTechnician?.id
-                            )
-                            try {
-                                val response = withContext(Dispatchers.IO) { RetrofitClient.instance.createTicket(request) }
-                                if (response.isSuccessful) {
-                                    // Si el backend ya asignó (por technician_id), mostrar mensaje acorde
-                                    val assigned = response.body()?.data?.assignee != null
-                                    if (assigned) {
-                                        Toast.makeText(context, "Ticket creado y asignado", Toast.LENGTH_SHORT).show()
-                                    } else {
-                                        // Fallback: si eligieron técnico pero el backend no asignó (permiso), intentar endpoint de asignación
-                                        val createdId = response.body()?.data?.id
-                                        if (createdId != null && selectedTechnician != null) {
-                                            try {
-                                                val assignResp = withContext(Dispatchers.IO) {
-                                                    RetrofitClient.instance.assignTicket(
-                                                        createdId,
-                                                        AssignTicketRequest(technician_id = selectedTechnician!!.id)
-                                                    )
-                                                }
-                                                if (assignResp.isSuccessful) {
-                                                    Toast.makeText(context, "Ticket creado y asignado", Toast.LENGTH_SHORT).show()
-                                                } else {
-                                                    Toast.makeText(context, "Ticket creado, pero no se pudo asignar (${assignResp.code()})", Toast.LENGTH_LONG).show()
-                                                }
-                                            } catch (e: Exception) {
-                                                Toast.makeText(context, "Ticket creado, error al asignar: ${e.message}", Toast.LENGTH_LONG).show()
-                                            }
-                                        } else {
-                                            Toast.makeText(context, "Ticket creado", Toast.LENGTH_SHORT).show()
-                                        }
+                    Button(
+                        onClick = {
+                            coroutineScope.launch {
+                                val fullDescription = buildString {
+                                    if (isHardwareSelected && (dispositivo.isNotBlank() || serie.isNotBlank())) {
+                                        appendLine("Hardware:")
+                                        if (dispositivo.isNotBlank()) appendLine("- Dispositivo: $dispositivo")
+                                        if (serie.isNotBlank()) appendLine("- S/N: $serie")
+                                        appendLine()
                                     }
-                                    navController.popBackStack()
-                                    // Intentar refrescar la lista de Mesa de Ayuda si existe en el back stack
-                                    try {
-                                        viewModel.loadTickets()
-                                    } catch (_: Exception) { }
-                                } else {
-                                    Toast.makeText(context, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+                                    append("Problema: ")
+                                    append(descripcion)
                                 }
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                                val request = CreateTicketRequest(
+                                    title = nombre,
+                                    description = fullDescription,
+                                    category_id = selectedCategory?.id,
+                                    priority_id = selectedPriority?.id,
+                                    client_company = compania.ifBlank { null },
+                                    client_contact = nombre.ifBlank { null },
+                                    location = ubicacion.ifBlank { null },
+                                    technician_id = selectedTechnician?.id
+                                )
+                                try {
+                                    val response = withContext(Dispatchers.IO) { RetrofitClient.instance.createTicket(request) }
+                                    if (response.isSuccessful) {
+                                        val assigned = response.body()?.data?.assignee != null
+                                        if (assigned) {
+                                            Toast.makeText(context, "Ticket creado y asignado", Toast.LENGTH_SHORT).show()
+                                        } else {
+                                            val createdId = response.body()?.data?.id
+                                            if (createdId != null && selectedTechnician != null) {
+                                                try {
+                                                    val assignResp = withContext(Dispatchers.IO) {
+                                                        RetrofitClient.instance.assignTicket(
+                                                            createdId,
+                                                            AssignTicketRequest(technician_id = selectedTechnician!!.id)
+                                                        )
+                                                    }
+                                                    if (assignResp.isSuccessful) {
+                                                        Toast.makeText(context, "Ticket creado y asignado", Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        Toast.makeText(context, "Ticket creado, pero no se pudo asignar (${assignResp.code()})", Toast.LENGTH_LONG).show()
+                                                    }
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Ticket creado, error al asignar: ${e.message}", Toast.LENGTH_LONG).show()
+                                                }
+                                            } else {
+                                                Toast.makeText(context, "Ticket creado", Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                        navController.popBackStack()
+                                        try {
+                                            viewModel.loadTickets()
+                                        } catch (_: Exception) { }
+                                    } else {
+                                        Toast.makeText(context, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+                                    }
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Error de red: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
                             }
-                        }
-                    }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(8.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFe10600))) {
+                        },
+                        enabled = isFormValid,
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(8.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
                         Text("Crear Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp))
                     }
                 }
@@ -244,7 +288,8 @@ private fun Dropdown(
     onExpandedChange: (Boolean) -> Unit,
     selectedValue: String,
     options: List<String>,
-    onSelect: (String) -> Unit
+    onSelect: (String) -> Unit,
+    isError: Boolean = false
 ) {
     Text(label, style = MaterialTheme.typography.bodySmall)
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = onExpandedChange) {
@@ -252,7 +297,13 @@ private fun Dropdown(
             value = selectedValue,
             onValueChange = {},
             readOnly = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            trailingIcon = {
+                if (isError) {
+                    Icon(Icons.Filled.Error, "Campo requerido", tint = MaterialTheme.colorScheme.error)
+                } else {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
+            },
             modifier = Modifier.menuAnchor().fillMaxWidth(),
             shape = RoundedCornerShape(8.dp),
             colors = ExposedDropdownMenuDefaults.textFieldColors(focusedIndicatorColor = Color.Transparent, unfocusedIndicatorColor = Color.Transparent)
