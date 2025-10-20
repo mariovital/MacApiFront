@@ -76,7 +76,7 @@ const ticketService = {
   assignTicket: async (ticketId, technicianId, reason = '') => {
     try {
       const response = await api.post(`/tickets/${ticketId}/assign`, {
-        assigned_to: technicianId,
+        technician_id: technicianId,
         reason
       });
       return response.data;

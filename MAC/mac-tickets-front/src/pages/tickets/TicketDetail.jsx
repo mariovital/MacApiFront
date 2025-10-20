@@ -17,7 +17,17 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  Box
+  Box,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemButton,
+  Radio
 } from '@mui/material';
 import {
   FiArrowLeft,
@@ -37,6 +47,7 @@ import {
   FiXCircle
 } from 'react-icons/fi';
 import ticketService from '../../services/ticketService';
+import catalogService from '../../services/catalogService';
 import { useAuth } from '../../contexts/AuthContext';
 import { TICKET_STATUSES, PRIORITIES } from '../../constants';
 
@@ -53,6 +64,13 @@ const TicketDetail = () => {
   const [isInternal, setIsInternal] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  
+  // Estados para reasignación
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [technicians, setTechnicians] = useState([]);
+  const [selectedTechnician, setSelectedTechnician] = useState(null);
+  const [loadingTechnicians, setLoadingTechnicians] = useState(false);
+  const [assigningTicket, setAssigningTicket] = useState(false);
 
   // Cargar ticket
   useEffect(() => {
@@ -118,6 +136,58 @@ const TicketDetail = () => {
       alert('Funcionalidad de subida en desarrollo');
     } catch (err) {
       console.error('Error subiendo archivos:', err);
+    }
+  };
+
+  // Cargar técnicos al abrir el diálogo de asignación
+  const handleOpenAssignDialog = async () => {
+    setShowAssignDialog(true);
+    setLoadingTechnicians(true);
+    
+    try {
+      const response = await catalogService.getTechnicians();
+      if (response.success) {
+        setTechnicians(response.data || []);
+      } else {
+        console.error('Error cargando técnicos');
+      }
+    } catch (err) {
+      console.error('Error:', err);
+      alert('Error al cargar lista de técnicos');
+    } finally {
+      setLoadingTechnicians(false);
+    }
+  };
+
+  // Cerrar diálogo
+  const handleCloseAssignDialog = () => {
+    setShowAssignDialog(false);
+    setSelectedTechnician(null);
+  };
+
+  // Reasignar ticket
+  const handleAssignTicket = async () => {
+    if (!selectedTechnician) {
+      alert('Por favor selecciona un técnico');
+      return;
+    }
+
+    try {
+      setAssigningTicket(true);
+      await ticketService.assignTicket(id, selectedTechnician.id, 'Reasignación manual');
+      
+      // Recargar datos del ticket
+      await loadTicketData();
+      
+      // Cerrar diálogo
+      handleCloseAssignDialog();
+      
+      alert('Ticket reasignado exitosamente');
+    } catch (err) {
+      console.error('Error reasignando ticket:', err);
+      alert('Error al reasignar el ticket. Intenta de nuevo.');
+    } finally {
+      setAssigningTicket(false);
     }
   };
 
@@ -487,6 +557,7 @@ const TicketDetail = () => {
                     variant="outlined"
                     fullWidth
                     startIcon={<FiUser />}
+                    onClick={handleOpenAssignDialog}
                     className="border-red-600 text-red-600 hover:bg-red-50 dark:hover:bg-red-900"
                   >
                     Reasignar
@@ -613,6 +684,141 @@ const TicketDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Dialog de Reasignación de Ticket */}
+      <Dialog
+        open={showAssignDialog}
+        onClose={handleCloseAssignDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '16px'
+          }
+        }}
+      >
+        <DialogTitle className="bg-gradient-to-r from-[#E31E24] to-[#C41A1F] text-white">
+          <div className="flex items-center space-x-2">
+            <FiUser size={24} />
+            <Typography variant="h6" className="font-bold">
+              Reasignar Ticket
+            </Typography>
+          </div>
+        </DialogTitle>
+
+        <DialogContent className="mt-4 dark:bg-gray-800">
+          {loadingTechnicians ? (
+            <div className="flex items-center justify-center py-8">
+              <CircularProgress sx={{ color: '#E31E24' }} />
+              <Typography className="ml-4 text-gray-600 dark:text-gray-400">
+                Cargando técnicos...
+              </Typography>
+            </div>
+          ) : technicians.length === 0 ? (
+            <div className="text-center py-8">
+              <FiAlertCircle className="text-gray-400 mx-auto mb-4" size={48} />
+              <Typography variant="body1" className="text-gray-600 dark:text-gray-400">
+                No hay técnicos disponibles
+              </Typography>
+            </div>
+          ) : (
+            <>
+              <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-4">
+                Selecciona el técnico al que deseas asignar este ticket:
+              </Typography>
+              
+              <List className="space-y-2">
+                {technicians.map((tech) => (
+                  <ListItem
+                    key={tech.id}
+                    disablePadding
+                    className="bg-gray-50 dark:bg-gray-700 rounded-lg overflow-hidden hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                  >
+                    <ListItemButton
+                      onClick={() => setSelectedTechnician(tech)}
+                      selected={selectedTechnician?.id === tech.id}
+                      sx={{
+                        '&.Mui-selected': {
+                          backgroundColor: 'rgba(227, 30, 36, 0.1)',
+                          '&:hover': {
+                            backgroundColor: 'rgba(227, 30, 36, 0.2)'
+                          }
+                        }
+                      }}
+                    >
+                      <Radio
+                        checked={selectedTechnician?.id === tech.id}
+                        sx={{
+                          color: '#E31E24',
+                          '&.Mui-checked': {
+                            color: '#E31E24'
+                          }
+                        }}
+                      />
+                      <ListItemAvatar>
+                        <Avatar className="bg-gradient-to-br from-blue-500 to-blue-600">
+                          {tech.first_name?.[0]}{tech.last_name?.[0]}
+                        </Avatar>
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          <Typography variant="body1" className="font-semibold text-gray-900 dark:text-white">
+                            {tech.first_name} {tech.last_name}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                            @{tech.username} • {tech.email}
+                          </Typography>
+                        }
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            </>
+          )}
+        </DialogContent>
+
+        <DialogActions className="px-6 pb-4 dark:bg-gray-800">
+          <Button
+            onClick={handleCloseAssignDialog}
+            disabled={assigningTicket}
+            sx={{
+              borderRadius: '12px',
+              textTransform: 'none',
+              padding: '10px 24px',
+              fontWeight: '600',
+              color: 'text.primary'
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleAssignTicket}
+            disabled={!selectedTechnician || assigningTicket}
+            variant="contained"
+            startIcon={assigningTicket ? <CircularProgress size={16} color="inherit" /> : <FiCheckCircle />}
+            sx={{
+              backgroundColor: '#E31E24',
+              color: 'white',
+              borderRadius: '12px',
+              textTransform: 'none',
+              padding: '10px 24px',
+              fontWeight: '600',
+              '&:hover': {
+                backgroundColor: '#C41A1F'
+              },
+              '&:disabled': {
+                backgroundColor: '#FCA5A5',
+                color: 'white'
+              }
+            }}
+          >
+            {assigningTicket ? 'Asignando...' : 'Asignar Ticket'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

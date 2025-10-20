@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { FiCheckCircle, FiArrowLeft, FiSave, FiX, FiAlertCircle } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
+import userService from '../../services/userService';
 
 const CreateUser = () => {
   const navigate = useNavigate();
@@ -110,23 +111,28 @@ const CreateUser = () => {
     try {
       setIsLoading(true);
       
-      // TODO: Integrar con API real
-      console.log('Creando usuario:', formData);
+      // Preparar datos para enviar (sin confirmPassword)
+      const { confirmPassword, ...userData } = formData;
       
-      // Simulación de llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Llamar al servicio para crear usuario
+      const response = await userService.createUser(userData);
       
-      // Mostrar mensaje de éxito
-      setShowSuccess(true);
-      
-      // Redirigir después de 1.5 segundos
-      setTimeout(() => {
-        navigate('/users');
-      }, 1500);
+      if (response.success) {
+        // Mostrar mensaje de éxito
+        setShowSuccess(true);
+        
+        // Redirigir después de 1.5 segundos
+        setTimeout(() => {
+          navigate('/users');
+        }, 1500);
+      } else {
+        setFormError(response.message || 'Error al crear el usuario');
+      }
       
     } catch (error) {
       console.error('Error creando usuario:', error);
-      setFormError(error.response?.data?.message || 'Error al crear el usuario');
+      const errorMessage = error.response?.data?.message || 'Error al crear el usuario';
+      setFormError(errorMessage);
     } finally {
       setIsLoading(false);
     }
