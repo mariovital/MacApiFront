@@ -73,6 +73,13 @@ const Sidebar = ({ collapsed, onToggle }) => {
   };
 
   const isActive = (path) => {
+    // Para la ruta /tickets, solo activar si es exactamente /tickets o /tickets/create o /tickets/:id
+    // pero NO para /tickets/history
+    if (path === '/tickets') {
+      return location.pathname === '/tickets' || 
+             (location.pathname.startsWith('/tickets/') && !location.pathname.startsWith('/tickets/history'));
+    }
+    // Para otras rutas, usar la lógica normal
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
