@@ -25,6 +25,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,24 +42,38 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import mx.tec.prototipo_01.models.TecnicoTicket
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
+import mx.tec.prototipo_01.viewmodels.TicketsUiState
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @Composable
-fun TecnicoTickets(navController: NavController, viewModel: TecnicoSharedViewModel) { // viewModel passed in
-    // The list now comes directly from the viewModel, so it's always in sync
-    val tickets = viewModel.pendingTickets
-
+fun TecnicoTickets(navController: NavController, viewModel: TecnicoSharedViewModel) {
+    val state = viewModel.pendingTicketsState
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background) // Use theme background color
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        if (tickets.isEmpty()) {
-            EmptyTicketsState()
-        } else {
-            TicketsList(tickets = tickets, navController = navController)
+        when (state) {
+            is TicketsUiState.Loading -> LoadingState()
+            is TicketsUiState.Error -> EmptyTicketsState()
+            is TicketsUiState.Success -> {
+                val tickets = state.tickets
+                if (tickets.isEmpty()) EmptyTicketsState() else TicketsList(tickets = tickets, navController = navController)
+            }
         }
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
     }
 }
 

@@ -28,6 +28,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
@@ -42,12 +43,13 @@ import androidx.navigation.NavController
 import mx.tec.prototipo_01.models.TecnicoTicket
 import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
+import mx.tec.prototipo_01.viewmodels.TicketsUiState
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @Composable
 fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewModel) { 
-    val tickets = viewModel.historyTickets
+    val state = viewModel.historyTicketsState
 
     LaunchedEffect(Unit) {
         viewModel.loadTickets()
@@ -58,11 +60,26 @@ fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewM
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        if (tickets.isEmpty()) {
-            EmptyTicketsState()
-        } else {
-            TicketsList(tickets = tickets, navController = navController)
+        when (state) {
+            is TicketsUiState.Loading -> LoadingState()
+            is TicketsUiState.Error -> EmptyTicketsState()
+            is TicketsUiState.Success -> {
+                val tickets = state.tickets
+                if (tickets.isEmpty()) EmptyTicketsState() else TicketsList(tickets = tickets, navController = navController)
+            }
         }
+    }
+}
+
+@Composable
+private fun LoadingState() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.Center
+    ) {
+        CircularProgressIndicator()
     }
 }
 
