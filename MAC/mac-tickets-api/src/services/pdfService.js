@@ -118,43 +118,43 @@ const pdfService = {
     let currentY = 50;
 
     // ========================================
-    // HEADER - Logo y Título
+    // HEADER - Logo y Título (COMPACTO)
     // ========================================
-    doc.fontSize(24)
+    doc.fontSize(20)
        .font('Helvetica-Bold')
        .fillColor('#1F2937')
        .text('MAC COMPUTADORAS', 50, currentY);
     
-    currentY += 30;
+    currentY += 25;
     
-    doc.fontSize(18)
+    doc.fontSize(16)
        .fillColor('#3B82F6')
        .text('ORDEN DE SERVICIO', 50, currentY);
     
-    doc.fontSize(14)
+    doc.fontSize(12)
        .fillColor('#6B7280')
-       .text(`Ticket #${ticket.ticket_number}`, 50, currentY + 25);
+       .text(`Ticket #${ticket.ticket_number}`, 50, currentY + 20);
     
-    currentY += 60;
+    currentY += 45;
 
     // Línea divisoria
     doc.moveTo(50, currentY)
        .lineTo(doc.page.width - 50, currentY)
        .strokeColor('#E5E7EB')
-       .lineWidth(2)
+       .lineWidth(1)
        .stroke();
     
-    currentY += 30;
+    currentY += 20;
 
     // ========================================
     // INFORMACIÓN GENERAL
     // ========================================
-    doc.fontSize(14)
+    doc.fontSize(12)
        .font('Helvetica-Bold')
        .fillColor('#1F2937')
        .text('INFORMACIÓN GENERAL', 50, currentY);
     
-    currentY += 25;
+    currentY += 18;
 
     // Formatear fechas
     const fechaApertura = new Date(ticket.created_at).toLocaleString('es-MX', {
@@ -184,7 +184,7 @@ const pdfService = {
       tiempoResolucion = `${days} días, ${hours} horas`;
     }
 
-    doc.fontSize(11)
+    doc.fontSize(10)
        .font('Helvetica')
        .fillColor('#374151');
 
@@ -197,24 +197,32 @@ const pdfService = {
     ];
 
     infoGeneral.forEach(item => {
-      doc.font('Helvetica-Bold').text(item.label, 70, currentY, { continued: true, width: 200 });
-      doc.font('Helvetica').text(`  ${item.value}`, { width: 400 });
-      currentY += 20;
+      // Renderizar label
+      doc.font('Helvetica-Bold').text(item.label, 70, currentY, { continued: false, width: 150 });
+      // Renderizar valor en la misma línea pero con posición X específica
+      doc.font('Helvetica').text(item.value, 220, currentY, { continued: false, width: 350 });
+      
+      // Calcular altura real del texto para casos de texto largo
+      const textHeight = Math.max(
+        doc.heightOfString(item.label, { width: 150 }),
+        doc.heightOfString(item.value, { width: 350 })
+      );
+      currentY += Math.ceil(textHeight) + 4;
     });
 
-    currentY += 20;
+    currentY += 15;
 
     // ========================================
     // DATOS DEL CLIENTE
     // ========================================
-    doc.fontSize(14)
+    doc.fontSize(12)
        .font('Helvetica-Bold')
        .fillColor('#1F2937')
        .text('DATOS DEL CLIENTE', 50, currentY);
     
-    currentY += 25;
+    currentY += 18;
 
-    doc.fontSize(11)
+    doc.fontSize(10)
        .font('Helvetica')
        .fillColor('#374151');
 
@@ -225,62 +233,79 @@ const pdfService = {
     ];
 
     datosCliente.forEach(item => {
-      doc.font('Helvetica-Bold').text(item.label, 70, currentY, { continued: true, width: 150 });
-      doc.font('Helvetica').text(`  ${item.value}`, { width: 400 });
-      currentY += 20;
+      // Renderizar label y valor en posiciones fijas
+      doc.font('Helvetica-Bold').text(item.label, 70, currentY, { continued: false, width: 100 });
+      doc.font('Helvetica').text(item.value, 170, currentY, { continued: false, width: 390 });
+      
+      // Calcular altura real del texto
+      const textHeight = Math.max(
+        doc.heightOfString(item.label, { width: 100 }),
+        doc.heightOfString(item.value, { width: 390 })
+      );
+      currentY += Math.ceil(textHeight) + 4;
     });
 
-    currentY += 20;
+    currentY += 15;
 
     // ========================================
     // TÉCNICO RESPONSABLE
     // ========================================
-    doc.fontSize(14)
+    doc.fontSize(12)
        .font('Helvetica-Bold')
        .fillColor('#1F2937')
        .text('TÉCNICO RESPONSABLE', 50, currentY);
     
-    currentY += 25;
+    currentY += 18;
 
     if (ticket.assignee) {
       const tecnicoNombre = `${ticket.assignee.first_name} ${ticket.assignee.last_name}`;
       const tecnicoEmail = ticket.assignee.email;
 
-      doc.fontSize(11)
+      // Nombre
+      doc.fontSize(10)
          .font('Helvetica-Bold')
-         .text('Nombre:', 70, currentY, { continued: true, width: 150 });
+         .text('Nombre:', 70, currentY, { continued: false, width: 100 });
       doc.font('Helvetica')
-         .text(`  ${tecnicoNombre}`, { width: 400 });
+         .text(tecnicoNombre, 170, currentY, { continued: false, width: 390 });
       
-      currentY += 20;
+      const nombreHeight = Math.max(
+        doc.heightOfString('Nombre:', { width: 100 }),
+        doc.heightOfString(tecnicoNombre, { width: 390 })
+      );
+      currentY += Math.ceil(nombreHeight) + 4;
 
+      // Correo
       doc.font('Helvetica-Bold')
-         .text('Correo:', 70, currentY, { continued: true, width: 150 });
+         .text('Correo:', 70, currentY, { continued: false, width: 100 });
       doc.font('Helvetica')
-         .text(`  ${tecnicoEmail}`, { width: 400 });
+         .text(tecnicoEmail, 170, currentY, { continued: false, width: 390 });
       
-      currentY += 20;
+      const correoHeight = Math.max(
+        doc.heightOfString('Correo:', { width: 100 }),
+        doc.heightOfString(tecnicoEmail, { width: 390 })
+      );
+      currentY += Math.ceil(correoHeight) + 4;
     } else {
-      doc.fontSize(11)
+      doc.fontSize(10)
          .font('Helvetica-Oblique')
          .fillColor('#9CA3AF')
          .text('No asignado', 70, currentY);
-      currentY += 20;
+      currentY += 16;
     }
 
-    currentY += 20;
+    currentY += 15;
 
     // ========================================
     // DESCRIPCIÓN DEL PROBLEMA
     // ========================================
-    doc.fontSize(14)
+    doc.fontSize(12)
        .font('Helvetica-Bold')
        .fillColor('#1F2937')
        .text('DESCRIPCIÓN DEL PROBLEMA', 50, currentY);
     
-    currentY += 25;
+    currentY += 18;
 
-    doc.fontSize(11)
+    doc.fontSize(10)
        .font('Helvetica')
        .fillColor('#374151')
        .text(ticket.description || 'Sin descripción', 70, currentY, {
@@ -290,26 +315,26 @@ const pdfService = {
 
     currentY += doc.heightOfString(ticket.description || 'Sin descripción', {
       width: pageWidth - 20
-    }) + 30;
+    }) + 15;
 
     // ========================================
     // SOLUCIÓN APLICADA
     // ========================================
     if (ticket.resolution_notes) {
       // Check if new page needed
-      if (currentY > doc.page.height - 200) {
+      if (currentY > doc.page.height - 150) {
         doc.addPage();
         currentY = 50;
       }
 
-      doc.fontSize(14)
+      doc.fontSize(12)
          .font('Helvetica-Bold')
          .fillColor('#1F2937')
          .text('SOLUCIÓN APLICADA', 50, currentY);
       
-      currentY += 25;
+      currentY += 18;
 
-      doc.fontSize(11)
+      doc.fontSize(10)
          .font('Helvetica')
          .fillColor('#374151')
          .text(ticket.resolution_notes, 70, currentY, {
@@ -319,7 +344,7 @@ const pdfService = {
 
       currentY += doc.heightOfString(ticket.resolution_notes, {
         width: pageWidth - 20
-      }) + 30;
+      }) + 15;
     }
 
     // ========================================
@@ -327,19 +352,19 @@ const pdfService = {
     // ========================================
     if (attachments && attachments.length > 0) {
       // Check if new page needed
-      if (currentY > doc.page.height - 200) {
+      if (currentY > doc.page.height - 120) {
         doc.addPage();
         currentY = 50;
       }
 
-      doc.fontSize(14)
+      doc.fontSize(12)
          .font('Helvetica-Bold')
          .fillColor('#1F2937')
          .text('ARCHIVOS ADJUNTOS', 50, currentY);
       
-      currentY += 25;
+      currentY += 18;
 
-      doc.fontSize(10)
+      doc.fontSize(9)
          .font('Helvetica')
          .fillColor('#374151');
 
@@ -355,10 +380,10 @@ const pdfService = {
           currentY,
           { width: pageWidth - 20 }
         );
-        currentY += 18;
+        currentY += 14;
       });
 
-      currentY += 20;
+      currentY += 15;
     }
 
     // ========================================
@@ -366,19 +391,19 @@ const pdfService = {
     // ========================================
     if (comments && comments.length > 0) {
       // Check if new page needed
-      if (currentY > doc.page.height - 300) {
+      if (currentY > doc.page.height - 200) {
         doc.addPage();
         currentY = 50;
       }
 
-      doc.fontSize(14)
+      doc.fontSize(12)
          .font('Helvetica-Bold')
          .fillColor('#1F2937')
          .text('COMENTARIOS Y SEGUIMIENTO', 50, currentY);
       
-      currentY += 25;
+      currentY += 18;
 
-      doc.fontSize(10)
+      doc.fontSize(9)
          .font('Helvetica')
          .fillColor('#374151');
 
@@ -394,11 +419,12 @@ const pdfService = {
           : 'Desconocido';
 
         // Tipo de comentario
-        const tipo = comment.is_internal ? '[INTERNO]' : '[PÚBLICO]';
+        const tipo = comment.is_internal ? '[INT]' : '[PUB]';
 
         doc.font('Helvetica-Bold')
-           .text(`${tipo} [${fecha}] - ${autor}`, 70, currentY, { width: pageWidth - 20 });
-        currentY += 15;
+           .fillColor('#374151')
+           .text(`${tipo} [${fecha}] ${autor}`, 70, currentY, { width: pageWidth - 20 });
+        currentY += 12;
 
         doc.font('Helvetica')
            .fillColor('#6B7280')
@@ -406,32 +432,33 @@ const pdfService = {
         
         currentY += doc.heightOfString(comment.comment || 'Sin comentario', {
           width: pageWidth - 20
-        }) + 15;
+        }) + 8;
 
         // Línea divisoria entre comentarios
         doc.moveTo(70, currentY)
            .lineTo(doc.page.width - 70, currentY)
            .strokeColor('#E5E7EB')
-           .lineWidth(0.5)
+           .lineWidth(0.3)
            .stroke();
         
-        currentY += 10;
+        currentY += 8;
         
         // Check if new page needed
-        if (currentY > doc.page.height - 150) {
+        if (currentY > doc.page.height - 120) {
           doc.addPage();
           currentY = 50;
         }
       });
 
-      currentY += 20;
+      currentY += 15;
     }
 
     // ========================================
-    // SECCIÓN DE FIRMAS
+    // SECCIÓN DE FIRMAS (OPTIMIZADA Y COMPACTA)
     // ========================================
-    // Asegurar que las firmas estén en una página completa
-    if (currentY > doc.page.height - 300) {
+    // Solo crear nueva página si NO hay espacio suficiente para TODA la sección de firmas
+    const firmasHeight = 200; // Altura necesaria para toda la sección
+    if (currentY > doc.page.height - firmasHeight) {
       doc.addPage();
       currentY = 50;
     }
@@ -440,104 +467,104 @@ const pdfService = {
     doc.moveTo(50, currentY)
        .lineTo(doc.page.width - 50, currentY)
        .strokeColor('#E5E7EB')
-       .lineWidth(2)
+       .lineWidth(1)
        .stroke();
     
-    currentY += 30;
+    currentY += 20;
 
-    doc.fontSize(14)
+    doc.fontSize(12)
        .font('Helvetica-Bold')
        .fillColor('#1F2937')
        .text('FIRMAS', 50, currentY);
     
-    currentY += 40;
+    currentY += 25;
 
     // Firma del Técnico
-    doc.fontSize(12)
+    doc.fontSize(10)
        .font('Helvetica-Bold')
        .text('Técnico Responsable:', 70, currentY);
     
-    currentY += 60;
+    currentY += 35;
 
-    doc.fontSize(11)
+    doc.fontSize(9)
        .font('Helvetica')
        .text('Firma: ', 70, currentY);
     
     // Línea para firma
-    doc.moveTo(120, currentY + 15)
-       .lineTo(300, currentY + 15)
+    doc.moveTo(110, currentY + 10)
+       .lineTo(280, currentY + 10)
        .strokeColor('#9CA3AF')
-       .lineWidth(1)
+       .lineWidth(0.5)
        .stroke();
 
-    currentY += 60;
+    currentY += 40;
 
     // Firma del Cliente
-    doc.fontSize(12)
+    doc.fontSize(10)
        .font('Helvetica-Bold')
        .text('Cliente / Responsable:', 70, currentY);
     
-    currentY += 40;
+    currentY += 30;
 
-    doc.fontSize(11)
+    doc.fontSize(9)
        .font('Helvetica')
        .text('Nombre: ', 70, currentY);
     
     // Línea para nombre
-    doc.moveTo(130, currentY + 15)
-       .lineTo(400, currentY + 15)
+    doc.moveTo(115, currentY + 10)
+       .lineTo(380, currentY + 10)
        .strokeColor('#9CA3AF')
-       .lineWidth(1)
+       .lineWidth(0.5)
        .stroke();
 
-    currentY += 40;
+    currentY += 30;
 
     doc.text('Firma: ', 70, currentY);
     
     // Línea para firma
-    doc.moveTo(120, currentY + 15)
-       .lineTo(400, currentY + 15)
+    doc.moveTo(110, currentY + 10)
+       .lineTo(380, currentY + 10)
        .strokeColor('#9CA3AF')
-       .lineWidth(1)
+       .lineWidth(0.5)
        .stroke();
 
-    currentY += 40;
+    currentY += 30;
 
     doc.text('Fecha: ', 70, currentY);
     
     // Línea para fecha
-    doc.moveTo(120, currentY + 15)
-       .lineTo(300, currentY + 15)
+    doc.moveTo(110, currentY + 10)
+       .lineTo(280, currentY + 10)
        .strokeColor('#9CA3AF')
-       .lineWidth(1)
+       .lineWidth(0.5)
        .stroke();
 
     // ========================================
-    // FOOTER
+    // FOOTER (COMPACTO)
     // ========================================
-    const footerY = doc.page.height - 60;
+    const footerY = doc.page.height - 50;
     
     doc.moveTo(50, footerY)
        .lineTo(doc.page.width - 50, footerY)
        .strokeColor('#E5E7EB')
-       .lineWidth(1)
+       .lineWidth(0.5)
        .stroke();
 
-    doc.fontSize(9)
+    doc.fontSize(8)
        .font('Helvetica')
        .fillColor('#9CA3AF')
        .text(
          'MAC Computadoras © 2025',
          50,
-         footerY + 10,
+         footerY + 8,
          { width: pageWidth / 2, align: 'left' }
        );
 
     const fechaGeneracion = new Date().toLocaleString('es-MX');
     doc.text(
-      `Generado el: ${fechaGeneracion}`,
+      `Generado: ${fechaGeneracion}`,
       doc.page.width / 2,
-      footerY + 10,
+      footerY + 8,
       { width: pageWidth / 2, align: 'right' }
     );
   }
