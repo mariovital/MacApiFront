@@ -11,7 +11,7 @@ import {
   Chip,
   CircularProgress
 } from '@mui/material';
-import { FiSearch, FiMapPin, FiCalendar, FiTag, FiUser, FiClock, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
+import { FiSearch, FiMapPin, FiCalendar, FiTag, FiUser, FiClock, FiCheckCircle, FiAlertCircle, FiRefreshCw, FiEye } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import ticketService from '../../services/ticketService';
@@ -52,14 +52,12 @@ const TicketHistory = () => {
     }
   };
 
-  const handleRealizeTicket = (ticketId) => {
-    console.log('Realizar ticket nuevamente:', ticketId);
-    // Aquí iría la lógica para crear un nuevo ticket basado en este
+  const handleViewTicketDetail = (ticketId) => {
+    navigate(`/tickets/${ticketId}`);
   };
 
-  const handleViewHistory = (ticketId) => {
-    console.log('Ver detalle del ticket:', ticketId);
-    navigate(`/tickets/${ticketId}`);
+  const handleRefresh = async () => {
+    await loadCompletedTickets();
   };
 
   const filteredTickets = tickets.filter(t => 
@@ -144,6 +142,26 @@ const TicketHistory = () => {
             <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
               <strong>{filteredTickets.length}</strong> tickets completados
             </Typography>
+            <Button
+              variant="outlined"
+              onClick={handleRefresh}
+              disabled={loading}
+              sx={{
+                borderColor: '#E5E7EB',
+                color: '#6B7280',
+                borderRadius: '12px',
+                textTransform: 'none',
+                padding: '8px 16px',
+                fontWeight: '600',
+                '&:hover': {
+                  borderColor: '#D1D5DB',
+                  backgroundColor: '#F9FAFB'
+                }
+              }}
+            >
+              <FiRefreshCw className={`mr-2 ${loading ? 'animate-spin' : ''}`} size={16} />
+              Actualizar
+            </Button>
           </div>
         </div>
       </div>
@@ -339,46 +357,27 @@ const TicketHistory = () => {
                   </div>
                 </div>
 
-                {/* Botones de acción - Estilo Figma */}
-                <div className="px-6 pb-6 grid grid-cols-2 gap-3">
+                {/* Botón de acción - Simplificado */}
+                <div className="px-6 pb-6">
                   <Button
                     variant="contained"
-                    onClick={() => handleRealizeTicket(ticket.id)}
+                    fullWidth
+                    onClick={() => handleViewTicketDetail(ticket.id)}
+                    startIcon={<FiEye />}
                     sx={{
-                      backgroundColor: '#4F46E5',
+                      backgroundColor: '#E31E24',
                       color: 'white',
                       borderRadius: '12px',
                       textTransform: 'none',
                       padding: '12px',
                       fontWeight: '600',
-                      fontSize: '0.9rem',
+                      fontSize: '0.95rem',
                       '&:hover': {
-                        backgroundColor: '#4338CA'
+                        backgroundColor: '#C41A1F'
                       }
                     }}
                   >
-                    Realizar ticket
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleViewHistory(ticket.id)}
-                    sx={{
-                      borderColor: '#4F46E5',
-                      color: '#4F46E5',
-                      borderRadius: '12px',
-                      textTransform: 'none',
-                      padding: '12px',
-                      fontWeight: '600',
-                      fontSize: '0.9rem',
-                      borderWidth: '2px',
-                      '&:hover': {
-                        borderColor: '#4338CA',
-                        backgroundColor: '#EEF2FF',
-                        borderWidth: '2px'
-                      }
-                    }}
-                  >
-                    Historial ticket
+                    Ver Detalle del Ticket
                   </Button>
                 </div>
               </CardContent>
