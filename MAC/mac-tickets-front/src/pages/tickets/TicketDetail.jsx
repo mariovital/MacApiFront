@@ -50,6 +50,7 @@ import ticketService from '../../services/ticketService';
 import catalogService from '../../services/catalogService';
 import { useAuth } from '../../contexts/AuthContext';
 import { TICKET_STATUSES, PRIORITIES } from '../../constants';
+import GeneratePDFButton from '../../components/tickets/GeneratePDFButton';
 
 const TicketDetail = () => {
   const { id } = useParams();
@@ -723,6 +724,14 @@ const TicketDetail = () => {
                         Reabrir Ticket
                       </Button>
                     )}
+
+                    {/* Botón: Generar PDF para Firma */}
+                    <GeneratePDFButton 
+                      ticket={ticket} 
+                      variant="contained" 
+                      size="medium" 
+                      fullWidth 
+                    />
                   </div>
                 </CardContent>
               </Card>

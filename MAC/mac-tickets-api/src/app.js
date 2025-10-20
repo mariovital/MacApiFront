@@ -117,6 +117,7 @@ import catalogRoutes from './routes/catalog.js';
 import attachmentRoutes from './routes/attachments.js';
 import passwordResetRoutes from './routes/passwordResets.js';
 import reportRoutes from './routes/reports.js';
+import pdfRoutes from './routes/pdf.js';
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
@@ -124,6 +125,7 @@ app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/catalog', catalogRoutes); // Categories, Priorities, Statuses, Technicians
 app.use('/api/reports', reportRoutes); // Reports and statistics
+app.use('/api/pdf', pdfRoutes); // PDF generation for tickets
 // Importante: montar primero password-resets para evitar interceptación por el router de adjuntos
 app.use('/api/password-resets', passwordResetRoutes); // Forgot password flow (público para crear)
 app.use('/api', attachmentRoutes); // Attachments (incluye /api/tickets/:id/attachments y /api/attachments/:id)

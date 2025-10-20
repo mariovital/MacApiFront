@@ -144,6 +144,14 @@ const Ticket = sequelize.define('Ticket', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  pdf_generated_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  pdf_generated_count: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
   ip_address: {
     type: DataTypes.STRING(45),
     allowNull: true
