@@ -299,16 +299,41 @@ const TicketList = () => {
                       onClick={(e) => e.stopPropagation()}
                       displayEmpty
                       disabled={ticket.assigned_to !== null}
+                      className="dark:bg-gray-700 dark:text-white"
                       sx={{
                         borderRadius: '10px',
-                        backgroundColor: ticket.assigned_to ? '#F3F4F6' : 'white'
+                        backgroundColor: ticket.assigned_to ? '#F3F4F6' : 'white',
+                        '& .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(156, 163, 175, 0.3)'
+                        },
+                        '&:hover .MuiOutlinedInput-notchedOutline': {
+                          borderColor: 'rgba(156, 163, 175, 0.5)'
+                        },
+                        '& .MuiSelect-icon': {
+                          color: 'inherit'
+                        }
+                      }}
+                      MenuProps={{
+                        PaperProps: {
+                          className: 'dark:bg-gray-800',
+                          sx: {
+                            '& .MuiMenuItem-root': {
+                              '&.Mui-selected': {
+                                backgroundColor: 'rgba(79, 70, 229, 0.1)'
+                              },
+                              '&:hover': {
+                                backgroundColor: 'rgba(79, 70, 229, 0.05)'
+                              }
+                            }
+                          }
+                        }
                       }}
                     >
-                      <MenuItem value="" disabled>
+                      <MenuItem value="" disabled className="dark:text-gray-400">
                         {ticket.assigned_to ? 'Ya asignado' : 'Seleccionar técnico'}
                       </MenuItem>
                       {technicians.map((tech) => (
-                        <MenuItem key={tech.id} value={tech.id}>
+                        <MenuItem key={tech.id} value={tech.id} className="dark:text-white">
                           {tech.name}
                         </MenuItem>
                       ))}
@@ -326,6 +351,11 @@ const TicketList = () => {
                       handleAcceptTicket(ticket.id);
                     }}
                     disabled={!selectedTechnician[ticket.id] || ticket.assigned_to !== null}
+                    className={
+                      (!selectedTechnician[ticket.id] || ticket.assigned_to !== null)
+                        ? 'dark:!bg-gray-700 dark:!text-gray-500'
+                        : ''
+                    }
                     sx={{
                       backgroundColor: '#4F46E5',
                       color: 'white',
