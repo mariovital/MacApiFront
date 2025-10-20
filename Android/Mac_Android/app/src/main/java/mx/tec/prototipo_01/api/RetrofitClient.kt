@@ -1,6 +1,7 @@
 package mx.tec.prototipo_01.api
 
 import mx.tec.prototipo_01.auth.TokenStore
+import mx.tec.prototipo_01.config.ApiConfig
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Response
@@ -10,11 +11,11 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Objeto singleton que configura y proporciona una instancia de Retrofit.
+ * 
+ * NOTA: Para cambiar entre emulador/dispositivo físico/producción,
+ * edita el archivo ApiConfig.kt
  */
 object RetrofitClient {
-
-    // Para Emulador Android Studio (puente a localhost del host)
-    private const val BASE_URL = "mactickets-db.clcbz19idjuk.us-east-1.rds.amazonaws.com"
 
     // Interceptor para agregar Authorization: Bearer <token>
     private val authInterceptor = object : Interceptor {
@@ -33,16 +34,16 @@ object RetrofitClient {
     private val httpClient by lazy {
         OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(20, TimeUnit.SECONDS)
-            .writeTimeout(20, TimeUnit.SECONDS)
+            .connectTimeout(ApiConfig.CONNECT_TIMEOUT, TimeUnit.SECONDS)
+            .readTimeout(ApiConfig.READ_TIMEOUT, TimeUnit.SECONDS)
+            .writeTimeout(ApiConfig.WRITE_TIMEOUT, TimeUnit.SECONDS)
             .build()
     }
 
     // Creación de la instancia de Retrofit
     private val retrofit by lazy {
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(ApiConfig.BASE_URL)
             .client(httpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

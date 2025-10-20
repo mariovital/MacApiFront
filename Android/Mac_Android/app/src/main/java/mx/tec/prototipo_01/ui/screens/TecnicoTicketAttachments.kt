@@ -263,7 +263,10 @@ private fun absoluteUrl(pathOrUrl: String): String {
 private fun RetrofitClientBase(): String {
     // BASE_URL en RetrofitClient termina con /api/
     // Los archivos se exponen en /uploads, así que base debe ser http://10.0.2.2:3001/
-    return "http://10.0.2.2:3001/"
+    // Nota: Esta URL debe coincidir con el entorno configurado en ApiConfig
+    val apiUrl = mx.tec.prototipo_01.config.ApiConfig.BASE_URL
+    // Remover /api/ del final para llegar a la raíz del servidor
+    return apiUrl.replace("/api/", "/")
 }
 
 private fun openExternal(ctx: android.content.Context, url: String, mime: String?) {

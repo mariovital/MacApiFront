@@ -135,7 +135,34 @@ interface ApiService {
     @PATCH("tickets/{id}/status")
     suspend fun updateTicketStatus(@Path("id") ticketId: Int, @Body body: UpdateStatusRequest): Response<TicketDetailResponse>
 
-    // Adjuntos
+    // Marcar ticket como resuelto (técnico)
+    @POST("tickets/{id}/resolve")
+    suspend fun resolveTicket(@Path("id") ticketId: Int): Response<TicketDetailResponse>
+
+    // Cerrar ticket (admin)
+    @POST("tickets/{id}/close")
+    suspend fun closeTicket(@Path("id") ticketId: Int): Response<TicketDetailResponse>
+
+    // Reabrir ticket (admin)
+    @POST("tickets/{id}/reopen")
+    suspend fun reopenTicket(@Path("id") ticketId: Int): Response<TicketDetailResponse>
+
+    // =====================================================================
+    // COMENTARIOS
+    // =====================================================================
+    
+    // Obtener comentarios de un ticket
+    @GET("tickets/{ticketId}/comments")
+    suspend fun getTicketComments(@Path("ticketId") ticketId: Int): Response<AttachmentListResponse>
+    
+    // Agregar comentario a un ticket
+    @POST("tickets/{ticketId}/comments")
+    suspend fun addTicketComment(@Path("ticketId") ticketId: Int, @Body body: Map<String, Any>): Response<AttachmentResponse>
+
+    // =====================================================================
+    // ADJUNTOS
+    // =====================================================================
+    
     @Multipart
     @POST("tickets/{id}/attachments")
     suspend fun uploadAttachment(@Path("id") ticketId: Int, @Part file: MultipartBody.Part): Response<AttachmentResponse>

@@ -39,6 +39,11 @@ class TecnicoSharedViewModel : ViewModel() {
                 val response = RetrofitClient.instance.getTickets(limit = 200)
                 if (response.isSuccessful) {
                     val apiItems = response.body()?.data?.items.orEmpty()
+                    
+                    // Actualizar el mapa de IDs
+                    ticketIdMap.clear()
+                    apiItems.forEach { ticketIdMap[it.ticket_number] = it.id }
+                    
                     val allTickets = apiItems.map { it.toDomain() }
                     val (pending, history) = allTickets.partition { t ->
                         t.status == TicketStatus.PENDIENTE || t.status == TicketStatus.EN_PROCESO
@@ -58,25 +63,102 @@ class TecnicoSharedViewModel : ViewModel() {
         }
     }
 
+    // Mapa ticket_number -> backend id
+    private val ticketIdMap = mutableMapOf<String, Int>()
+
     fun getTicketById(id: String): TecnicoTicket? {
         val pending = (pendingTicketsState as? TicketsUiState.Success)?.tickets ?: emptyList()
         val history = (historyTicketsState as? TicketsUiState.Success)?.tickets ?: emptyList()
         return (pending + history).find { it.id == id }
     }
 
-    fun refreshTicketDetail(id: String) {
-        // This is a placeholder for future logic to refresh a single ticket
+    fun refreshTicketDetail(ticketNumber: String) {
+        viewModelScope.launch {
+            try {
+                val backendId = ticketIdMap[ticketNumber] ?: return@launch
+                val response = RetrofitClient.instance.getTicketById(backendId)
+                if (response.isSuccessful) {
+                    val apiItem = response.body()?.data ?: return@launch
+                    val updated = apiItem.toDomain()
+                    
+                    // Actualizar en la lista correspondiente
+                    val pending = (pendingTicketsState as? TicketsUiState.Success)?.tickets?.toMutableList() ?: mutableListOf()
+                    val history = (historyTicketsState as? TicketsUiState.Success)?.tickets?.toMutableList() ?: mutableListOf()
+                    
+                    val idxPending = pending.indexOfFirst { it.id == ticketNumber }
+                    if (idxPending >= 0) {
+                        pending[idxPending] = updated
+                        pendingTicketsState = TicketsUiState.Success(pending)
+                        return@launch
+                    }
+                    
+                    val idxHistory = history.indexOfFirst { it.id == ticketNumber }
+                    if (idxHistory >= 0) {
+                        history[idxHistory] = updated
+                        historyTicketsState = TicketsUiState.Success(history)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("TecnicoSharedViewModel", "Error refreshing ticket detail", e)
+            }
+        }
     }
 
     fun acceptTicket(ticketId: String) {
-        // Logic to accept a ticket
+        viewModelScope.launch {
+            try {
+                val backendId = ticketIdMap[ticketId] ?: return@launch
+                val response = RetrofitClient.instance.acceptTicket(backendId)
+                if (response.isSuccessful) {
+                    Log.d("TecnicoSharedViewModel", "Ticket aceptado exitosamente")
+                    // Recargar tickets para reflejar el cambio
+                    loadTickets()
+                } else {
+                    Log.e("TecnicoSharedViewModel", "Error al aceptar ticket: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("TecnicoSharedViewModel", "Exception al aceptar ticket", e)
+            }
+        }
     }
 
     fun rejectTicket(ticketId: String, reason: String?) {
-        // Logic to reject a ticket
+        viewModelScope.launch {
+            try {
+                val backendId = ticketIdMap[ticketId] ?: return@launch
+                val response = RetrofitClient.instance.rejectTicket(
+                    backendId,
+                    mx.tec.prototipo_01.models.api.RejectTicketRequest(reason = reason)
+                )
+                if (response.isSuccessful) {
+                    Log.d("TecnicoSharedViewModel", "Ticket rechazado exitosamente")
+                    // Recargar tickets para reflejar el cambio
+                    loadTickets()
+                } else {
+                    Log.e("TecnicoSharedViewModel", "Error al rechazar ticket: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("TecnicoSharedViewModel", "Exception al rechazar ticket", e)
+            }
+        }
     }
 
     fun closeTicket(ticketId: String) {
-        // Logic to close a ticket
+        viewModelScope.launch {
+            try {
+                val backendId = ticketIdMap[ticketId] ?: return@launch
+                // Marcar ticket como resuelto (el backend se encarga del estado)
+                val response = RetrofitClient.instance.resolveTicket(backendId)
+                if (response.isSuccessful) {
+                    Log.d("TecnicoSharedViewModel", "Ticket cerrado exitosamente")
+                    // Recargar tickets para reflejar el cambio
+                    loadTickets()
+                } else {
+                    Log.e("TecnicoSharedViewModel", "Error al cerrar ticket: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("TecnicoSharedViewModel", "Exception al cerrar ticket", e)
+            }
+        }
     }
 }
