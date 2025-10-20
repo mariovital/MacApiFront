@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit
 object RetrofitClient {
 
     // Para Emulador Android Studio (puente a localhost del host)
-    private const val BASE_URL = "http://10.0.2.2:3001/api/"
+    private const val BASE_URL = "mactickets-db.clcbz19idjuk.us-east-1.rds.amazonaws.com"
 
     // Interceptor para agregar Authorization: Bearer <token>
     private val authInterceptor = object : Interceptor {
