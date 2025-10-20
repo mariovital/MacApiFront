@@ -8,7 +8,7 @@ export { default as Dashboard } from './dashboard/Dashboard';
 export { TicketList } from './tickets';
 
 // Users  
-export { UserList } from './users';
+export { UserList, CreateUser } from './users';
 
 // Reports
 export { Reports } from './reports';
