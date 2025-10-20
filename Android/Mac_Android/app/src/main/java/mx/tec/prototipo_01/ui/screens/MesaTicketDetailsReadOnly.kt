@@ -185,7 +185,7 @@ fun MesaTicketDetailsReadOnly(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(Icons.Default.Person, "Usuario", tint = Color.LightGray, modifier = Modifier.size(24.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                StatusBadge(status = ticket.status.displayName)
+                                StatusBadgeChip(status = ticket.status.displayName)
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
@@ -197,7 +197,7 @@ fun MesaTicketDetailsReadOnly(
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
-                                PriorityBadge(priority = ticket.priority)
+                                PriorityBadgeChip(priority = ticket.priority)
                             }
                         }
 

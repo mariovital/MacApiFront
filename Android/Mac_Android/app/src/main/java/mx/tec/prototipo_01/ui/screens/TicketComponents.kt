@@ -16,7 +16,7 @@ import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.models.TicketStatus
 
 @Composable
-fun StatusBadge(status: String) {
+fun StatusBadgeChip(status: String) {
     val statusEnum = remember(status) { TicketStatus.values().find { it.displayName.equals(status, ignoreCase = true) } }
     if (statusEnum != null) {
         Box(
@@ -30,7 +30,7 @@ fun StatusBadge(status: String) {
 }
 
 @Composable
-fun PriorityBadge(priority: String) {
+fun PriorityBadgeChip(priority: String) {
     val priorityEnum = remember(priority) { TicketPriority.values().find { it.displayName.equals(priority, ignoreCase = true) } }
     val color = priorityEnum?.color ?: Color(0xFF69696E)
     val label = priorityEnum?.displayName ?: (priority.ifBlank { "N/A" })

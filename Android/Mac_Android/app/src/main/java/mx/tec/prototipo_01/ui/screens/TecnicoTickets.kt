@@ -157,7 +157,7 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        StatusBadge(status = ticket.status.displayName)
+                        StatusBadgeChip(status = ticket.status.displayName)
                     }
                 }
                 Column(
@@ -169,7 +169,7 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                         color = Color.Gray
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    PriorityBadge(priority = ticket.priority)
+                    PriorityBadgeChip(priority = ticket.priority)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))

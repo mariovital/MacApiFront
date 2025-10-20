@@ -1,5 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
+import java.io.File
 
 plugins {
     alias(libs.plugins.android.application)
@@ -7,11 +8,30 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// Load the API key from local.properties
-val localProperties = Properties()
-val localPropertiesFile = rootProject.file("local.properties")
-if (localPropertiesFile.exists()) {
-    localProperties.load(FileInputStream(localPropertiesFile))
+// Helper to resolve a property from root local.properties, module local.properties, env var, or Gradle -P
+fun resolveSecret(key: String): String? {
+    fun fromFile(file: File): String? {
+        return try {
+            if (!file.exists()) {
+                null
+            } else {
+                val p = Properties()
+                FileInputStream(file).use { p.load(it) }
+                p.getProperty(key)?.takeIf { it.isNotBlank() }
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    // 1) rootProject/local.properties
+    fromFile(rootProject.file("local.properties"))?.let { return it }
+    // 2) module/app/local.properties
+    fromFile(project.file("local.properties"))?.let { return it }
+    // 3) environment variable
+    System.getenv(key)?.takeIf { it.isNotBlank() }?.let { return it }
+    // 4) gradle -P
+    return (project.findProperty(key) as String?)?.takeIf { it.isNotBlank() }
 }
 
 android {
@@ -28,8 +48,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Make the API key available as a manifest placeholder
-        val mapsApiKey = localProperties.getProperty("MAPS_API_KEY") ?: ""
+        val mapsApiKey = resolveSecret("MAPS_API_KEY") ?: ""
         manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
+    // Also expose the key to code via BuildConfig for fallback geocoding
+    buildConfigField("String", "MAPS_API_KEY", "\"${mapsApiKey}\"")
+        if (mapsApiKey.isBlank()) {
+            println("WARNING: MAPS_API_KEY is empty. Google Maps tiles will not render. Set it in Android/Mac_Android/local.properties or app/local.properties or as env var MAPS_API_KEY.")
+        }
     }
 
     buildTypes {
@@ -50,6 +75,8 @@ android {
     }
     buildFeatures {
         compose = true
+    // Ensure BuildConfig is generated so we can reference BuildConfig.MAPS_API_KEY
+    buildConfig = true
     }
 }
 
@@ -77,6 +104,7 @@ dependencies {
     // Google Maps for Compose
     implementation("com.google.maps.android:maps-compose:4.3.3")
     implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.libraries.places:places:3.4.0")
 
     // Coil para carga de imágenes y miniaturas en Compose
     implementation("io.coil-kt:coil-compose:2.6.0")
