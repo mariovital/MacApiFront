@@ -68,24 +68,32 @@ fun TicketItem.toDomain(): TecnicoTicket {
 
 private fun mapStatus(api: RelatedStatus?, statusId: Int): TicketStatus {
     val name = api?.name?.lowercase()?.trim()
-    return when {
-        name == null -> when (statusId) {
-            1 -> TicketStatus.PENDIENTE
-            2 -> TicketStatus.EN_PROCESO
-            3 -> TicketStatus.COMPLETADO
-            4 -> TicketStatus.RECHAZADO
-            else -> TicketStatus.PENDIENTE
+    // Normalizar por nombre primero
+    if (name != null) {
+        return when {
+            name.contains("pend") || name.contains("asign") || name.contains("nuevo") || name.contains("reabier") -> TicketStatus.PENDIENTE
+            name.contains("proceso") || name.contains("en_proceso") || name.contains("in progress") -> TicketStatus.EN_PROCESO
+            name.contains("rechaz") -> TicketStatus.RECHAZADO
+            name.contains("complet") || name.contains("resuelto") || name.contains("cerrado") -> TicketStatus.COMPLETADO
+            else -> {
+                // Fallback por ID si el nombre no coincide con reglas conocidas
+                when (statusId) {
+                    1, 2, 7 -> TicketStatus.PENDIENTE // Nuevo, Asignado, Reabierto
+                    3 -> TicketStatus.EN_PROCESO      // En Proceso
+                    4 -> TicketStatus.RECHAZADO       // Rechazado (si existiera como id)
+                    5, 6 -> TicketStatus.COMPLETADO   // Resuelto, Cerrado
+                    else -> TicketStatus.PENDIENTE
+                }
+            }
         }
-        name.contains("pendiente") -> TicketStatus.PENDIENTE
-        name.contains("proceso") || name.contains("en_proceso") || name.contains("in progress") -> TicketStatus.EN_PROCESO
-        name.contains("complet") || name.contains("resuelto") || name.contains("cerrado") -> TicketStatus.COMPLETADO
-        name.contains("rechaz") -> TicketStatus.RECHAZADO
-        else -> when (statusId) {
-            1 -> TicketStatus.PENDIENTE
-            2 -> TicketStatus.EN_PROCESO
-            3 -> TicketStatus.COMPLETADO
-            4 -> TicketStatus.RECHAZADO
-            else -> TicketStatus.PENDIENTE
-        }
+    }
+
+    // Sin nombre: usar sólo el ID conocido del backend
+    return when (statusId) {
+        1, 2, 7 -> TicketStatus.PENDIENTE
+        3 -> TicketStatus.EN_PROCESO
+        4 -> TicketStatus.RECHAZADO
+        5, 6 -> TicketStatus.COMPLETADO
+        else -> TicketStatus.PENDIENTE
     }
 }

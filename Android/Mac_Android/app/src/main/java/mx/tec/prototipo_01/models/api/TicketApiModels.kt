@@ -226,3 +226,34 @@ data class PasswordResetItem(
     val processed_by: Int?,
     val note: String?
 )
+
+// Comentarios
+data class CommentItem(
+    val id: Int,
+    val ticket_id: Int,
+    val user_id: Int,
+    val comment: String,
+    val is_internal: Boolean,
+    val created_at: String
+)
+
+data class CommentListResponse(
+    val success: Boolean,
+    val data: List<CommentItem>
+)
+
+data class CreateCommentRequest(
+    val comment: String,
+    val is_internal: Boolean = false
+)
+
+data class CreateCommentResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: CommentItem?
+)
+
+// Resolución con comentario
+data class ResolveTicketRequest(
+    val resolution_comment: String
+)
