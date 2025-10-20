@@ -1,6 +1,7 @@
 // /pages/users/UserList.jsx - Vista de Usuarios según Figma
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Typography, 
   Button,
@@ -21,6 +22,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const UserList = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -125,6 +127,7 @@ const UserList = () => {
           <Button
             variant="contained"
             startIcon={<FiPlus />}
+            onClick={() => navigate('/users/create')}
             sx={{
               backgroundColor: '#E31E24',
               color: 'white',

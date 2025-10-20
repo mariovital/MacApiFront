@@ -12,7 +12,7 @@ import { CustomThemeProvider } from './contexts/ThemeContext';
 import { MainLayout } from './components/layout';
 
 // Páginas  
-import { Login, Dashboard, TicketList, UserList, Reports, Settings } from './pages';
+import { Login, Dashboard, TicketList, UserList, CreateUser, Reports, Settings } from './pages';
 import { TicketHistory, CreateTicket, EditTicket, TicketDetail } from './pages/tickets';
 
 // Hook para rutas protegidas
@@ -121,6 +121,15 @@ function App() {
               element={
                 <ProtectedLayout>
                   <UserList />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
+              path="/users/create" 
+              element={
+                <ProtectedLayout>
+                  <CreateUser />
                 </ProtectedLayout>
               } 
             />
