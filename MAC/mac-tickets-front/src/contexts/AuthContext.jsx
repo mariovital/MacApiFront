@@ -38,7 +38,43 @@ export const AuthProvider = ({ children }) => {
         throw new Error(userData.message || 'Error en el login');
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || 'Error de conexión';
+      console.error('❌ Error en login:', err);
+      
+      // Mensajes de error más específicos y amigables
+      let errorMessage = 'Error de conexión con el servidor';
+      
+      if (err.response) {
+        // El servidor respondió con un error
+        const status = err.response.status;
+        const message = err.response.data?.message;
+        
+        switch (status) {
+          case 400:
+            errorMessage = message || 'Datos de login inválidos';
+            break;
+          case 401:
+            errorMessage = 'Usuario o contraseña incorrectos';
+            break;
+          case 403:
+            errorMessage = 'Acceso denegado. Usuario inactivo o sin permisos';
+            break;
+          case 404:
+            errorMessage = 'Usuario no encontrado en el sistema';
+            break;
+          case 500:
+            errorMessage = 'Error del servidor. Intenta de nuevo más tarde';
+            break;
+          default:
+            errorMessage = message || `Error del servidor (${status})`;
+        }
+      } else if (err.request) {
+        // La petición se hizo pero no hubo respuesta
+        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión a internet';
+      } else {
+        // Error al configurar la petición
+        errorMessage = err.message || 'Error inesperado al iniciar sesión';
+      }
+      
       setError(errorMessage);
       throw new Error(errorMessage);
     } finally {

@@ -10,7 +10,10 @@ import {
   IconButton,
   Link,
   Fade,
-  Slide
+  Slide,
+  Dialog,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import { 
   FiMail, 
@@ -20,7 +23,8 @@ import {
   FiArrowRight,
   FiShield,
   FiZap,
-  FiCheckCircle
+  FiCheckCircle,
+  FiAlertCircle
 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -36,6 +40,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
   const [showContent, setShowContent] = useState(false);
+  const [showInvalidCredentialsDialog, setShowInvalidCredentialsDialog] = useState(false);
 
   // 2. FUNCIONES DE EVENTO
   const handleInputChange = (e) => {
@@ -51,7 +56,9 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLocalError('');
     
+    // Validaciones del formulario
     if (!credentials.email || !credentials.password) {
       setLocalError('Por favor complete todos los campos');
       return;
@@ -62,11 +69,46 @@ const Login = () => {
       return;
     }
 
+    // Validación de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(credentials.email)) {
+      setLocalError('Por favor ingresa un email válido');
+      return;
+    }
+
+    if (credentials.password.length < 3) {
+      setLocalError('La contraseña debe tener al menos 3 caracteres');
+      return;
+    }
+
     try {
       await login(credentials);
     } catch (loginError) {
       console.error('Error en login:', loginError);
+      
+      // Detectar si es error de credenciales incorrectas
+      const errorMsg = (loginError.message || '').toLowerCase();
+      const isInvalidCredentials = 
+        errorMsg.includes('contraseña') || 
+        errorMsg.includes('incorrectos') ||
+        errorMsg.includes('incorrectas') ||
+        errorMsg.includes('credenciales') ||
+        errorMsg.includes('inválidas') ||
+        errorMsg.includes('usuario o contraseña');
+      
+      if (isInvalidCredentials) {
+        setShowInvalidCredentialsDialog(true);
+      }
     }
+  };
+
+  const handleCloseDialog = () => {
+    setShowInvalidCredentialsDialog(false);
+    // Limpiar el campo de contraseña para que el usuario lo reingrese
+    setCredentials(prev => ({
+      ...prev,
+      password: ''
+    }));
   };
 
   const togglePasswordVisibility = () => {
@@ -233,13 +275,25 @@ const Login = () => {
                           mb: 3,
                           borderRadius: '12px',
                           backgroundColor: '#FEE2E2',
+                          border: '2px solid #EF4444',
                           color: '#991B1B',
+                          fontWeight: '600',
+                          animation: 'shake 0.5s',
+                          '@keyframes shake': {
+                            '0%, 100%': { transform: 'translateX(0)' },
+                            '10%, 30%, 50%, 70%, 90%': { transform: 'translateX(-5px)' },
+                            '20%, 40%, 60%, 80%': { transform: 'translateX(5px)' }
+                          },
                           '& .MuiAlert-icon': {
-                            color: '#DC2626'
+                            color: '#DC2626',
+                            fontSize: '24px'
+                          },
+                          '& .MuiAlert-message': {
+                            fontSize: '0.95rem'
                           }
                         }}
                       >
-                        {currentError}
+                        <strong>Error de autenticación:</strong> {currentError}
                       </Alert>
                     </Fade>
                   )}
@@ -445,6 +499,51 @@ const Login = () => {
           </div>
         </div>
       </Fade>
+
+      {/* Dialog Simple de Credenciales Incorrectas */}
+      <Dialog
+        open={showInvalidCredentialsDialog}
+        onClose={handleCloseDialog}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '12px',
+            padding: '8px'
+          }
+        }}
+      >
+        <DialogContent className="text-center py-6">
+          <FiAlertCircle className="text-red-500 mx-auto mb-4" size={48} />
+          <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-3">
+            Usuario o Contraseña Incorrectos
+          </Typography>
+          <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-4">
+            Verifica tus credenciales e intenta de nuevo
+          </Typography>
+        </DialogContent>
+
+        <DialogActions className="px-4 pb-4">
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleCloseDialog}
+            sx={{
+              backgroundColor: '#E31E24',
+              color: 'white',
+              borderRadius: '12px',
+              textTransform: 'none',
+              padding: '10px 24px',
+              fontWeight: '600',
+              '&:hover': {
+                backgroundColor: '#C41A1F'
+              }
+            }}
+          >
+            Entendido
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

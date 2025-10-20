@@ -12,12 +12,14 @@ import {
   MenuItem,
   FormControl,
   Chip,
-  IconButton
+  IconButton,
+  CircularProgress
 } from '@mui/material';
-import { FiSearch, FiPlus, FiMapPin, FiCalendar, FiTag, FiUser } from 'react-icons/fi';
+import { FiSearch, FiPlus, FiMapPin, FiCalendar, FiTag, FiUser, FiRefreshCw, FiAlertCircle } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { GoogleMapComponent } from '../../components/common';
+import ticketService from '../../services/ticketService';
 
 const TicketList = () => {
   const { user } = useAuth();
@@ -25,54 +27,11 @@ const TicketList = () => {
   const [tickets, setTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTechnician, setSelectedTechnician] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Mock data de tickets
-  const mockTickets = [
-    {
-      id: 1,
-      ticket_number: 'TICKET-001',
-      title: 'Pantalla Rota Dell.',
-      description: 'La pantalla del monitor Dell presenta una fisura en la esquina superior derecha que se extiende al centro',
-      client_name: 'Juan García MAC',
-      location: 'Zapote, 200 metros al norte de la Shell, San José',
-      coordinates: { lat: 9.9281, lng: -84.0907 },
-      reported_date: '2023-02-05 12:51',
-      category: 'Hardware',
-      status: { name: 'Espera Asig.', color: '#6B7280' },
-      priority: { name: 'ALTA', color: '#FF5722' },
-      assigned_to: null
-    },
-    {
-      id: 2,
-      ticket_number: 'TICKET-002',
-      title: 'Problema con impresora HP',
-      description: 'La impresora no imprime correctamente los documentos, salen borrosos',
-      client_name: 'María López',
-      location: 'Centro comercial, local 45, Heredia',
-      coordinates: { lat: 9.9981, lng: -84.1169 },
-      reported_date: '2023-02-05 10:30',
-      category: 'Hardware',
-      status: { name: 'En Proceso', color: '#F59E0B' },
-      priority: { name: 'MEDIA', color: '#FF9800' },
-      assigned_to: 2
-    },
-    {
-      id: 3,
-      ticket_number: 'TICKET-003',
-      title: 'Error en sistema de facturación',
-      description: 'El sistema no permite generar facturas desde hace 2 días',
-      client_name: 'Carlos Rodríguez',
-      location: 'Oficina principal, edificio corporativo, San José',
-      coordinates: { lat: 9.9355, lng: -84.0837 },
-      reported_date: '2023-02-04 15:20',
-      category: 'Software',
-      status: { name: 'Crítico', color: '#F44336' },
-      priority: { name: 'CRÍTICA', color: '#F44336' },
-      assigned_to: null
-    }
-  ];
-
-  // Mock data de técnicos
+  // Mock data de técnicos (se cargará desde API más adelante)
   const technicians = [
     { id: 1, name: 'Juan Pérez' },
     { id: 2, name: 'María González' },
@@ -80,9 +39,41 @@ const TicketList = () => {
     { id: 4, name: 'Ana Torres' }
   ];
 
+  // Cargar tickets al montar el componente
   useEffect(() => {
-    setTickets(mockTickets);
+    loadTickets();
   }, []);
+
+  const loadTickets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Obtener tickets desde la API (excluyendo resueltos y cerrados)
+      const response = await ticketService.getTickets({
+        limit: 100,
+        page: 1
+      });
+
+      if (response.success && response.data) {
+        setTickets(response.data.items || []);
+      }
+    } catch (err) {
+      console.error('Error cargando tickets:', err);
+      setError('Error al cargar los tickets. Por favor, intenta de nuevo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await loadTickets();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleAcceptTicket = (ticketId) => {
     const technicianId = selectedTechnician[ticketId];
@@ -99,9 +90,10 @@ const TicketList = () => {
   };
 
   const filteredTickets = tickets.filter(t => 
-    t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.client_name.toLowerCase().includes(searchTerm.toLowerCase())
+    t.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.ticket_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.client_company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.client_contact?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -109,29 +101,52 @@ const TicketList = () => {
       {/* Header estilo Figma */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center">
+          <div className="flex items-center space-x-4">
             <Typography variant="h4" className="font-bold text-gray-900 dark:text-white">
               Tickets<span className="text-[#E31E24]">.</span>
             </Typography>
+            {!loading && (
+              <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
+                <strong>{tickets.length}</strong> tickets activos
+              </Typography>
+            )}
           </div>
-          <Button
-            variant="contained"
-            startIcon={<FiPlus />}
-            onClick={() => navigate('/tickets/create')}
-            sx={{
-              backgroundColor: '#E31E24',
-              color: 'white',
-              borderRadius: '12px',
-              textTransform: 'none',
-              padding: '10px 24px',
-              fontWeight: '600',
-              '&:hover': {
-                backgroundColor: '#C41A1F'
-              }
-            }}
-          >
-            Nuevo Ticket
-          </Button>
+          <div className="flex items-center space-x-3">
+            <IconButton
+              onClick={handleRefresh}
+              disabled={refreshing}
+              sx={{
+                color: '#E31E24',
+                '&:hover': {
+                  backgroundColor: 'rgba(227, 30, 36, 0.1)'
+                }
+              }}
+              title="Recargar tickets"
+            >
+              <FiRefreshCw 
+                size={20} 
+                className={refreshing ? 'animate-spin' : ''}
+              />
+            </IconButton>
+            <Button
+              variant="contained"
+              startIcon={<FiPlus />}
+              onClick={() => navigate('/tickets/create')}
+              sx={{
+                backgroundColor: '#E31E24',
+                color: 'white',
+                borderRadius: '12px',
+                textTransform: 'none',
+                padding: '10px 24px',
+                fontWeight: '600',
+                '&:hover': {
+                  backgroundColor: '#C41A1F'
+                }
+              }}
+            >
+              Nuevo Ticket
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -162,8 +177,46 @@ const TicketList = () => {
           />
         </div>
 
+        {/* Loading state */}
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <CircularProgress sx={{ color: '#E31E24' }} size={48} />
+            <Typography className="ml-4 text-gray-600 dark:text-gray-400">
+              Cargando tickets...
+            </Typography>
+          </div>
+        )}
+
+        {/* Error state */}
+        {error && !loading && (
+          <Card className="p-8 text-center shadow-lg dark:bg-gray-800" sx={{ borderRadius: '16px' }}>
+            <FiAlertCircle className="text-6xl text-red-500 mx-auto mb-4" />
+            <Typography variant="h5" className="mb-4 dark:text-white">
+              {error}
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={loadTickets}
+              sx={{
+                backgroundColor: '#E31E24',
+                color: 'white',
+                borderRadius: '12px',
+                textTransform: 'none',
+                padding: '10px 24px',
+                fontWeight: '600',
+                '&:hover': {
+                  backgroundColor: '#C41A1F'
+                }
+              }}
+            >
+              Reintentar
+            </Button>
+          </Card>
+        )}
+
         {/* Grid de tickets - Estilo Figma */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {!loading && !error && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredTickets.map((ticket) => (
             <Card 
               key={ticket.id}
@@ -175,30 +228,34 @@ const TicketList = () => {
               }}
             >
               <CardContent className="p-0">
-                {/* Header de la card con badges */}
+                  {/* Header de la card con badges */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-3">
-                    <Chip 
-                      label={ticket.status.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: ticket.status.color + '20',
-                        color: ticket.status.color,
-                        fontWeight: '700',
-                        fontSize: '0.7rem',
-                        textTransform: 'uppercase'
-                      }}
-                    />
-                    <Chip 
-                      label={ticket.priority.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: ticket.priority.color,
-                        color: 'white',
-                        fontWeight: '700',
-                        fontSize: '0.7rem'
-                      }}
-                    />
+                    {ticket.status && (
+                      <Chip 
+                        label={ticket.status.name}
+                        size="small"
+                        sx={{
+                          backgroundColor: ticket.status.color + '20',
+                          color: ticket.status.color,
+                          fontWeight: '700',
+                          fontSize: '0.7rem',
+                          textTransform: 'uppercase'
+                        }}
+                      />
+                    )}
+                    {ticket.priority && (
+                      <Chip 
+                        label={ticket.priority.name}
+                        size="small"
+                        sx={{
+                          backgroundColor: ticket.priority.color,
+                          color: 'white',
+                          fontWeight: '700',
+                          fontSize: '0.7rem'
+                        }}
+                      />
+                    )}
                   </div>
                   
                   {/* Título del ticket */}
@@ -221,7 +278,7 @@ const TicketList = () => {
                         Reportado:
                       </Typography>
                       <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
-                        {ticket.client_name}
+                        {ticket.client_company || ticket.client_contact || 'Sin información'}
                       </Typography>
                     </div>
                   </div>
@@ -247,7 +304,7 @@ const TicketList = () => {
                         Fecha:
                       </Typography>
                       <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
-                        {ticket.reported_date}
+                        {ticket.created_at ? new Date(ticket.created_at).toLocaleString('es-MX') : 'Sin fecha'}
                       </Typography>
                     </div>
                   </div>
@@ -371,16 +428,17 @@ const TicketList = () => {
               </CardContent>
             </Card>
           ))}
-        </div>
 
-        {/* Sin resultados */}
-        {filteredTickets.length === 0 && (
-          <div className="text-center py-12">
-            <FiTag className="mx-auto text-gray-400 mb-4" size={48} />
-            <Typography variant="h6" className="text-gray-600 dark:text-gray-400">
-              No se encontraron tickets
-            </Typography>
-          </div>
+          {/* Sin resultados dentro del grid */}
+          {filteredTickets.length === 0 && (
+            <div className="col-span-full text-center py-12">
+              <FiTag className="mx-auto text-gray-400 mb-4" size={48} />
+              <Typography variant="h6" className="text-gray-600 dark:text-gray-400">
+                No se encontraron tickets
+              </Typography>
+            </div>
+          )}
+        </div>
         )}
       </div>
     </div>
