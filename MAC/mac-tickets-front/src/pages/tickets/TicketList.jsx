@@ -17,6 +17,7 @@ import {
 import { FiSearch, FiPlus, FiMapPin, FiCalendar, FiTag, FiUser } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { GoogleMapComponent } from '../../components/common';
 
 const TicketList = () => {
   const { user } = useAuth();
@@ -265,23 +266,14 @@ const TicketList = () => {
                   </div>
                 </div>
 
-                {/* Mapa placeholder - Estilo Figma */}
+                {/* Mapa de Google Maps */}
                 <div className="px-6 pb-4">
-                  <div 
-                    className="w-full h-40 bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 rounded-xl flex items-center justify-center relative overflow-hidden"
-                    style={{
-                      backgroundImage: 'linear-gradient(45deg, #E5E7EB 25%, transparent 25%, transparent 75%, #E5E7EB 75%, #E5E7EB), linear-gradient(45deg, #E5E7EB 25%, transparent 25%, transparent 75%, #E5E7EB 75%, #E5E7EB)',
-                      backgroundSize: '20px 20px',
-                      backgroundPosition: '0 0, 10px 10px'
-                    }}
-                  >
-                    <div className="text-center">
-                      <FiMapPin className="mx-auto text-blue-600 dark:text-blue-300 mb-2" size={32} />
-                      <Typography variant="caption" className="text-blue-700 dark:text-blue-200 font-medium">
-                        Mapa de ubicación
-                      </Typography>
-                    </div>
-                  </div>
+                  <GoogleMapComponent 
+                    address={ticket.location}
+                    height="160px"
+                    zoom={15}
+                    className="shadow-md"
+                  />
                 </div>
 
                 {/* Asignar técnico */}

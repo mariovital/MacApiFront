@@ -8,89 +8,49 @@ import {
   CardContent,
   TextField,
   InputAdornment,
-  Chip
+  Chip,
+  CircularProgress
 } from '@mui/material';
-import { FiSearch, FiMapPin, FiCalendar, FiTag, FiUser, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { FiSearch, FiMapPin, FiCalendar, FiTag, FiUser, FiClock, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import ticketService from '../../services/ticketService';
 
 const TicketHistory = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data de tickets pasados/completados
-  const mockHistoryTickets = [
-    {
-      id: 1,
-      ticket_number: 'TICKET-001',
-      title: 'Pantalla Rota Dell.',
-      description: 'La pantalla del monitor Dell presenta una fisura en la esquina superior derecha',
-      client_name: 'Juan García MAC',
-      location: 'Zapote, 200 metros al norte de la Shell, San José',
-      coordinates: { lat: 9.9281, lng: -84.0907 },
-      reported_date: '2023-01-15 10:30',
-      completed_date: '2023-01-16 14:45',
-      category: 'Hardware',
-      status: { name: 'Cerrado', color: '#10B981' },
-      priority: { name: 'ALTA', color: '#FF5722' },
-      assigned_to: { name: 'Juan Pérez' },
-      resolution_time: '1 día 4 horas'
-    },
-    {
-      id: 2,
-      ticket_number: 'TICKET-002',
-      title: 'Problema con impresora HP',
-      description: 'La impresora no imprime correctamente, documentos salen borrosos',
-      client_name: 'María López',
-      location: 'Centro comercial, local 45, Heredia',
-      coordinates: { lat: 9.9981, lng: -84.1169 },
-      reported_date: '2023-01-14 08:20',
-      completed_date: '2023-01-14 16:30',
-      category: 'Hardware',
-      status: { name: 'Resuelto', color: '#10B981' },
-      priority: { name: 'MEDIA', color: '#FF9800' },
-      assigned_to: { name: 'María González' },
-      resolution_time: '8 horas'
-    },
-    {
-      id: 3,
-      ticket_number: 'TICKET-003',
-      title: 'Configuración de red local',
-      description: 'Necesita configuración de red para nueva sucursal',
-      client_name: 'Carlos Rodríguez',
-      location: 'Oficina nueva, Escazú, San José',
-      coordinates: { lat: 9.9199, lng: -84.1422 },
-      reported_date: '2023-01-12 09:00',
-      completed_date: '2023-01-13 17:00',
-      category: 'Redes',
-      status: { name: 'Cerrado', color: '#10B981' },
-      priority: { name: 'BAJA', color: '#4CAF50' },
-      assigned_to: { name: 'Carlos Ruiz' },
-      resolution_time: '1 día 8 horas'
-    },
-    {
-      id: 4,
-      ticket_number: 'TICKET-004',
-      title: 'Instalación de software contable',
-      description: 'Instalación y configuración de sistema contable QuickBooks',
-      client_name: 'Ana Martínez',
-      location: 'Centro de San José, edificio torre 3',
-      coordinates: { lat: 9.9333, lng: -84.0833 },
-      reported_date: '2023-01-10 11:15',
-      completed_date: '2023-01-11 15:30',
-      category: 'Software',
-      status: { name: 'Resuelto', color: '#10B981' },
-      priority: { name: 'MEDIA', color: '#FF9800' },
-      assigned_to: { name: 'Ana Torres' },
-      resolution_time: '1 día 4 horas'
-    }
-  ];
-
+  // Cargar tickets completados desde la API
   useEffect(() => {
-    setTickets(mockHistoryTickets);
+    loadCompletedTickets();
   }, []);
+
+  const loadCompletedTickets = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Obtener tickets con status 5 (Resuelto) o 6 (Cerrado)
+      const response = await ticketService.getTickets({
+        status: '5,6', // Filtrar por tickets resueltos o cerrados
+        limit: 100,
+        page: 1
+      });
+
+      if (response.success && response.data) {
+        setTickets(response.data.items || []);
+      }
+    } catch (err) {
+      console.error('Error cargando tickets completados:', err);
+      setError('Error al cargar el historial de tickets');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRealizeTicket = (ticketId) => {
     console.log('Realizar ticket nuevamente:', ticketId);
@@ -98,15 +58,77 @@ const TicketHistory = () => {
   };
 
   const handleViewHistory = (ticketId) => {
-    console.log('Ver historial completo del ticket:', ticketId);
-    navigate(`/tickets/${ticketId}/history`);
+    console.log('Ver detalle del ticket:', ticketId);
+    navigate(`/tickets/${ticketId}`);
   };
 
   const filteredTickets = tickets.filter(t => 
-    t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    t.client_name.toLowerCase().includes(searchTerm.toLowerCase())
+    t.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.ticket_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.client_company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    t.client_contact?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Calcular tiempo de resolución
+  const calculateResolutionTime = (createdAt, closedAt) => {
+    if (!closedAt) return 'En proceso';
+    
+    const start = new Date(createdAt);
+    const end = new Date(closedAt);
+    const diffMs = end - start;
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
+    const remainingHours = diffHours % 24;
+    
+    if (diffDays > 0) {
+      return `${diffDays} día${diffDays > 1 ? 's' : ''} ${remainingHours}h`;
+    }
+    return `${diffHours} horas`;
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <CircularProgress sx={{ color: '#E31E24' }} size={48} />
+          <Typography className="mt-4 text-gray-600 dark:text-gray-400">
+            Cargando historial de tickets...
+          </Typography>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <FiAlertCircle className="mx-auto text-red-500 mb-4" size={48} />
+          <Typography variant="h6" className="text-gray-900 dark:text-white mb-2">
+            {error}
+          </Typography>
+          <Button
+            onClick={loadCompletedTickets}
+            sx={{
+              backgroundColor: '#E31E24',
+              color: 'white',
+              borderRadius: '12px',
+              textTransform: 'none',
+              padding: '10px 24px',
+              fontWeight: '600',
+              '&:hover': {
+                backgroundColor: '#C41A1F'
+              }
+            }}
+          >
+            Reintentar
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900">
@@ -201,14 +223,14 @@ const TicketHistory = () => {
                   </Typography>
                   
                   <Typography variant="body2" className="text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
-                    {ticket.description}
+                    {ticket.description || 'Sin descripción'}
                   </Typography>
 
                   {/* Tiempo de resolución */}
                   <div className="flex items-center mt-3 p-2 bg-white dark:bg-gray-700 rounded-lg">
                     <FiClock className="text-green-600 dark:text-green-400 mr-2" size={16} />
                     <Typography variant="caption" className="text-green-700 dark:text-green-300 font-semibold">
-                      Resuelto en: {ticket.resolution_time}
+                      Resuelto en: {calculateResolutionTime(ticket.created_at, ticket.closed_at || ticket.updated_at)}
                     </Typography>
                   </div>
                 </div>
@@ -220,10 +242,10 @@ const TicketHistory = () => {
                     <FiUser className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
                     <div>
                       <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
-                        Reportado:
+                        Cliente:
                       </Typography>
                       <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
-                        {ticket.client_name}
+                        {ticket.client_company || ticket.client_contact || 'Sin información'}
                       </Typography>
                     </div>
                   </div>
@@ -242,17 +264,19 @@ const TicketHistory = () => {
                   </div>
 
                   {/* Técnico asignado */}
-                  <div className="flex items-start">
-                    <FiUser className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
-                    <div>
-                      <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
-                        Técnico:
-                      </Typography>
-                      <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
-                        {ticket.assigned_to.name}
-                      </Typography>
+                  {ticket.assignee && (
+                    <div className="flex items-start">
+                      <FiUser className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
+                      <div>
+                        <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
+                          Técnico:
+                        </Typography>
+                        <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
+                          {ticket.assignee.first_name} {ticket.assignee.last_name}
+                        </Typography>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Fechas */}
                   <div className="grid grid-cols-2 gap-3">
@@ -263,7 +287,7 @@ const TicketHistory = () => {
                           Iniciado:
                         </Typography>
                         <Typography variant="body2" className="text-gray-900 dark:text-white font-medium text-xs">
-                          {ticket.reported_date}
+                          {new Date(ticket.created_at).toLocaleString('es-MX')}
                         </Typography>
                       </div>
                     </div>
@@ -274,24 +298,26 @@ const TicketHistory = () => {
                           Completado:
                         </Typography>
                         <Typography variant="body2" className="text-gray-900 dark:text-white font-medium text-xs">
-                          {ticket.completed_date}
+                          {new Date(ticket.closed_at || ticket.updated_at).toLocaleString('es-MX')}
                         </Typography>
                       </div>
                     </div>
                   </div>
 
                   {/* Ubicación */}
-                  <div className="flex items-start">
-                    <FiMapPin className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
-                    <div>
-                      <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
-                        Ubicación:
-                      </Typography>
-                      <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
-                        {ticket.location}
-                      </Typography>
+                  {ticket.location && (
+                    <div className="flex items-start">
+                      <FiMapPin className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
+                      <div>
+                        <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
+                          Ubicación:
+                        </Typography>
+                        <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
+                          {ticket.location}
+                        </Typography>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Mapa placeholder */}
