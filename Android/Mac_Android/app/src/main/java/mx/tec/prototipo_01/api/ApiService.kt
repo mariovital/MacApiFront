@@ -32,6 +32,10 @@ import retrofit2.http.PATCH
 import retrofit2.http.Multipart
 import retrofit2.http.Part
 import okhttp3.MultipartBody
+import mx.tec.prototipo_01.models.api.CommentListResponse
+import mx.tec.prototipo_01.models.api.CreateCommentRequest
+import mx.tec.prototipo_01.models.api.CreateCommentResponse
+import mx.tec.prototipo_01.models.api.ResolveTicketRequest
 
 /**
  * Interfaz que define las rutas del API para Retrofit.
@@ -136,8 +140,9 @@ interface ApiService {
     suspend fun updateTicketStatus(@Path("id") ticketId: Int, @Body body: UpdateStatusRequest): Response<TicketDetailResponse>
 
     // Marcar ticket como resuelto (técnico)
+    // Marcar ticket como resuelto (técnico) con comentario obligatorio
     @POST("tickets/{id}/resolve")
-    suspend fun resolveTicket(@Path("id") ticketId: Int): Response<TicketDetailResponse>
+    suspend fun resolveTicket(@Path("id") ticketId: Int, @Body body: ResolveTicketRequest): Response<TicketDetailResponse>
 
     // Cerrar ticket (admin)
     @POST("tickets/{id}/close")
@@ -153,11 +158,11 @@ interface ApiService {
     
     // Obtener comentarios de un ticket
     @GET("tickets/{ticketId}/comments")
-    suspend fun getTicketComments(@Path("ticketId") ticketId: Int): Response<AttachmentListResponse>
+    suspend fun getTicketComments(@Path("ticketId") ticketId: Int): Response<CommentListResponse>
     
     // Agregar comentario a un ticket
     @POST("tickets/{ticketId}/comments")
-    suspend fun addTicketComment(@Path("ticketId") ticketId: Int, @Body body: Map<String, Any>): Response<AttachmentResponse>
+    suspend fun addTicketComment(@Path("ticketId") ticketId: Int, @Body body: CreateCommentRequest): Response<CreateCommentResponse>
 
     // =====================================================================
     // ADJUNTOS
