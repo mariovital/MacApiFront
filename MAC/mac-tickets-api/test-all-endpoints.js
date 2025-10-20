@@ -266,7 +266,7 @@ async function testTickets() {
   if (createdTicketId) {
     log('\n4.5 Update Ticket', 'yellow');
     const updateData = {
-      title: 'Test Ticket - UPDATED',
+      title: 'Test Ticket - UDATED',
       description: 'Ticket actualizado por el script de testing'
     };
     const updateResult = await makeRequest('PUT', `/api/tickets/${createdTicketId}`, updateData, true);

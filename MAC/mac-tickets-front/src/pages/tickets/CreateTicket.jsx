@@ -50,21 +50,21 @@ const CreateTicket = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900">
       {/* Header estilo Figma */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
         <div className="flex items-center space-x-4">
           <button
             onClick={handleCancel}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
           >
-            <FiArrowLeft size={20} className="text-gray-600" />
+            <FiArrowLeft size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
           <div>
-            <Typography variant="h4" className="font-bold text-gray-900">
+            <Typography variant="h4" className="font-bold text-gray-900 dark:text-white">
               Nuevo Ticket<span className="text-[#E31E24]">.</span>
             </Typography>
-            <Typography variant="body2" className="text-gray-600 mt-1">
+            <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mt-1">
               Completa el formulario para crear un nuevo ticket de soporte
             </Typography>
           </div>
@@ -74,7 +74,7 @@ const CreateTicket = () => {
       {/* Contenido principal */}
       <div className="px-6 pb-6 max-w-5xl mx-auto">
         <Card 
-          className="shadow-lg"
+          className="shadow-lg dark:bg-gray-800"
           sx={{ borderRadius: '16px' }}
         >
           <CardContent className="p-8">

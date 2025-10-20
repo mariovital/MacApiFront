@@ -158,7 +158,7 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
     return (
       <div className="flex items-center justify-center py-12">
         <CircularProgress sx={{ color: '#E31E24' }} />
-        <Typography className="ml-4 text-gray-600">Cargando formulario...</Typography>
+        <Typography className="ml-4 text-gray-600 dark:text-gray-400">Cargando formulario...</Typography>
       </div>
     );
   }
@@ -171,7 +171,11 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
           severity="error" 
           icon={<FiAlertCircle />}
           onClose={() => setFormError('')}
-          sx={{ borderRadius: '12px' }}
+          sx={{ 
+            borderRadius: '12px',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            color: '#EF4444'
+          }}
         >
           {formError}
         </Alert>
@@ -179,7 +183,7 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
 
       {/* Información del Ticket */}
       <div>
-        <Typography variant="h6" className="font-bold text-gray-900 mb-4">
+        <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-4">
           Información del Ticket
         </Typography>
         
@@ -194,8 +198,29 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
             helperText={errors.title}
             required
             placeholder="Ej: Problema con impresora HP LaserJet"
-            InputProps={{
-              sx: { borderRadius: '12px' }
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                backgroundColor: 'transparent',
+                '& fieldset': {
+                  borderColor: 'rgba(156, 163, 175, 0.3)'
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(156, 163, 175, 0.5)'
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#E31E24'
+                }
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(156, 163, 175, 0.7)'
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: '#E31E24'
+              },
+              '& .MuiInputBase-input': {
+                color: 'inherit'
+              }
             }}
           />
 
@@ -211,8 +236,29 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
             multiline
             rows={4}
             placeholder="Describe el problema con el mayor detalle posible..."
-            InputProps={{
-              sx: { borderRadius: '12px' }
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                backgroundColor: 'transparent',
+                '& fieldset': {
+                  borderColor: 'rgba(156, 163, 175, 0.3)'
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(156, 163, 175, 0.5)'
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#E31E24'
+                }
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(156, 163, 175, 0.7)'
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: '#E31E24'
+              },
+              '& .MuiInputBase-input': {
+                color: 'inherit'
+              }
             }}
           />
 
@@ -224,7 +270,26 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
               required
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px'
+                  borderRadius: '12px',
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.3)'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.5)'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#E31E24'
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(156, 163, 175, 0.7)'
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#E31E24'
+                },
+                '& .MuiSelect-select': {
+                  color: 'inherit'
                 }
               }}
             >
@@ -233,6 +298,16 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
                 value={formData.category_id}
                 onChange={handleChange('category_id')}
                 label="Categoría"
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: 'background.paper',
+                      '& .MuiMenuItem-root': {
+                        color: 'text.primary'
+                      }
+                    }
+                  }
+                }}
               >
                 <MenuItem value="">
                   <em>Selecciona una categoría</em>
@@ -254,7 +329,26 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
               required
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  borderRadius: '12px'
+                  borderRadius: '12px',
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.3)'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.5)'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#E31E24'
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(156, 163, 175, 0.7)'
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#E31E24'
+                },
+                '& .MuiSelect-select': {
+                  color: 'inherit'
                 }
               }}
             >
@@ -263,6 +357,16 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
                 value={formData.priority_id}
                 onChange={handleChange('priority_id')}
                 label="Prioridad"
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: 'background.paper',
+                      '& .MuiMenuItem-root': {
+                        color: 'text.primary'
+                      }
+                    }
+                  }
+                }}
               >
                 <MenuItem value="">
                   <em>Selecciona una prioridad</em>
@@ -287,11 +391,11 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
         </div>
       </div>
 
-      <Divider />
+      <Divider className="dark:border-gray-700" />
 
       {/* Información del Cliente */}
       <div>
-        <Typography variant="h6" className="font-bold text-gray-900 mb-4">
+        <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-4">
           Información del Cliente
         </Typography>
         
@@ -307,8 +411,29 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
               helperText={errors.client_company}
               required
               placeholder="Nombre de la empresa"
-              InputProps={{
-                sx: { borderRadius: '12px' }
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.3)'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.5)'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#E31E24'
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(156, 163, 175, 0.7)'
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#E31E24'
+                },
+                '& .MuiInputBase-input': {
+                  color: 'inherit'
+                }
               }}
             />
 
@@ -321,8 +446,29 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
               helperText={errors.client_contact}
               required
               placeholder="Juan Pérez"
-              InputProps={{
-                sx: { borderRadius: '12px' }
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.3)'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.5)'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#E31E24'
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(156, 163, 175, 0.7)'
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#E31E24'
+                },
+                '& .MuiInputBase-input': {
+                  color: 'inherit'
+                }
               }}
             />
           </div>
@@ -338,8 +484,29 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
               error={!!errors.client_email}
               helperText={errors.client_email || 'Opcional'}
               placeholder="correo@empresa.com"
-              InputProps={{
-                sx: { borderRadius: '12px' }
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.3)'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.5)'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#E31E24'
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(156, 163, 175, 0.7)'
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#E31E24'
+                },
+                '& .MuiInputBase-input': {
+                  color: 'inherit'
+                }
               }}
             />
 
@@ -352,8 +519,29 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
               error={!!errors.client_phone}
               helperText={errors.client_phone || 'Opcional'}
               placeholder="8888-8888"
-              InputProps={{
-                sx: { borderRadius: '12px' }
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  backgroundColor: 'transparent',
+                  '& fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.3)'
+                  },
+                  '&:hover fieldset': {
+                    borderColor: 'rgba(156, 163, 175, 0.5)'
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#E31E24'
+                  }
+                },
+                '& .MuiInputLabel-root': {
+                  color: 'rgba(156, 163, 175, 0.7)'
+                },
+                '& .MuiInputLabel-root.Mui-focused': {
+                  color: '#E31E24'
+                },
+                '& .MuiInputBase-input': {
+                  color: 'inherit'
+                }
               }}
             />
           </div>
@@ -367,8 +555,29 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
             placeholder="Ej: San José, Zapote, 200m norte de la Shell"
             multiline
             rows={2}
-            InputProps={{
-              sx: { borderRadius: '12px' }
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                backgroundColor: 'transparent',
+                '& fieldset': {
+                  borderColor: 'rgba(156, 163, 175, 0.3)'
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(156, 163, 175, 0.5)'
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#E31E24'
+                }
+              },
+              '& .MuiInputLabel-root': {
+                color: 'rgba(156, 163, 175, 0.7)'
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: '#E31E24'
+              },
+              '& .MuiInputBase-input': {
+                color: 'inherit'
+              }
             }}
           />
         </div>
@@ -382,15 +591,15 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
           disabled={isLoading}
           startIcon={<FiX />}
           sx={{
-            borderColor: '#E5E7EB',
-            color: '#6B7280',
+            borderColor: 'rgba(156, 163, 175, 0.3)',
+            color: 'inherit',
             borderRadius: '12px',
             textTransform: 'none',
             padding: '10px 24px',
             fontWeight: '600',
             '&:hover': {
-              borderColor: '#D1D5DB',
-              backgroundColor: '#F9FAFB'
+              borderColor: 'rgba(156, 163, 175, 0.5)',
+              backgroundColor: 'rgba(156, 163, 175, 0.1)'
             }
           }}
         >
@@ -412,7 +621,7 @@ const TicketForm = ({ onSubmit, onCancel, initialData = null, isLoading = false 
               backgroundColor: '#C41A1F'
             },
             '&:disabled': {
-              backgroundColor: '#FCA5A5',
+              backgroundColor: 'rgba(227, 30, 36, 0.5)',
               color: 'white'
             }
           }}

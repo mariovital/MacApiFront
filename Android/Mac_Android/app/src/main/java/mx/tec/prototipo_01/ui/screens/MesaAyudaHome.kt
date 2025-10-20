@@ -26,7 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +48,7 @@ fun MesaAyudaHome(
     isDark: Boolean,
     onThemeChange: () -> Unit
 ) {
-    var selectedOption by remember { mutableStateOf(0) }
+    var selectedOption by rememberSaveable { mutableStateOf(0) }
 
     val view = LocalView.current
     val headerColor = MaterialTheme.colorScheme.primary
@@ -75,7 +75,7 @@ fun MesaAyudaHome(
                         Text(text = titleText, color = MaterialTheme.colorScheme.onPrimary, fontWeight = FontWeight.Medium, fontSize = 28.sp)
                         Box(
                             modifier = Modifier
-                                .padding(start = 4.dp, bottom = 4.dp) // Adjusted position
+                                .padding(start = 4.dp, bottom = 4.dp)
                                 .size(7.dp)
                                 .background(color = MaterialTheme.colorScheme.error, shape = CircleShape)
                         )
@@ -114,7 +114,6 @@ fun MesaAyudaHome(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Capturar resultado desde detalles para volver a la pestaña de Tickets
             androidx.compose.runtime.LaunchedEffect(Unit) {
                 navController.currentBackStackEntry
                     ?.savedStateHandle
@@ -123,14 +122,13 @@ fun MesaAyudaHome(
                         if (tab == 0) selectedOption = 0
                     }
             }
-            // Cargar/Refrescar tickets de Mesa al cambiar de pestaña
             androidx.compose.runtime.LaunchedEffect(selectedOption) {
                 if (selectedOption == 0 || selectedOption == 1) {
                     viewModel.loadTickets()
                 }
             }
             when(selectedOption) {
-                0 -> MesaAyudaTickets(navController = navController, viewModel = viewModel)
+                0 -> MesaAyudaTickets(navController = navController, viewModel = viewModel, isDark = isDark)
                 1 -> MesaAyudaHistorial(navController = navController, viewModel = viewModel)
                 2 -> MesaAyudaConfig(
                     onThemeToggle = onThemeChange,

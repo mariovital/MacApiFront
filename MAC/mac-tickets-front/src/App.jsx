@@ -12,8 +12,8 @@ import { CustomThemeProvider } from './contexts/ThemeContext';
 import { MainLayout } from './components/layout';
 
 // Páginas  
-import { Login, Dashboard, TicketList, UserList, Reports, Settings } from './pages';
-import { TicketHistory, CreateTicket, TicketDetail } from './pages/tickets';
+import { Login, Dashboard, TicketList, UserList, CreateUser, Reports, Settings } from './pages';
+import { TicketHistory, CreateTicket, EditTicket, TicketDetail } from './pages/tickets';
 
 // Hook para rutas protegidas
 import { useAuth } from './contexts/AuthContext';
@@ -90,6 +90,15 @@ function App() {
             />
             
             <Route 
+              path="/tickets/:id/edit" 
+              element={
+                <ProtectedLayout>
+                  <EditTicket />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
               path="/tickets/history" 
               element={
                 <ProtectedLayout>
@@ -112,6 +121,15 @@ function App() {
               element={
                 <ProtectedLayout>
                   <UserList />
+                </ProtectedLayout>
+              } 
+            />
+            
+            <Route 
+              path="/users/create" 
+              element={
+                <ProtectedLayout>
+                  <CreateUser />
                 </ProtectedLayout>
               } 
             />

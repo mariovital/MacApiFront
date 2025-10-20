@@ -1,7 +1,11 @@
 package mx.tec.prototipo_01.ui.screens
 
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.net.Uri
+import android.os.SystemClock
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +28,6 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,12 +36,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,8 +60,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
-import android.content.Intent
-import android.net.Uri
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -64,23 +67,23 @@ import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
+import mx.tec.prototipo_01.BuildConfig
 import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.models.TicketStatus
 import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
-import java.net.URLDecoder
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
+import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Locale
-import org.json.JSONArray
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.withTimeoutOrNull
-import android.os.SystemClock
+import java.net.URLDecoder
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,18 +92,15 @@ fun TecnicoTicketDetails(
     viewModel: TecnicoSharedViewModel,
     ticketId: String
 ) {
-    // Get the ticket from the ViewModel. This is reactive and will update if the ticket changes.
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
     var showCloseConfirmationDialog by remember { mutableStateOf(false) }
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("") }
 
-    // Intentar refrescar detalle desde backend cuando se abre la pantalla
     LaunchedEffect(ticketId) {
         viewModel.refreshTicketDetail(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString()))
     }
 
-    // If the ticket is null for any reason (e.g., it was rejected and removed), just go back.
     if (ticket == null) {
         navController.popBackStack()
         return
@@ -112,21 +112,13 @@ fun TecnicoTicketDetails(
             title = { Text("Confirmar Cierre") },
             text = { Text("¿Estás seguro de que quieres cerrar este ticket?") },
             confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.closeTicket(ticket.id)
-                        showCloseConfirmationDialog = false
-                        navController.popBackStack()
-                    }
-                ) {
-                    Text("Confirmar")
-                }
+                Button(onClick = {
+                    viewModel.closeTicket(ticket.id)
+                    showCloseConfirmationDialog = false
+                    navController.popBackStack()
+                }) { Text("Confirmar") }
             },
-            dismissButton = {
-                Button(onClick = { showCloseConfirmationDialog = false }) {
-                    Text("Cancelar")
-                }
-            }
+            dismissButton = { Button(onClick = { showCloseConfirmationDialog = false }) { Text("Cancelar") } }
         )
     }
 
@@ -138,7 +130,7 @@ fun TecnicoTicketDetails(
                 Column {
                     Text("Por favor describe el motivo del rechazo:")
                     Spacer(modifier = Modifier.height(8.dp))
-                    androidx.compose.material3.OutlinedTextField(
+                    OutlinedTextField(
                         value = rejectReason,
                         onValueChange = { rejectReason = it },
                         singleLine = false,
@@ -155,14 +147,11 @@ fun TecnicoTicketDetails(
                     navController.popBackStack()
                 }) { Text("Enviar y rechazar") }
             },
-            dismissButton = {
-                Button(onClick = { showRejectDialog = false }) { Text("Cancelar") }
-            }
+            dismissButton = { Button(onClick = { showRejectDialog = false }) { Text("Cancelar") } }
         )
     }
 
-    val (dispositivo, serialNumber) = remember(ticket.description) { parseHardwareFromDescription(ticket.description) }
-    val problema = ticket.title
+    val (dispositivo, serialNumber, problema) = remember(ticket.description) { parseDescription(ticket.description) }
     val ubicacion = ticket.location ?: "—"
     val cleanAddress = remember(ubicacion) { sanitizeAddress(ubicacion) }
     val context = LocalContext.current
@@ -170,10 +159,9 @@ fun TecnicoTicketDetails(
     var geocodeTried by remember(ubicacion) { mutableStateOf(false) }
     var geocodeFailed by remember(ubicacion) { mutableStateOf(false) }
 
-    // Geocodificar con estrategia rápida: caché + carreras en paralelo (device + web) con timeouts cortos
     LaunchedEffect(cleanAddress) {
         if (cleanAddress.isNotBlank() && cleanAddress != "—") {
-            mapCoordinates = geocodeAddressFast(context, cleanAddress)
+            mapCoordinates = geocodeAddressFast(context, cleanAddress, BuildConfig.MAPS_API_KEY)
             geocodeTried = true
             geocodeFailed = mapCoordinates == null
         } else {
@@ -203,22 +191,16 @@ fun TecnicoTicketDetails(
                         val now = SystemClock.elapsedRealtime()
                         if (now - lastBackClick.value > 700) {
                             lastBackClick.value = now
-                            // Usa navigateUp para no hacer pop extra cuando ya no hay back stack
                             navController.navigateUp()
                         }
-                    }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary)
-                    }
+                    }) { Icon(Icons.Default.ArrowBack, contentDescription = "Volver atrás", tint = MaterialTheme.colorScheme.onPrimary) }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = topBarColor)
             )
         }
     ) { padding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)
         ) {
             item {
                 Card(
@@ -239,21 +221,12 @@ fun TecnicoTicketDetails(
                                 StatusBadge(status = ticket.status.displayName)
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    text = ticket.id,
-                                    fontSize = 12.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier
-                                        .background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(4.dp))
-                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                )
+                                Text(text = ticket.id, fontSize = 12.sp, color = Color.Gray, modifier = Modifier.background(Color.LightGray.copy(alpha = 0.3f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
                                 Spacer(modifier = Modifier.height(4.dp))
                                 PriorityBadge(priority = ticket.priority)
                             }
                         }
-
                         Spacer(modifier = Modifier.height(16.dp))
-
                         Row(verticalAlignment = Alignment.Top) {
                             Icon(Icons.Default.DateRange, "Ticket Title", modifier = Modifier.padding(top = 4.dp))
                             Spacer(modifier = Modifier.width(8.dp))
@@ -266,38 +239,23 @@ fun TecnicoTicketDetails(
                                 }
                             }
                         }
-
                         Spacer(modifier = Modifier.height(16.dp))
-
                         Row(verticalAlignment = Alignment.Top) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(top = 8.dp)) {
                                 Box(modifier = Modifier.width(1.dp).height(4.dp).background(Color.LightGray))
                                 Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(Color.LightGray))
                             }
                             Spacer(modifier = Modifier.width(12.dp))
-                                val descripcionLimpia = remember(ticket.description) { cleanDescription(ticket.description) }
-                                Text(descripcionLimpia, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp, color = Color.Gray)
+                            Text(remember(ticket.description) { cleanDescription(ticket.description) }, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp, color = Color.Gray)
                         }
-
                         Spacer(modifier = Modifier.height(24.dp))
-
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Detalles:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            // Prioridad ya se muestra en el encabezado; se omite aquí para evitar duplicado
-                            Spacer(modifier = Modifier.height(8.dp))
-                            if (!ticket.categoryName.isNullOrBlank()) {
-                                Text("Categoría: ${ticket.categoryName}", color = Color.Gray, fontSize = 14.sp)
-                            }
-                            if (!ticket.clientDepartment.isNullOrBlank()) {
-                                Text("Departamento: ${ticket.clientDepartment}", color = Color.Gray, fontSize = 14.sp)
-                            }
-                            if (!ticket.clientEmail.isNullOrBlank()) {
-                                Text("Email: ${ticket.clientEmail}", color = Color.Gray, fontSize = 14.sp)
-                            }
-                            if (!ticket.clientPhone.isNullOrBlank()) {
-                                Text("Teléfono: ${ticket.clientPhone}", color = Color.Gray, fontSize = 14.sp)
-                            }
+                            if (!ticket.categoryName.isNullOrBlank()) Text("Categoría: ${ticket.categoryName}", color = Color.Gray, fontSize = 14.sp)
+                            if (!ticket.clientDepartment.isNullOrBlank()) Text("Departamento: ${ticket.clientDepartment}", color = Color.Gray, fontSize = 14.sp)
+                            if (!ticket.clientEmail.isNullOrBlank()) Text("Email: ${ticket.clientEmail}", color = Color.Gray, fontSize = 14.sp)
+                            if (!ticket.clientPhone.isNullOrBlank()) Text("Teléfono: ${ticket.clientPhone}", color = Color.Gray, fontSize = 14.sp)
                             if (!ticket.priorityJustification.isNullOrBlank()) {
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text("Justificación de prioridad:", fontWeight = FontWeight.Medium, fontSize = 14.sp)
@@ -309,121 +267,38 @@ fun TecnicoTicketDetails(
                             Text("S/N: ${serialNumber ?: "—"}", color = Color.Gray, fontSize = 14.sp)
                             Text("Problema: $problema", color = Color.Gray, fontSize = 14.sp, lineHeight = 20.sp)
                         }
-
                         Spacer(modifier = Modifier.height(24.dp))
-
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text("Ubicación:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(cleanAddress, color = Color.Gray, fontSize = 14.sp, lineHeight = 20.sp)
                             Spacer(modifier = Modifier.height(8.dp))
-                            OutlinedButton(
-                                onClick = { openInMaps(context, cleanAddress) },
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Text("Abrir en Maps")
-                            }
+                            OutlinedButton(onClick = { openInMaps(context, cleanAddress) }, shape = RoundedCornerShape(12.dp)) { Text("Abrir en Maps") }
                         }
-
                         Spacer(modifier = Modifier.height(16.dp))
-
-                        // Mostrar siempre el mapa como antes; centrar en un punto por defecto y mover si obtenemos coordenadas
                         val defaultTarget = remember { LatLng(19.4056, -99.0965) }
-                        val cameraPositionState = rememberCameraPositionState {
-                            position = CameraPosition.fromLatLngZoom(defaultTarget, 15f)
+                        val cameraPositionState = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(defaultTarget, 15f) }
+                        LaunchedEffect(mapCoordinates) { mapCoordinates?.let { target -> cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(target, 15f)) } }
+                        GoogleMap(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)), cameraPositionState = cameraPositionState) {
+                            mapCoordinates?.let { target -> Marker(state = MarkerState(position = target), title = "Ubicación del Ticket") }
                         }
-
-                        // Si ya tenemos coordenadas, animar la cámara a esa ubicación
-                        LaunchedEffect(mapCoordinates) {
-                            mapCoordinates?.let { target ->
-                                cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(target, 15f))
-                            }
-                        }
-
-                        GoogleMap(
-                            modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)),
-                            cameraPositionState = cameraPositionState
-                        ) {
-                            mapCoordinates?.let { target ->
-                                Marker(
-                                    state = MarkerState(position = target),
-                                    title = "Ubicación del Ticket"
-                                )
-                            }
-                        }
-
-                        if (geocodeTried && geocodeFailed) {
-                            Text(
-                                text = "No se pudo ubicar la dirección en el mapa",
-                                color = Color.Gray,
-                                fontSize = 12.sp
-                            )
-                        }
-
+                        if (geocodeTried && geocodeFailed) Text(text = "No se pudo ubicar la dirección en el mapa", color = Color.Gray, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(24.dp))
-
                         when (ticket.status) {
                             TicketStatus.PENDIENTE -> {
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    Button(onClick = {
-                                        viewModel.acceptTicket(ticket.id)
-                                        navController.popBackStack()
-                                    }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) {
-                                        Text("Aceptar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
-                                    }
-                                    Button(onClick = {
-                                        rejectReason = ""
-                                        showRejectDialog = true
-                                    }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) {
-                                        Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
-                                    }
+                                    Button(onClick = { viewModel.acceptTicket(ticket.id); navController.popBackStack() }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) { Text("Aceptar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
+                                    Button(onClick = { rejectReason = ""; showRejectDialog = true }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
                                 }
                             }
                             TicketStatus.EN_PROCESO -> {
                                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                    Button(
-                                        onClick = {
-                                            val encodedIdNav = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
-                                            val encodedTitleNav = URLEncoder.encode(ticket.title, StandardCharsets.UTF_8.toString())
-                                            val encodedCompanyNav = URLEncoder.encode(ticket.company, StandardCharsets.UTF_8.toString())
-                                            val encodedAssignedToNav = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
-                                            val encodedStatusNav = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
-                                            val encodedPriorityNav = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
-                                            navController.navigate("tecnico_ticket_attachments/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
-                                        },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                                    ) {
-                                        Text("Adjuntar evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
-                                    }
-                                    Button(
-                                        onClick = { showCloseConfirmationDialog = true },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp),
-                                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-                                    ) {
-                                        Text("Cerrar Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
-                                    }
+                                    Button(onClick = { navController.navigate("tecnico_ticket_attachments/${ticket.id.encodeUrl()}/${ticket.title.encodeUrl()}/${ticket.company.encodeUrl()}/${ticket.assignedTo.encodeUrl()}/${ticket.status.displayName.encodeUrl()}/${ticket.priority.encodeUrl()}") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("Adjuntar evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
+                                    Button(onClick = { showCloseConfirmationDialog = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Cerrar Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
                                 }
                             }
                             TicketStatus.COMPLETADO, TicketStatus.RECHAZADO -> {
-                                Button(
-                                    onClick = {
-                                        val encodedIdNav = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
-                                        val encodedTitleNav = URLEncoder.encode(ticket.title, StandardCharsets.UTF_8.toString())
-                                        val encodedCompanyNav = URLEncoder.encode(ticket.company, StandardCharsets.UTF_8.toString())
-                                        val encodedAssignedToNav = URLEncoder.encode(ticket.assignedTo, StandardCharsets.UTF_8.toString())
-                                        val encodedStatusNav = URLEncoder.encode(ticket.status.displayName, StandardCharsets.UTF_8.toString())
-                                        val encodedPriorityNav = URLEncoder.encode(ticket.priority, StandardCharsets.UTF_8.toString())
-                                        navController.navigate("tecnico_ticket_attachments/$encodedIdNav/$encodedTitleNav/$encodedCompanyNav/$encodedAssignedToNav/$encodedStatusNav/$encodedPriorityNav")
-                                    },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(12.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
-                                ) {
-                                    Text("Adjuntar evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold)
-                                }
+                                Button(onClick = { navController.navigate("tecnico_ticket_attachments/${ticket.id.encodeUrl()}/${ticket.title.encodeUrl()}/${ticket.company.encodeUrl()}/${ticket.assignedTo.encodeUrl()}/${ticket.status.displayName.encodeUrl()}/${ticket.priority.encodeUrl()}") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("Ver evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
                             }
                         }
                     }
@@ -433,133 +308,123 @@ fun TecnicoTicketDetails(
     }
 }
 
-    private fun cleanDescription(description: String): String {
-        // Remueve líneas del bloque de hardware (con o sin guiones/bullets) para evitar duplicados en la UI
-        return description
-            .lines()
-            .filterNot { line ->
-                val normalized = line.trim().replaceFirst("^[\\-•\\s]+".toRegex(), "")
-                normalized.equals("Hardware:", ignoreCase = true) ||
+private fun String.encodeUrl(): String = URLEncoder.encode(this, StandardCharsets.UTF_8.toString())
+
+private suspend fun geocodeAddressFast(context: Context, address: String, apiKey: String): LatLng? = coroutineScope {
+    val deviceLookup = async { withTimeoutOrNull(1000) { getCoordinatesFromDevice(context, address) } }
+    val googleWebLookup = async { withTimeoutOrNull(3000) { getCoordinatesFromGoogle(address, apiKey) } }
+    deviceLookup.await() ?: googleWebLookup.await()
+}
+
+private suspend fun getCoordinatesFromDevice(context: Context, address: String): LatLng? = withContext(Dispatchers.IO) {
+    try {
+        val geocoder = Geocoder(context)
+        @Suppress("DEPRECATION")
+        geocoder.getFromLocationName(address, 1)?.firstOrNull()?.let { LatLng(it.latitude, it.longitude) }
+    } catch (e: IOException) {
+        Log.e("TecnicoTicketDetails", "Fallo el geocoder del dispositivo para la dirección: '$address'", e)
+        null
+    }
+}
+
+private suspend fun getCoordinatesFromGoogle(address: String, apiKey: String): LatLng? = withContext(Dispatchers.IO) {
+    if (apiKey.isBlank()) {
+        Log.e("TecnicoTicketDetails", "La API key de Google Geocoding está vacía.")
+        return@withContext null
+    }
+    Log.d("TecnicoTicketDetails", "Buscando en Google Geocoding: '$address'")
+    try {
+        val url = URL("https://maps.googleapis.com/maps/api/geocode/json?address=${address.encodeUrl()}&key=$apiKey")
+        (url.openConnection() as HttpURLConnection).run {
+            requestMethod = "GET"
+            connect()
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                inputStream.bufferedReader().use { it.readText() }.let { response ->
+                    val jsonResponse = JSONObject(response)
+                    if (jsonResponse.getString("status") == "OK") {
+                        val results = jsonResponse.getJSONArray("results")
+                        if (results.length() > 0) {
+                            val location = results.getJSONObject(0).getJSONObject("geometry").getJSONObject("location")
+                            return@withContext LatLng(location.getDouble("lat"), location.getDouble("lng"))
+                        } else {
+                            Log.w("TecnicoTicketDetails", "Google Geocoding no encontró resultados para: '$address'")
+                        }
+                    } else {
+                        Log.e("TecnicoTicketDetails", "Google Geocoding API error: ${jsonResponse.getString("status")} - ${jsonResponse.optString("error_message", "")}")
+                    }
+                }
+            } else {
+                Log.e("TecnicoTicketDetails", "Google Geocoding devolvió error: $responseCode")
+            }
+        }
+    } catch (e: Exception) {
+        Log.e("TecnicoTicketDetails", "Fallo el geocoder de Google para: '$address'", e)
+    }
+    null
+}
+
+private fun sanitizeAddress(address: String): String = address.replace("-", " ")
+
+private fun openInMaps(context: Context, address: String) {
+    val intentUri = Uri.parse("geo:0,0?q=${Uri.encode(address)}")
+    val mapIntent = Intent(Intent.ACTION_VIEW, intentUri)
+    mapIntent.setPackage("com.google.android.apps.maps") // Prioriza Google Maps
+    if (mapIntent.resolveActivity(context.packageManager) != null) {
+        context.startActivity(mapIntent)
+    } else { // Si no está Google Maps, abre el selector genérico
+        val genericIntent = Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q=${Uri.encode(address)}"))
+        context.startActivity(genericIntent)
+    }
+}
+
+private fun parseDescription(description: String): Triple<String?, String?, String> {
+    val lines = description.lines()
+    var dispositivo: String? = null
+    var serie: String? = null
+    val problemLines = mutableListOf<String>()
+
+    lines.forEach { line ->
+        val trimmed = line.trim()
+        when {
+            trimmed.startsWith("Dispositivo:", ignoreCase = true) -> {
+                dispositivo = trimmed.substringAfter(":").trim().ifBlank { null }
+            }
+            trimmed.startsWith("S/N:", ignoreCase = true) -> {
+                serie = trimmed.substringAfter(":").trim().ifBlank { null }
+            }
+            else -> problemLines.add(line)
+        }
+    }
+    return Triple(dispositivo, serie, problemLines.joinToString("\n").trim())
+}
+
+private fun cleanDescription(description: String): String {
+    return description.lines().filterNot { line ->
+        val normalized = line.trim().replaceFirst("^[-•\\s]+".toRegex(), "")
+        normalized.equals("Hardware:", ignoreCase = true) ||
                 normalized.startsWith("Dispositivo:", ignoreCase = true) ||
                 normalized.startsWith("S/N:", ignoreCase = true) ||
                 normalized.startsWith("Serie:", ignoreCase = true) ||
                 normalized.startsWith("Serial:", ignoreCase = true)
-            }
-            .joinToString("\n")
-            .replace("\n\n\n", "\n\n") // compactar saltos extra
-            .trim()
-    }
-
-    private fun parseHardwareFromDescription(description: String): Pair<String?, String?> {
-        var device: String? = null
-        var serial: String? = null
-        description.lines().forEach { raw ->
-            val line = raw.trim().replaceFirst("^[\\-•\\s]+".toRegex(), "")
-            when {
-                line.startsWith("Dispositivo:", ignoreCase = true) -> {
-                    device = line.substringAfter(":").trim().ifBlank { null }
-                }
-                line.startsWith("S/N:", ignoreCase = true) || line.startsWith("Serie:", ignoreCase = true) || line.startsWith("Serial:", ignoreCase = true) -> {
-                    serial = line.substringAfter(":").trim().ifBlank { null }
-                }
-            }
-        }
-        return device to serial
-    }
-// Usa StatusBadge y PriorityBadge compartidos en TicketComponents.kt
-
-private suspend fun geocodeAddressFast(context: Context, address: String): LatLng? {
-    // 0) caché en memoria
-    GeocodeCache[address]?.let { return it }
-    return coroutineScope {
-        val deviceJob = async(Dispatchers.IO) { deviceGeocode(context, address) }
-        val webJob = async(Dispatchers.IO) { webGeocode(address) }
-
-        // Espera corta al geocoder del dispositivo
-        val deviceFirst = withTimeoutOrNull(1800) { deviceJob.await() }
-        var result = deviceFirst ?: withTimeoutOrNull(2500) { webJob.await() }
-        // Cancela el otro job si sigue vivo
-        if (!deviceJob.isCompleted) deviceJob.cancel()
-        if (!webJob.isCompleted) webJob.cancel()
-
-        // Fallback: intenta con ", México" si no hubo resultado
-        if (result == null) {
-            val alt = "$address, México"
-            val altDevice = withTimeoutOrNull(1200) { deviceGeocode(context, alt) }
-            result = altDevice ?: withTimeoutOrNull(2000) { webGeocode(alt) }
-        }
-
-        result?.also { GeocodeCache[address] = it }
-    }
+    }.joinToString("\n").replace("\n\n\n", "\n\n").trim()
 }
 
-private fun deviceGeocode(context: Context, address: String): LatLng? = try {
-    val geocoder = Geocoder(context, Locale("es", "MX"))
-    @Suppress("DEPRECATION")
-    val addresses = geocoder.getFromLocationName(address, 1)
-    if (addresses?.isNotEmpty() == true) LatLng(addresses[0].latitude, addresses[0].longitude) else null
-} catch (_: Exception) { null }
-
-private fun webGeocode(address: String): LatLng? = try {
-    val urlStr = "https://nominatim.openstreetmap.org/search?format=json&q=" + URLEncoder.encode(address, "UTF-8") + "&limit=1&addressdetails=0&countrycodes=mx"
-    val url = URL(urlStr)
-    val conn = (url.openConnection() as HttpURLConnection).apply {
-        requestMethod = "GET"
-        setRequestProperty("User-Agent", "MAC-Tickets/1.0 (android-app)")
-        setRequestProperty("Accept-Language", "es-MX,es;q=0.9")
-        connectTimeout = 3500
-        readTimeout = 3500
-    }
-    conn.inputStream.use { stream ->
-        val body = stream.bufferedReader().readText()
-        val arr = JSONArray(body)
-        if (arr.length() > 0) {
-            val obj = arr.getJSONObject(0)
-            val lat = obj.optString("lat").toDoubleOrNull()
-            val lon = obj.optString("lon").toDoubleOrNull()
-            if (lat != null && lon != null) LatLng(lat, lon) else null
-        } else null
-    }
-} catch (_: Exception) { null }
-
-private object GeocodeCache {
-    private val map = LinkedHashMap<String, LatLng>(64, 0.75f, true)
-    private const val MAX = 100
-    operator fun get(key: String): LatLng? = synchronized(map) { map[key] }
-    operator fun set(key: String, value: LatLng) {
-        synchronized(map) {
-            map[key] = value
-            if (map.size > MAX) {
-                val firstKey = map.entries.firstOrNull()?.key
-                if (firstKey != null) map.remove(firstKey)
-            }
+@Composable
+fun StatusBadge(status: String) {
+    val statusEnum = remember(status) { TicketStatus.values().find { it.displayName.equals(status, ignoreCase = true) } }
+    if (statusEnum != null) {
+        Box(modifier = Modifier.background(statusEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+            Text(statusEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
         }
     }
 }
 
-private fun openInMaps(context: Context, address: String) {
-    try {
-        val uri = Uri.parse("geo:0,0?q=" + Uri.encode(address))
-        val intent = Intent(Intent.ACTION_VIEW, uri)
-        intent.setPackage("com.google.android.apps.maps")
-        if (intent.resolveActivity(context.packageManager) == null) {
-            // Fallback sin paquete específico
-            context.startActivity(Intent(Intent.ACTION_VIEW, uri))
-        } else {
-            context.startActivity(intent)
+@Composable
+fun PriorityBadge(priority: String) {
+    val priorityEnum = remember(priority) { TicketPriority.values().find { it.displayName.equals(priority, ignoreCase = true) } }
+    if (priorityEnum != null) {
+        Box(modifier = Modifier.background(priorityEnum.color, RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 4.dp)) {
+            Text(priorityEnum.displayName, color = Color.White, fontWeight = FontWeight.Medium, fontSize = 12.sp)
         }
-    } catch (_: Exception) { /* ignorar */ }
-}
-
-private fun sanitizeAddress(raw: String): String {
-    if (raw.isBlank()) return raw
-    // Mantener toda la dirección en una sola línea con más contexto para mejorar geocodificación
-    val cleaned = raw.trim()
-        .removePrefix("Ubicación:")
-        .removePrefix("Ubicacion:")
-        .removePrefix("Location:")
-        .trim()
-        .replace(Regex("[\n\r]+"), " ")
-        .replace("  ", " ")
-    return cleaned
+    }
 }

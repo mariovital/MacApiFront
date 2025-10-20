@@ -73,6 +73,13 @@ const Sidebar = ({ collapsed, onToggle }) => {
   };
 
   const isActive = (path) => {
+    // Para la ruta /tickets, solo activar si es exactamente /tickets o /tickets/create o /tickets/:id
+    // pero NO para /tickets/history
+    if (path === '/tickets') {
+      return location.pathname === '/tickets' || 
+             (location.pathname.startsWith('/tickets/') && !location.pathname.startsWith('/tickets/history'));
+    }
+    // Para otras rutas, usar la lógica normal
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
@@ -92,11 +99,14 @@ const Sidebar = ({ collapsed, onToggle }) => {
       ${collapsed ? 'w-20' : 'w-72'}
     `}>
       
-      {/* Logo y nombre */}
-      <div className="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-700">
+      {/* Logo y nombre - Clickeable para ir al home */}
+      <button 
+        onClick={() => navigate('/dashboard')}
+        className="flex items-center justify-center p-6 border-b border-gray-200 dark:border-gray-700 w-full hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+      >
         {!collapsed ? (
           <div className="text-center">
-            <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-2 p-2 shadow-md">
+            <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center mx-auto mb-2 p-2 shadow-md transition-transform hover:scale-105">
               <img 
                 src="/maccomputadoras_logo.png" 
                 alt="MAC Computadoras" 
@@ -108,7 +118,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
             </span>
           </div>
         ) : (
-          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-md">
+          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center p-1.5 shadow-md transition-transform hover:scale-105">
             <img 
               src="/maccomputadoras_logo.png" 
               alt="MAC" 
@@ -116,7 +126,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
             />
           </div>
         )}
-      </div>
+      </button>
 
       {/* Navegación */}
       <nav className="p-4 flex-1">

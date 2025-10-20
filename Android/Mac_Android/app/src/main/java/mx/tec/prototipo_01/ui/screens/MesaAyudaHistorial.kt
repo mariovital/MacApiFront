@@ -47,7 +47,6 @@ import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 fun MesaAyudaHistorial(navController: NavController, viewModel: MesaAyudaSharedViewModel) {
     val tickets = viewModel.historyTickets
 
-    // Garantizar que haya datos cargados al entrar
     LaunchedEffect(Unit) {
         viewModel.loadTickets()
     }
@@ -159,6 +158,22 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = ticket.status.color,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = ticket.status.displayName,
+                                fontSize = 10.sp,
+                                color = Color.White,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
                 }
                 Column(

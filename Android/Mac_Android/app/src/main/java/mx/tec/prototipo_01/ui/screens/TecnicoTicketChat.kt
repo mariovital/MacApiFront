@@ -198,7 +198,7 @@ private fun TicketInfoCard(
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(text = assignedTo, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.width(8.dp))
-                    StatusBadge(status = status)
+                    StatusBadgeChip(status = status)
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
@@ -210,7 +210,7 @@ private fun TicketInfoCard(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    PriorityBadge(priority = priority)
+                    PriorityBadgeChip(priority = priority)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))

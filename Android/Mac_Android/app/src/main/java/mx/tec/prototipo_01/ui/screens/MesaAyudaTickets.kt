@@ -47,17 +47,26 @@ import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 
 @Composable
-fun MesaAyudaTickets(navController: NavController, viewModel: MesaAyudaSharedViewModel) {
+fun MesaAyudaTickets(
+    navController: NavController,
+    viewModel: MesaAyudaSharedViewModel,
+    isDark: Boolean // Receive isDark parameter
+) {
     val tickets = viewModel.pendingTickets
 
-    // Cargar tickets al entrar a la pestaña
     LaunchedEffect(Unit) {
         viewModel.loadTickets()
     }
 
+    val fabColor = if (isDark) Color(0xFF0044FF) else Color(0xFF1976D2)
+
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate("create_ticket") }) {
+            FloatingActionButton(
+                onClick = { navController.navigate("create_ticket") },
+                containerColor = fabColor,
+                contentColor = Color.White
+            ) {
                 Icon(Icons.Default.Add, contentDescription = "Crear ticket")
             }
         }
