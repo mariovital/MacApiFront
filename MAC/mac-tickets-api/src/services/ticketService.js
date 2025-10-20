@@ -1,6 +1,6 @@
 // /services/ticketService.js
 
-import { Ticket, User, Category, Priority, TicketStatus } from '../models/index.js';
+import { Ticket, User, Category, Priority, TicketStatus, Comment } from '../models/index.js';
 import { Op } from 'sequelize';
 
 /**
@@ -618,6 +618,191 @@ export const getTicketStats = async (userId, userRole) => {
   }
 };
 
+/**
+ * Marcar ticket como resuelto (solo técnico asignado)
+ */
+export const resolveTicket = async (ticketId, resolutionComment, userId, userRole) => {
+  try {
+    // Buscar ticket
+    const ticket = await Ticket.findByPk(ticketId, {
+      include: [
+        { model: TicketStatus, as: 'status' },
+        { model: User, as: 'assignee' }
+      ]
+    });
+
+    if (!ticket) {
+      throw new Error('Ticket no encontrado');
+    }
+
+    // VALIDACIÓN 1: Solo el técnico asignado o admin pueden marcar como resuelto
+    if (userRole === 'tecnico' && ticket.assigned_to !== userId) {
+      throw new Error('Solo el técnico asignado puede marcar este ticket como resuelto');
+    }
+
+    if (userRole === 'mesa_trabajo') {
+      throw new Error('Solo técnicos y administradores pueden resolver tickets');
+    }
+
+    // VALIDACIÓN 2: El ticket debe estar en estado "En Proceso" (status_id = 3)
+    if (ticket.status_id !== 3) {
+      throw new Error('El ticket debe estar en estado "En Proceso" para poder marcarlo como resuelto');
+    }
+
+    // Agregar comentario de resolución
+    await Comment.create({
+      ticket_id: ticketId,
+      user_id: userId,
+      comment: `[RESOLUCIÓN] ${resolutionComment}`,
+      is_internal: false
+    });
+
+    // Actualizar ticket a estado "Resuelto" (status_id = 5)
+    await ticket.update({
+      status_id: 5,
+      resolved_at: new Date(),
+      resolved_by: userId
+    });
+
+    // Retornar ticket actualizado con relaciones
+    const updatedTicket = await Ticket.findByPk(ticketId, {
+      include: [
+        { model: Category, as: 'category' },
+        { model: Priority, as: 'priority' },
+        { model: TicketStatus, as: 'status' },
+        { model: User, as: 'creator', attributes: ['id', 'first_name', 'last_name', 'username'] },
+        { model: User, as: 'assignee', attributes: ['id', 'first_name', 'last_name', 'username'] }
+      ]
+    });
+
+    console.log(`✅ Ticket ${ticketId} marcado como resuelto por usuario ${userId}`);
+
+    return updatedTicket;
+
+  } catch (error) {
+    console.error('Error en ticketService.resolveTicket:', error);
+    throw error;
+  }
+};
+
+/**
+ * Cerrar ticket (solo admin)
+ */
+export const closeTicket = async (ticketId, closeReason, userId, userRole) => {
+  try {
+    // VALIDACIÓN: Solo admin puede cerrar tickets
+    if (userRole !== 'admin') {
+      throw new Error('Solo administradores pueden cerrar tickets');
+    }
+
+    // Buscar ticket
+    const ticket = await Ticket.findByPk(ticketId);
+
+    if (!ticket) {
+      throw new Error('Ticket no encontrado');
+    }
+
+    // VALIDACIÓN: El ticket debe estar en estado "Resuelto" (status_id = 5)
+    if (ticket.status_id !== 5) {
+      throw new Error('El ticket debe estar en estado "Resuelto" para poder cerrarlo');
+    }
+
+    // Agregar comentario de cierre
+    await Comment.create({
+      ticket_id: ticketId,
+      user_id: userId,
+      comment: `[CIERRE] Ticket cerrado. Razón: ${closeReason}`,
+      is_internal: true
+    });
+
+    // Actualizar ticket a estado "Cerrado" (status_id = 6)
+    await ticket.update({
+      status_id: 6,
+      closed_at: new Date(),
+      closed_by: userId
+    });
+
+    // Retornar ticket actualizado con relaciones
+    const updatedTicket = await Ticket.findByPk(ticketId, {
+      include: [
+        { model: Category, as: 'category' },
+        { model: Priority, as: 'priority' },
+        { model: TicketStatus, as: 'status' },
+        { model: User, as: 'creator', attributes: ['id', 'first_name', 'last_name', 'username'] },
+        { model: User, as: 'assignee', attributes: ['id', 'first_name', 'last_name', 'username'] }
+      ]
+    });
+
+    console.log(`✅ Ticket ${ticketId} cerrado por admin ${userId}`);
+
+    return updatedTicket;
+
+  } catch (error) {
+    console.error('Error en ticketService.closeTicket:', error);
+    throw error;
+  }
+};
+
+/**
+ * Reabrir ticket cerrado (solo admin)
+ */
+export const reopenTicket = async (ticketId, reopenReason, userId, userRole) => {
+  try {
+    // VALIDACIÓN: Solo admin puede reabrir tickets
+    if (userRole !== 'admin') {
+      throw new Error('Solo administradores pueden reabrir tickets');
+    }
+
+    // Buscar ticket
+    const ticket = await Ticket.findByPk(ticketId);
+
+    if (!ticket) {
+      throw new Error('Ticket no encontrado');
+    }
+
+    // VALIDACIÓN: El ticket debe estar en estado "Cerrado" (status_id = 6)
+    if (ticket.status_id !== 6) {
+      throw new Error('Solo se pueden reabrir tickets en estado "Cerrado"');
+    }
+
+    // Agregar comentario de reapertura
+    await Comment.create({
+      ticket_id: ticketId,
+      user_id: userId,
+      comment: `[REAPERTURA] Ticket reabierto. Razón: ${reopenReason}`,
+      is_internal: true
+    });
+
+    // Actualizar ticket a estado "Reabierto" (status_id = 7)
+    await ticket.update({
+      status_id: 7,
+      reopened_at: new Date(),
+      reopened_by: userId,
+      resolved_at: null,  // Limpiar fecha de resolución
+      closed_at: null      // Limpiar fecha de cierre
+    });
+
+    // Retornar ticket actualizado con relaciones
+    const updatedTicket = await Ticket.findByPk(ticketId, {
+      include: [
+        { model: Category, as: 'category' },
+        { model: Priority, as: 'priority' },
+        { model: TicketStatus, as: 'status' },
+        { model: User, as: 'creator', attributes: ['id', 'first_name', 'last_name', 'username'] },
+        { model: User, as: 'assignee', attributes: ['id', 'first_name', 'last_name', 'username'] }
+      ]
+    });
+
+    console.log(`✅ Ticket ${ticketId} reabierto por admin ${userId}`);
+
+    return updatedTicket;
+
+  } catch (error) {
+    console.error('Error en ticketService.reopenTicket:', error);
+    throw error;
+  }
+};
+
 export default {
   getTickets,
   getTicketById,
@@ -627,6 +812,9 @@ export default {
   assignTicket,
   acceptTicket,
   rejectTicket,
-  getTicketStats
+  getTicketStats,
+  resolveTicket,
+  closeTicket,
+  reopenTicket
 };
 

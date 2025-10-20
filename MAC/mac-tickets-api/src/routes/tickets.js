@@ -2,6 +2,7 @@
 
 import express from 'express';
 import * as ticketController from '../controllers/ticketController.js';
+import * as commentController from '../controllers/commentController.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -67,6 +68,40 @@ router.post('/:id/accept', ticketController.acceptTicket);
  * Rechazar ticket (técnico asignado)
  */
 router.post('/:id/reject', ticketController.rejectTicket);
+
+/**
+ * POST /api/tickets/:id/resolve
+ * Marcar ticket como resuelto (solo técnico asignado)
+ */
+router.post('/:id/resolve', ticketController.resolveTicket);
+
+/**
+ * POST /api/tickets/:id/close
+ * Cerrar ticket (solo admin)
+ */
+router.post('/:id/close', ticketController.closeTicket);
+
+/**
+ * POST /api/tickets/:id/reopen
+ * Reabrir ticket (solo admin)
+ */
+router.post('/:id/reopen', ticketController.reopenTicket);
+
+// =========================
+// Comentarios de ticket
+// =========================
+
+/**
+ * GET /api/tickets/:ticketId/comments
+ * Obtener comentarios de un ticket
+ */
+router.get('/:ticketId/comments', commentController.getTicketComments);
+
+/**
+ * POST /api/tickets/:ticketId/comments
+ * Agregar comentario a un ticket
+ */
+router.post('/:ticketId/comments', commentController.addTicketComment);
 
 // =========================
 // Adjuntos de ticket

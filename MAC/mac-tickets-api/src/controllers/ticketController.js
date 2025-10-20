@@ -471,6 +471,183 @@ export const getTicketStats = async (req, res) => {
   }
 };
 
+/**
+ * Marcar ticket como resuelto (solo técnico asignado)
+ * POST /api/tickets/:id/resolve
+ */
+export const resolveTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { resolution_comment } = req.body;
+
+    // Validación: comentario de resolución es obligatorio
+    if (!resolution_comment || resolution_comment.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'El comentario de resolución es obligatorio'
+      });
+    }
+
+    if (resolution_comment.trim().length < 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'El comentario de resolución debe tener al menos 10 caracteres'
+      });
+    }
+
+    const updatedTicket = await ticketService.resolveTicket(
+      id,
+      resolution_comment,
+      req.user.id,
+      req.user.role
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Ticket marcado como resuelto exitosamente',
+      data: updatedTicket
+    });
+
+  } catch (error) {
+    console.error('Error en ticketController.resolveTicket:', error);
+    
+    if (error.message === 'Ticket no encontrado') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (
+      error.message.includes('No tienes permiso') ||
+      error.message.includes('Solo el técnico asignado') ||
+      error.message.includes('debe estar en estado')
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (error.message.includes('debe tener al menos')) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+/**
+ * Cerrar ticket (solo admin)
+ * POST /api/tickets/:id/close
+ */
+export const closeTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { close_reason } = req.body;
+
+    const updatedTicket = await ticketService.closeTicket(
+      id,
+      close_reason || 'Cerrado por administrador',
+      req.user.id,
+      req.user.role
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Ticket cerrado exitosamente',
+      data: updatedTicket
+    });
+
+  } catch (error) {
+    console.error('Error en ticketController.closeTicket:', error);
+    
+    if (error.message === 'Ticket no encontrado') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (
+      error.message.includes('Solo administradores') ||
+      error.message.includes('debe estar en estado')
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+/**
+ * Reabrir ticket cerrado (solo admin)
+ * POST /api/tickets/:id/reopen
+ */
+export const reopenTicket = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reopen_reason } = req.body;
+
+    if (!reopen_reason || reopen_reason.trim().length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'La razón para reabrir es obligatoria'
+      });
+    }
+
+    const updatedTicket = await ticketService.reopenTicket(
+      id,
+      reopen_reason,
+      req.user.id,
+      req.user.role
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Ticket reabierto exitosamente',
+      data: updatedTicket
+    });
+
+  } catch (error) {
+    console.error('Error en ticketController.reopenTicket:', error);
+    
+    if (error.message === 'Ticket no encontrado') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (
+      error.message.includes('Solo administradores') ||
+      error.message.includes('debe estar en estado')
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
 export default {
   getTickets,
   getTicketById,
@@ -480,6 +657,9 @@ export default {
   assignTicket,
   acceptTicket,
   rejectTicket,
-  getTicketStats
+  getTicketStats,
+  resolveTicket,
+  closeTicket,
+  reopenTicket
 };
 

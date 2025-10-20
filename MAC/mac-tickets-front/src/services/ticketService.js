@@ -86,6 +86,17 @@ const ticketService = {
     }
   },
 
+  // Obtener comentarios de un ticket
+  getComments: async (ticketId) => {
+    try {
+      const response = await api.get(`/tickets/${ticketId}/comments`);
+      return response.data;
+    } catch (error) {
+      console.error('Error obteniendo comentarios:', error);
+      throw error;
+    }
+  },
+
   // Agregar comentario
   addComment: async (ticketId, comment, isInternal = false) => {
     try {
@@ -115,6 +126,51 @@ const ticketService = {
       return response.data;
     } catch (error) {
       console.error('Error subiendo archivo:', error);
+      throw error;
+    }
+  },
+
+  // Marcar ticket como resuelto (técnico asignado)
+  resolveTicket: async (ticketId, resolutionComment, evidenceFile = null) => {
+    try {
+      // Si hay evidencia, subirla primero
+      if (evidenceFile) {
+        await ticketService.uploadAttachment(ticketId, evidenceFile, 'Evidencia de resolución');
+      }
+
+      // Marcar como resuelto
+      const response = await api.post(`/tickets/${ticketId}/resolve`, {
+        resolution_comment: resolutionComment
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error resolviendo ticket:', error);
+      throw error;
+    }
+  },
+
+  // Cerrar ticket (solo admin)
+  closeTicket: async (ticketId, closeReason = '') => {
+    try {
+      const response = await api.post(`/tickets/${ticketId}/close`, {
+        close_reason: closeReason
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error cerrando ticket:', error);
+      throw error;
+    }
+  },
+
+  // Reabrir ticket (solo admin)
+  reopenTicket: async (ticketId, reopenReason) => {
+    try {
+      const response = await api.post(`/tickets/${ticketId}/reopen`, {
+        reopen_reason: reopenReason
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error reabriendo ticket:', error);
       throw error;
     }
   }

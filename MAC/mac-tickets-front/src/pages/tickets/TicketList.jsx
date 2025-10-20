@@ -390,8 +390,9 @@ const TicketList = () => {
                   </FormControl>
                 </div>
 
-                {/* Botón Aceptar - Estilo Figma */}
-                <div className="px-6 pb-6">
+                {/* Botones de Acción */}
+                <div className="px-6 pb-6 space-y-2">
+                  {/* Botón Aceptar - Estilo Figma */}
                   <Button
                     fullWidth
                     variant="contained"
@@ -424,6 +425,33 @@ const TicketList = () => {
                   >
                     {ticket.assigned_to ? 'Ticket Asignado' : 'Aceptar'}
                   </Button>
+
+                  {/* Botón Resolver (técnico asignado, estado "En Proceso") */}
+                  {((user?.role === 'tecnico' && ticket.assigned_to === user?.id) || user?.role === 'admin') && 
+                   ticket.status_id === 3 && (
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/tickets/${ticket.id}#resolve`);
+                      }}
+                      sx={{
+                        backgroundColor: '#16A34A',
+                        color: 'white',
+                        borderRadius: '12px',
+                        textTransform: 'none',
+                        padding: '12px',
+                        fontWeight: '600',
+                        fontSize: '1rem',
+                        '&:hover': {
+                          backgroundColor: '#15803D'
+                        }
+                      }}
+                    >
+                      Marcar como Resuelto
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

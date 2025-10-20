@@ -64,6 +64,8 @@ const TicketDetail = () => {
   const [isInternal, setIsInternal] = useState(false);
   const [submittingComment, setSubmittingComment] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [loadingComments, setLoadingComments] = useState(false);
   
   // Estados para reasignación
   const [showAssignDialog, setShowAssignDialog] = useState(false);
@@ -71,6 +73,22 @@ const TicketDetail = () => {
   const [selectedTechnician, setSelectedTechnician] = useState(null);
   const [loadingTechnicians, setLoadingTechnicians] = useState(false);
   const [assigningTicket, setAssigningTicket] = useState(false);
+
+  // Estados para resolución (técnico)
+  const [showResolveDialog, setShowResolveDialog] = useState(false);
+  const [resolutionComment, setResolutionComment] = useState('');
+  const [evidenceFile, setEvidenceFile] = useState(null);
+  const [resolving, setResolving] = useState(false);
+
+  // Estados para cerrar ticket (admin)
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [closeReason, setCloseReason] = useState('');
+  const [closing, setClosing] = useState(false);
+
+  // Estados para reabrir ticket (admin)
+  const [showReopenDialog, setShowReopenDialog] = useState(false);
+  const [reopenReason, setReopenReason] = useState('');
+  const [reopening, setReopening] = useState(false);
 
   // Cargar ticket
   useEffect(() => {
@@ -84,6 +102,8 @@ const TicketDetail = () => {
       
       if (response.success) {
         setTicket(response.data);
+        // Cargar comentarios
+        await loadComments();
       } else {
         setError('No se pudo cargar el ticket');
       }
@@ -95,6 +115,22 @@ const TicketDetail = () => {
     }
   };
 
+  const loadComments = async () => {
+    try {
+      setLoadingComments(true);
+      const response = await ticketService.getComments(id);
+      
+      if (response.success) {
+        setComments(response.data || []);
+      }
+    } catch (err) {
+      console.error('Error cargando comentarios:', err);
+      setComments([]);
+    } finally {
+      setLoadingComments(false);
+    }
+  };
+
   const handleAddComment = async () => {
     if (!commentText.trim()) return;
 
@@ -103,7 +139,8 @@ const TicketDetail = () => {
       await ticketService.addComment(id, commentText, isInternal);
       setCommentText('');
       setIsInternal(false);
-      await loadTicketData(); // Recargar para ver el comentario
+      // Recargar solo comentarios
+      await loadComments();
     } catch (err) {
       console.error('Error agregando comentario:', err);
       alert('Error al agregar comentario');
@@ -191,6 +228,88 @@ const TicketDetail = () => {
     }
   };
 
+  // Marcar ticket como resuelto (técnico)
+  const handleResolveTicket = async () => {
+    // Validación
+    if (!resolutionComment || resolutionComment.trim().length < 10) {
+      alert('El comentario de resolución debe tener al menos 10 caracteres');
+      return;
+    }
+
+    try {
+      setResolving(true);
+      await ticketService.resolveTicket(id, resolutionComment.trim(), evidenceFile);
+      
+      // Recargar datos del ticket
+      await loadTicketData();
+      
+      // Cerrar diálogo y limpiar
+      setShowResolveDialog(false);
+      setResolutionComment('');
+      setEvidenceFile(null);
+      
+      alert('✅ Ticket marcado como resuelto exitosamente');
+    } catch (err) {
+      console.error('Error resolviendo ticket:', err);
+      const errorMsg = err.response?.data?.message || 'Error al resolver el ticket. Intenta de nuevo.';
+      alert(errorMsg);
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  // Cerrar ticket (admin)
+  const handleCloseTicket = async () => {
+    try {
+      setClosing(true);
+      await ticketService.closeTicket(id, closeReason || 'Cerrado por administrador');
+      
+      // Recargar datos del ticket
+      await loadTicketData();
+      
+      // Cerrar diálogo y limpiar
+      setShowCloseDialog(false);
+      setCloseReason('');
+      
+      alert('✅ Ticket cerrado exitosamente');
+    } catch (err) {
+      console.error('Error cerrando ticket:', err);
+      const errorMsg = err.response?.data?.message || 'Error al cerrar el ticket. Intenta de nuevo.';
+      alert(errorMsg);
+    } finally {
+      setClosing(false);
+    }
+  };
+
+  // Reabrir ticket (admin)
+  const handleReopenTicket = async () => {
+    // Validación
+    if (!reopenReason || reopenReason.trim().length < 10) {
+      alert('La razón para reabrir debe tener al menos 10 caracteres');
+      return;
+    }
+
+    try {
+      setReopening(true);
+      await ticketService.reopenTicket(id, reopenReason.trim());
+      
+      // Recargar datos del ticket
+      await loadTicketData();
+      
+      // Cerrar diálogo y limpiar
+      setShowReopenDialog(false);
+      setReopenReason('');
+      
+      alert('✅ Ticket reabierto exitosamente');
+    } catch (err) {
+      console.error('Error reabriendo ticket:', err);
+      const errorMsg = err.response?.data?.message || 'Error al reabrir el ticket. Intenta de nuevo.';
+      alert(errorMsg);
+    } finally {
+      setReopening(false);
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -227,6 +346,10 @@ const TicketDetail = () => {
   const canEdit = user?.role === 'admin' || ticket.created_by === user?.id || ticket.assigned_to === user?.id;
   const canChangeStatus = user?.role === 'admin' || ticket.assigned_to === user?.id;
   const canAssign = user?.role === 'admin';
+  const canResolve = (user?.role === 'tecnico' && ticket.assigned_to === user?.id && ticket.status_id === 3) || 
+                     (user?.role === 'admin' && ticket.status_id === 3);
+  const canClose = user?.role === 'admin' && ticket.status_id === 5;
+  const canReopen = user?.role === 'admin' && ticket.status_id === 6;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -404,22 +527,50 @@ const TicketDetail = () => {
 
                 {/* Lista de comentarios */}
                 <div className="space-y-4">
-                  {ticket.comments && ticket.comments.length > 0 ? (
-                    ticket.comments.map((comment) => (
+                  {loadingComments ? (
+                    <div className="flex items-center justify-center py-8">
+                      <CircularProgress size={24} sx={{ color: '#E31E24' }} />
+                      <Typography className="ml-3 text-gray-600 dark:text-gray-400">
+                        Cargando comentarios...
+                      </Typography>
+                    </div>
+                  ) : comments && comments.length > 0 ? (
+                    comments.map((comment) => (
                       <div key={comment.id} className="flex space-x-4">
                         <Avatar className="bg-red-600">
-                          {comment.user?.first_name?.[0]}{comment.user?.last_name?.[0]}
+                          {comment.author?.first_name?.[0]}{comment.author?.last_name?.[0]}
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
                             <Typography variant="body2" className="font-semibold dark:text-white">
-                              {comment.user?.first_name} {comment.user?.last_name}
+                              {comment.author?.first_name} {comment.author?.last_name}
                             </Typography>
                             {comment.is_internal && (
                               <Chip
                                 label="Interno"
                                 size="small"
-                                className="bg-yellow-100 text-yellow-800"
+                                className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              />
+                            )}
+                            {comment.comment?.startsWith('[RESOLUCIÓN]') && (
+                              <Chip
+                                label="Resolución"
+                                size="small"
+                                className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                              />
+                            )}
+                            {comment.comment?.startsWith('[CIERRE]') && (
+                              <Chip
+                                label="Cierre"
+                                size="small"
+                                className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                              />
+                            )}
+                            {comment.comment?.startsWith('[REAPERTURA]') && (
+                              <Chip
+                                label="Reapertura"
+                                size="small"
+                                className="bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
                               />
                             )}
                             <Typography variant="caption" className="text-gray-500 dark:text-gray-400">
@@ -524,6 +675,58 @@ const TicketDetail = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Acciones del Ticket */}
+            {(canResolve || canClose || canReopen) && (
+              <Card className="dark:bg-gray-800">
+                <CardContent className="p-6">
+                  <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-4">
+                    Acciones
+                  </Typography>
+                  
+                  <div className="space-y-3">
+                    {/* Botón: Marcar como Resuelto (Técnico) */}
+                    {canResolve && (
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={<FiCheckCircle />}
+                        onClick={() => setShowResolveDialog(true)}
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Marcar como Resuelto
+                      </Button>
+                    )}
+
+                    {/* Botón: Cerrar Ticket (Admin) */}
+                    {canClose && (
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        startIcon={<FiCheckCircle />}
+                        onClick={() => setShowCloseDialog(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        Cerrar Ticket
+                      </Button>
+                    )}
+
+                    {/* Botón: Reabrir Ticket (Admin) */}
+                    {canReopen && (
+                      <Button
+                        variant="outlined"
+                        fullWidth
+                        startIcon={<FiAlertCircle />}
+                        onClick={() => setShowReopenDialog(true)}
+                        className="border-orange-600 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900"
+                      >
+                        Reabrir Ticket
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Asignación */}
             <Card className="dark:bg-gray-800">
@@ -816,6 +1019,231 @@ const TicketDetail = () => {
             }}
           >
             {assigningTicket ? 'Asignando...' : 'Asignar Ticket'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de Marcar como Resuelto */}
+      <Dialog
+        open={showResolveDialog}
+        onClose={() => !resolving && setShowResolveDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '16px' } }}
+      >
+        <DialogTitle className="bg-gradient-to-r from-green-600 to-green-700 text-white">
+          <div className="flex items-center space-x-2">
+            <FiCheckCircle size={24} />
+            <Typography variant="h6" className="font-bold">
+              Marcar Ticket como Resuelto
+            </Typography>
+          </div>
+        </DialogTitle>
+
+        <DialogContent className="mt-4 dark:bg-gray-800">
+          <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-4">
+            Describe cómo se resolvió el problema. Este comentario será visible para el cliente.
+          </Typography>
+          
+          <TextField
+            label="Comentario de Resolución *"
+            multiline
+            rows={4}
+            fullWidth
+            value={resolutionComment}
+            onChange={(e) => setResolutionComment(e.target.value)}
+            placeholder="Ej: Se reemplazó el cable de red defectuoso. El sistema está funcionando correctamente."
+            helperText={`${resolutionComment.length}/500 caracteres (mínimo 10)`}
+            inputProps={{ maxLength: 500 }}
+            className="mb-4"
+            error={resolutionComment.length > 0 && resolutionComment.length < 10}
+          />
+
+          <div className="mt-4">
+            <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-2">
+              Evidencia (Opcional)
+            </Typography>
+            <input
+              type="file"
+              onChange={(e) => setEvidenceFile(e.target.files?.[0] || null)}
+              className="block w-full text-sm text-gray-500 dark:text-gray-400
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-green-50 file:text-green-700
+                hover:file:bg-green-100"
+            />
+            {evidenceFile && (
+              <Typography variant="caption" className="text-green-600 mt-2 block">
+                ✓ {evidenceFile.name}
+              </Typography>
+            )}
+          </div>
+        </DialogContent>
+
+        <DialogActions className="px-6 pb-4 dark:bg-gray-800">
+          <Button
+            onClick={() => {
+              setShowResolveDialog(false);
+              setResolutionComment('');
+              setEvidenceFile(null);
+            }}
+            disabled={resolving}
+            sx={{ borderRadius: '12px', textTransform: 'none', padding: '10px 24px', fontWeight: '600' }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleResolveTicket}
+            disabled={!resolutionComment || resolutionComment.trim().length < 10 || resolving}
+            variant="contained"
+            startIcon={resolving ? <CircularProgress size={16} color="inherit" /> : <FiCheckCircle />}
+            sx={{
+              backgroundColor: '#16A34A',
+              color: 'white',
+              borderRadius: '12px',
+              textTransform: 'none',
+              padding: '10px 24px',
+              fontWeight: '600',
+              '&:hover': { backgroundColor: '#15803D' },
+              '&:disabled': { backgroundColor: '#86EFAC', color: 'white' }
+            }}
+          >
+            {resolving ? 'Marcando como Resuelto...' : 'Marcar como Resuelto'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de Cerrar Ticket (Admin) */}
+      <Dialog
+        open={showCloseDialog}
+        onClose={() => !closing && setShowCloseDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '16px' } }}
+      >
+        <DialogTitle className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+          <div className="flex items-center space-x-2">
+            <FiCheckCircle size={24} />
+            <Typography variant="h6" className="font-bold">
+              Cerrar Ticket
+            </Typography>
+          </div>
+        </DialogTitle>
+
+        <DialogContent className="mt-4 dark:bg-gray-800">
+          <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-4">
+            Confirma que deseas cerrar este ticket. Esta acción marcará el ticket como finalizado.
+          </Typography>
+          
+          <TextField
+            label="Razón de Cierre (Opcional)"
+            multiline
+            rows={3}
+            fullWidth
+            value={closeReason}
+            onChange={(e) => setCloseReason(e.target.value)}
+            placeholder="Ej: Cliente confirmó que el problema fue resuelto satisfactoriamente"
+            inputProps={{ maxLength: 300 }}
+          />
+        </DialogContent>
+
+        <DialogActions className="px-6 pb-4 dark:bg-gray-800">
+          <Button
+            onClick={() => {
+              setShowCloseDialog(false);
+              setCloseReason('');
+            }}
+            disabled={closing}
+            sx={{ borderRadius: '12px', textTransform: 'none', padding: '10px 24px', fontWeight: '600' }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleCloseTicket}
+            disabled={closing}
+            variant="contained"
+            startIcon={closing ? <CircularProgress size={16} color="inherit" /> : <FiCheckCircle />}
+            sx={{
+              backgroundColor: '#2563EB',
+              color: 'white',
+              borderRadius: '12px',
+              textTransform: 'none',
+              padding: '10px 24px',
+              fontWeight: '600',
+              '&:hover': { backgroundColor: '#1D4ED8' },
+              '&:disabled': { backgroundColor: '#93C5FD', color: 'white' }
+            }}
+          >
+            {closing ? 'Cerrando...' : 'Cerrar Ticket'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de Reabrir Ticket (Admin) */}
+      <Dialog
+        open={showReopenDialog}
+        onClose={() => !reopening && setShowReopenDialog(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '16px' } }}
+      >
+        <DialogTitle className="bg-gradient-to-r from-orange-600 to-orange-700 text-white">
+          <div className="flex items-center space-x-2">
+            <FiAlertCircle size={24} />
+            <Typography variant="h6" className="font-bold">
+              Reabrir Ticket
+            </Typography>
+          </div>
+        </DialogTitle>
+
+        <DialogContent className="mt-4 dark:bg-gray-800">
+          <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mb-4">
+            Explica la razón por la cual se necesita reabrir este ticket. Este comentario será visible internamente.
+          </Typography>
+          
+          <TextField
+            label="Razón para Reabrir *"
+            multiline
+            rows={4}
+            fullWidth
+            value={reopenReason}
+            onChange={(e) => setReopenReason(e.target.value)}
+            placeholder="Ej: El cliente reportó que el problema volvió a ocurrir"
+            helperText={`${reopenReason.length}/300 caracteres (mínimo 10)`}
+            inputProps={{ maxLength: 300 }}
+            error={reopenReason.length > 0 && reopenReason.length < 10}
+          />
+        </DialogContent>
+
+        <DialogActions className="px-6 pb-4 dark:bg-gray-800">
+          <Button
+            onClick={() => {
+              setShowReopenDialog(false);
+              setReopenReason('');
+            }}
+            disabled={reopening}
+            sx={{ borderRadius: '12px', textTransform: 'none', padding: '10px 24px', fontWeight: '600' }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleReopenTicket}
+            disabled={!reopenReason || reopenReason.trim().length < 10 || reopening}
+            variant="contained"
+            startIcon={reopening ? <CircularProgress size={16} color="inherit" /> : <FiAlertCircle />}
+            sx={{
+              backgroundColor: '#EA580C',
+              color: 'white',
+              borderRadius: '12px',
+              textTransform: 'none',
+              padding: '10px 24px',
+              fontWeight: '600',
+              '&:hover': { backgroundColor: '#C2410C' },
+              '&:disabled': { backgroundColor: '#FDBA74', color: 'white' }
+            }}
+          >
+            {reopening ? 'Reabriendo...' : 'Reabrir Ticket'}
           </Button>
         </DialogActions>
       </Dialog>
