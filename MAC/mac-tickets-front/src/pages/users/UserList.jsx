@@ -113,12 +113,12 @@ const UserList = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900">
       {/* Header estilo Figma */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <Typography variant="h4" className="font-bold text-gray-900">
+            <Typography variant="h4" className="font-bold text-gray-900 dark:text-white">
               Usuarios<span className="text-[#E31E24]">.</span>
             </Typography>
           </div>
@@ -154,9 +154,10 @@ const UserList = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <FiSearch className="text-gray-400" />
+                  <FiSearch className="text-gray-400 dark:text-gray-500" />
                 </InputAdornment>
               ),
+              className: "dark:bg-gray-800 dark:text-white",
               sx: {
                 backgroundColor: 'white',
                 borderRadius: '12px',
@@ -176,7 +177,7 @@ const UserList = () => {
               className="bg-[#E31E24] rounded-[40px] p-2 shadow-lg"
             >
               {/* Card blanca interior */}
-              <div className="bg-white rounded-[36px] p-6">
+              <div className="bg-white dark:bg-gray-800 rounded-[36px] p-6">
                 <div className="flex items-center justify-between">
                   {/* Información del usuario */}
                   <div className="flex items-center space-x-4">
@@ -190,14 +191,14 @@ const UserList = () => {
                     {/* Datos */}
                     <div>
                       <div className="flex items-center space-x-3 mb-1">
-                        <Typography variant="h6" className="font-bold text-gray-900">
+                        <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
                           {userItem.username}
                         </Typography>
-                        <Typography variant="h6" className="font-semibold text-gray-700">
+                        <Typography variant="h6" className="font-semibold text-gray-700 dark:text-gray-300">
                           {userItem.first_name} {userItem.last_name}
                         </Typography>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
                         <div className="flex items-center">
                           <FiMail className="mr-1" size={14} />
                           {userItem.email}

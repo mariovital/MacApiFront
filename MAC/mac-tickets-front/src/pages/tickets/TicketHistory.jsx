@@ -138,9 +138,10 @@ const TicketHistory = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <FiSearch className="text-gray-400" />
+                  <FiSearch className="text-gray-400 dark:text-gray-500" />
                 </InputAdornment>
               ),
+              className: "dark:bg-gray-800 dark:text-white",
               sx: {
                 backgroundColor: 'white',
                 borderRadius: '12px',
@@ -157,7 +158,7 @@ const TicketHistory = () => {
           {filteredTickets.map((ticket) => (
             <Card 
               key={ticket.id}
-              className="shadow-lg hover:shadow-xl transition-shadow"
+              className="shadow-lg hover:shadow-xl transition-shadow dark:bg-gray-800"
               sx={{ 
                 borderRadius: '20px',
                 overflow: 'visible'
@@ -165,7 +166,7 @@ const TicketHistory = () => {
             >
               <CardContent className="p-0">
                 {/* Header de la card con badges */}
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-green-200">
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900 dark:to-emerald-900 px-6 py-4 border-b border-green-200 dark:border-green-700">
                   <div className="flex items-center justify-between mb-3">
                     <Chip 
                       label={ticket.status.name}
@@ -195,18 +196,18 @@ const TicketHistory = () => {
                   </div>
                   
                   {/* Título del ticket */}
-                  <Typography variant="h6" className="font-bold text-gray-900 mb-2">
+                  <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-2">
                     {ticket.title}
                   </Typography>
                   
-                  <Typography variant="body2" className="text-gray-600 line-clamp-2 mb-2">
+                  <Typography variant="body2" className="text-gray-600 dark:text-gray-300 line-clamp-2 mb-2">
                     {ticket.description}
                   </Typography>
 
                   {/* Tiempo de resolución */}
-                  <div className="flex items-center mt-3 p-2 bg-white rounded-lg">
-                    <FiClock className="text-green-600 mr-2" size={16} />
-                    <Typography variant="caption" className="text-green-700 font-semibold">
+                  <div className="flex items-center mt-3 p-2 bg-white dark:bg-gray-700 rounded-lg">
+                    <FiClock className="text-green-600 dark:text-green-400 mr-2" size={16} />
+                    <Typography variant="caption" className="text-green-700 dark:text-green-300 font-semibold">
                       Resuelto en: {ticket.resolution_time}
                     </Typography>
                   </div>
@@ -216,12 +217,12 @@ const TicketHistory = () => {
                 <div className="px-6 py-4 space-y-3">
                   {/* Reportado por */}
                   <div className="flex items-start">
-                    <FiUser className="text-gray-400 mr-3 mt-1 flex-shrink-0" size={16} />
+                    <FiUser className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
                     <div>
-                      <Typography variant="caption" className="text-gray-500 block">
+                      <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
                         Reportado:
                       </Typography>
-                      <Typography variant="body2" className="text-gray-900 font-medium">
+                      <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
                         {ticket.client_name}
                       </Typography>
                     </div>
@@ -229,12 +230,12 @@ const TicketHistory = () => {
 
                   {/* Etiqueta/ID */}
                   <div className="flex items-start">
-                    <FiTag className="text-gray-400 mr-3 mt-1 flex-shrink-0" size={16} />
+                    <FiTag className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
                     <div>
-                      <Typography variant="caption" className="text-gray-500 block">
+                      <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
                         Etiqueta:
                       </Typography>
-                      <Typography variant="body2" className="text-gray-900 font-medium">
+                      <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
                         {ticket.ticket_number}
                       </Typography>
                     </div>
@@ -242,12 +243,12 @@ const TicketHistory = () => {
 
                   {/* Técnico asignado */}
                   <div className="flex items-start">
-                    <FiUser className="text-gray-400 mr-3 mt-1 flex-shrink-0" size={16} />
+                    <FiUser className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
                     <div>
-                      <Typography variant="caption" className="text-gray-500 block">
+                      <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
                         Técnico:
                       </Typography>
-                      <Typography variant="body2" className="text-gray-900 font-medium">
+                      <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
                         {ticket.assigned_to.name}
                       </Typography>
                     </div>
@@ -256,23 +257,23 @@ const TicketHistory = () => {
                   {/* Fechas */}
                   <div className="grid grid-cols-2 gap-3">
                     <div className="flex items-start">
-                      <FiCalendar className="text-gray-400 mr-2 mt-1 flex-shrink-0" size={14} />
+                      <FiCalendar className="text-gray-400 dark:text-gray-500 mr-2 mt-1 flex-shrink-0" size={14} />
                       <div>
-                        <Typography variant="caption" className="text-gray-500 block">
+                        <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
                           Iniciado:
                         </Typography>
-                        <Typography variant="body2" className="text-gray-900 font-medium text-xs">
+                        <Typography variant="body2" className="text-gray-900 dark:text-white font-medium text-xs">
                           {ticket.reported_date}
                         </Typography>
                       </div>
                     </div>
                     <div className="flex items-start">
-                      <FiCheckCircle className="text-green-600 mr-2 mt-1 flex-shrink-0" size={14} />
+                      <FiCheckCircle className="text-green-600 dark:text-green-400 mr-2 mt-1 flex-shrink-0" size={14} />
                       <div>
-                        <Typography variant="caption" className="text-gray-500 block">
+                        <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
                           Completado:
                         </Typography>
-                        <Typography variant="body2" className="text-gray-900 font-medium text-xs">
+                        <Typography variant="body2" className="text-gray-900 dark:text-white font-medium text-xs">
                           {ticket.completed_date}
                         </Typography>
                       </div>
@@ -281,12 +282,12 @@ const TicketHistory = () => {
 
                   {/* Ubicación */}
                   <div className="flex items-start">
-                    <FiMapPin className="text-gray-400 mr-3 mt-1 flex-shrink-0" size={16} />
+                    <FiMapPin className="text-gray-400 dark:text-gray-500 mr-3 mt-1 flex-shrink-0" size={16} />
                     <div>
-                      <Typography variant="caption" className="text-gray-500 block">
+                      <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
                         Ubicación:
                       </Typography>
-                      <Typography variant="body2" className="text-gray-900 font-medium">
+                      <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
                         {ticket.location}
                       </Typography>
                     </div>
@@ -296,7 +297,7 @@ const TicketHistory = () => {
                 {/* Mapa placeholder */}
                 <div className="px-6 pb-4">
                   <div 
-                    className="w-full h-32 bg-gradient-to-br from-green-100 to-emerald-200 rounded-xl flex items-center justify-center relative overflow-hidden"
+                    className="w-full h-32 bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900 dark:to-emerald-800 rounded-xl flex items-center justify-center relative overflow-hidden"
                     style={{
                       backgroundImage: 'linear-gradient(45deg, #E5E7EB 25%, transparent 25%, transparent 75%, #E5E7EB 75%, #E5E7EB), linear-gradient(45deg, #E5E7EB 25%, transparent 25%, transparent 75%, #E5E7EB 75%, #E5E7EB)',
                       backgroundSize: '20px 20px',
@@ -304,8 +305,8 @@ const TicketHistory = () => {
                     }}
                   >
                     <div className="text-center">
-                      <FiMapPin className="mx-auto text-green-700 mb-1" size={24} />
-                      <Typography variant="caption" className="text-green-800 font-medium">
+                      <FiMapPin className="mx-auto text-green-700 dark:text-green-300 mb-1" size={24} />
+                      <Typography variant="caption" className="text-green-800 dark:text-green-200 font-medium">
                         Ubicación del servicio
                       </Typography>
                     </div>

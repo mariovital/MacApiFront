@@ -64,15 +64,15 @@ const Reports = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5]">
+    <div className="min-h-screen bg-[#F5F5F5] dark:bg-gray-900">
       {/* Header estilo Figma */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 mb-6">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 mb-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <Typography variant="h4" className="font-bold text-gray-900">
+            <Typography variant="h4" className="font-bold text-gray-900 dark:text-white">
               Reportes<span className="text-[#E31E24]">.</span>
             </Typography>
-            <Typography variant="body2" className="text-gray-600 mt-1">
+            <Typography variant="body2" className="text-gray-600 dark:text-gray-400 mt-1">
               Análisis detallado del rendimiento del sistema de tickets
             </Typography>
           </div>
@@ -131,25 +131,25 @@ const Reports = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {/* Total Tickets */}
           <Card 
-            className="shadow-lg hover:shadow-xl transition-shadow"
+            className="shadow-lg hover:shadow-xl transition-shadow dark:bg-gray-800"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-blue-100 rounded-xl">
-                  <FiTag className="text-blue-600" size={24} />
+                <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+                  <FiTag className="text-blue-600 dark:text-blue-300" size={24} />
                 </div>
                 <div className="flex items-center space-x-1">
-                  <FiTrendingUp className="text-green-500" size={16} />
-                  <Typography variant="caption" className="text-green-600 font-bold">
+                  <FiTrendingUp className="text-green-500 dark:text-green-400" size={16} />
+                  <Typography variant="caption" className="text-green-600 dark:text-green-400 font-bold">
                     +{mockStats.trends.ticketsGrowth}%
                   </Typography>
                 </div>
               </div>
-              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+              <Typography variant="body2" className="text-gray-600 dark:text-gray-400 font-medium mb-1">
                 Total Tickets
               </Typography>
-              <Typography variant="h3" className="font-bold text-gray-900">
+              <Typography variant="h3" className="font-bold text-gray-900 dark:text-white">
                 {mockStats.totalTickets}
               </Typography>
             </CardContent>
@@ -157,22 +157,22 @@ const Reports = () => {
 
           {/* Tickets Resueltos */}
           <Card 
-            className="shadow-lg hover:shadow-xl transition-shadow"
+            className="shadow-lg hover:shadow-xl transition-shadow dark:bg-gray-800"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-green-100 rounded-xl">
-                  <FiTarget className="text-green-600" size={24} />
+                <div className="p-3 bg-green-100 dark:bg-green-900 rounded-xl">
+                  <FiTarget className="text-green-600 dark:text-green-300" size={24} />
                 </div>
-                <Typography variant="caption" className="text-gray-600 font-medium">
+                <Typography variant="caption" className="text-gray-600 dark:text-gray-400 font-medium">
                   {Math.round((mockStats.resolvedTickets / mockStats.totalTickets) * 100)}% del total
                 </Typography>
               </div>
-              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+              <Typography variant="body2" className="text-gray-600 dark:text-gray-400 font-medium mb-1">
                 Resueltos
               </Typography>
-              <Typography variant="h3" className="font-bold text-gray-900">
+              <Typography variant="h3" className="font-bold text-gray-900 dark:text-white">
                 {mockStats.resolvedTickets}
               </Typography>
             </CardContent>
@@ -180,25 +180,25 @@ const Reports = () => {
 
           {/* Tiempo Promedio */}
           <Card 
-            className="shadow-lg hover:shadow-xl transition-shadow"
+            className="shadow-lg hover:shadow-xl transition-shadow dark:bg-gray-800"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-orange-100 rounded-xl">
-                  <FiClock className="text-orange-600" size={24} />
+                <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-xl">
+                  <FiClock className="text-orange-600 dark:text-orange-300" size={24} />
                 </div>
                 <div className="flex items-center space-x-1">
-                  <FiTrendingDown className="text-green-500" size={16} />
-                  <Typography variant="caption" className="text-green-600 font-bold">
+                  <FiTrendingDown className="text-green-500 dark:text-green-400" size={16} />
+                  <Typography variant="caption" className="text-green-600 dark:text-green-400 font-bold">
                     {Math.abs(mockStats.trends.resolutionImprovement)}%
                   </Typography>
                 </div>
               </div>
-              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+              <Typography variant="body2" className="text-gray-600 dark:text-gray-400 font-medium mb-1">
                 Tiempo Promedio
               </Typography>
-              <Typography variant="h3" className="font-bold text-gray-900">
+              <Typography variant="h3" className="font-bold text-gray-900 dark:text-white">
                 {mockStats.averageResolutionTime}
               </Typography>
             </CardContent>
@@ -206,22 +206,22 @@ const Reports = () => {
 
           {/* SLA Compliance */}
           <Card 
-            className="shadow-lg hover:shadow-xl transition-shadow"
+            className="shadow-lg hover:shadow-xl transition-shadow dark:bg-gray-800"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <div className="p-3 bg-purple-100 rounded-xl">
-                  <FiActivity className="text-purple-600" size={24} />
+                <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
+                  <FiActivity className="text-purple-600 dark:text-purple-300" size={24} />
                 </div>
-                <Typography variant="caption" className="text-gray-600 font-medium">
+                <Typography variant="caption" className="text-gray-600 dark:text-gray-400 font-medium">
                   Objetivo: 90%
                 </Typography>
               </div>
-              <Typography variant="body2" className="text-gray-600 font-medium mb-1">
+              <Typography variant="body2" className="text-gray-600 dark:text-gray-400 font-medium mb-1">
                 Cumplimiento SLA
               </Typography>
-              <Typography variant="h3" className="font-bold text-gray-900">
+              <Typography variant="h3" className="font-bold text-gray-900 dark:text-white">
                 {mockStats.slaCompliance}%
               </Typography>
             </CardContent>
@@ -232,15 +232,15 @@ const Reports = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Distribución por Categoría */}
           <Card 
-            className="shadow-lg"
+            className="shadow-lg dark:bg-gray-800"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <Typography variant="h6" className="font-bold text-gray-900">
+                <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
                   Tickets por Categoría
                 </Typography>
-                <FiPieChart className="text-gray-400" size={20} />
+                <FiPieChart className="text-gray-400 dark:text-gray-500" size={20} />
               </div>
               <div className="space-y-4">
                 {categoryStats.map((category, index) => (
@@ -251,17 +251,18 @@ const Reports = () => {
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: category.color }}
                         />
-                        <Typography variant="body2" className="font-semibold text-gray-900">
+                        <Typography variant="body2" className="font-semibold text-gray-900 dark:text-white">
                           {category.name}
                         </Typography>
                       </div>
                       <div className="flex items-center space-x-3">
-                        <Typography variant="body2" className="text-gray-600 font-medium">
+                        <Typography variant="body2" className="text-gray-600 dark:text-gray-400 font-medium">
                           {category.total}
                         </Typography>
                         <Chip 
                           label={`${category.percentage}%`}
                           size="small"
+                          className="dark:bg-gray-700 dark:text-gray-300"
                           sx={{
                             backgroundColor: '#F3F4F6',
                             color: '#374151',
@@ -292,25 +293,25 @@ const Reports = () => {
 
           {/* Distribución por Prioridad */}
           <Card 
-            className="shadow-lg"
+            className="shadow-lg dark:bg-gray-800"
             sx={{ borderRadius: '16px' }}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <Typography variant="h6" className="font-bold text-gray-900">
+                <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
                   Tickets por Prioridad
                 </Typography>
-                <FiBarChart2 className="text-gray-400" size={20} />
+                <FiBarChart2 className="text-gray-400 dark:text-gray-500" size={20} />
               </div>
               <div className="space-y-4">
                 {priorityStats.map((priority, index) => (
                   <div key={index} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Typography variant="body2" className="font-semibold text-gray-900">
+                      <Typography variant="body2" className="font-semibold text-gray-900 dark:text-white">
                         {priority.level}
                       </Typography>
-                      <Typography variant="body2" className="text-gray-600 font-medium">
-                        {priority.count} <span className="text-gray-400">({priority.percentage}%)</span>
+                      <Typography variant="body2" className="text-gray-600 dark:text-gray-400 font-medium">
+                        {priority.count} <span className="text-gray-400 dark:text-gray-500">({priority.percentage}%)</span>
                       </Typography>
                     </div>
                     <LinearProgress 
@@ -335,57 +336,57 @@ const Reports = () => {
 
         {/* Rendimiento por Técnico */}
         <Card 
-          className="shadow-lg"
+          className="shadow-lg dark:bg-gray-800"
           sx={{ borderRadius: '16px' }}
         >
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <Typography variant="h6" className="font-bold text-gray-900">
+              <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
                 Rendimiento por Técnico
               </Typography>
-              <FiUsers className="text-gray-400" size={20} />
+              <FiUsers className="text-gray-400 dark:text-gray-500" size={20} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {technicianStats.map((tech, index) => (
                 <div 
                   key={index} 
-                  className="p-5 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors"
+                  className="p-5 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 >
-                  <Typography variant="body1" className="font-bold text-gray-900 mb-4">
+                  <Typography variant="body1" className="font-bold text-gray-900 dark:text-white mb-4">
                     {tech.name}
                   </Typography>
                   <div className="space-y-3">
                     <div className="flex justify-between items-center">
-                      <Typography variant="body2" className="text-gray-600">
+                      <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
                         Resueltos:
                       </Typography>
-                      <Typography variant="body2" className="font-bold text-green-600">
+                      <Typography variant="body2" className="font-bold text-green-600 dark:text-green-400">
                         {tech.resolved}
                       </Typography>
                     </div>
                     <div className="flex justify-between items-center">
-                      <Typography variant="body2" className="text-gray-600">
+                      <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
                         Pendientes:
                       </Typography>
-                      <Typography variant="body2" className="font-bold text-orange-600">
+                      <Typography variant="body2" className="font-bold text-orange-600 dark:text-orange-400">
                         {tech.pending}
                       </Typography>
                     </div>
                     <div className="flex justify-between items-center">
-                      <Typography variant="body2" className="text-gray-600">
+                      <Typography variant="body2" className="text-gray-600 dark:text-gray-400">
                         Rating:
                       </Typography>
-                      <Typography variant="body2" className="font-bold text-blue-600">
+                      <Typography variant="body2" className="font-bold text-blue-600 dark:text-blue-400">
                         ⭐ {tech.rating}
                       </Typography>
                     </div>
-                    <Divider className="my-3" />
+                    <Divider className="my-3 dark:border-gray-600" />
                     <div>
                       <div className="flex justify-between items-center mb-2">
-                        <Typography variant="caption" className="text-gray-600 font-medium">
+                        <Typography variant="caption" className="text-gray-600 dark:text-gray-400 font-medium">
                           Eficiencia
                         </Typography>
-                        <Typography variant="caption" className="font-bold text-gray-900">
+                        <Typography variant="caption" className="font-bold text-gray-900 dark:text-white">
                           {tech.efficiency}%
                         </Typography>
                       </div>
