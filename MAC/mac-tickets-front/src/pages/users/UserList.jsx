@@ -207,124 +207,153 @@ const UserList = () => {
           />
         </div>
 
-        {/* Grid de usuarios - Estilo Figma */}
-        <div className="space-y-4">
+        {/* Grid de usuarios - Estilo moderno similar al Dashboard */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {filteredUsers.map((userItem) => (
-            <div 
+            <Card
               key={userItem.id}
-              className="bg-[#E31E24] rounded-[40px] p-2 shadow-lg"
+              className="shadow-lg hover:shadow-xl transition-all duration-300 bg-white dark:bg-gray-800"
+              sx={{ borderRadius: '16px' }}
             >
-              {/* Card blanca interior */}
-              <div className="bg-white dark:bg-gray-800 rounded-[36px] p-4 md:p-6">
-                {/* Layout responsive: columna en móvil, fila en desktop */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                  {/* Información del usuario */}
-                  <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
-                    {/* Avatar circular */}
-                    <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-base md:text-lg">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-4 flex-1 min-w-0">
+                    {/* Avatar con icono */}
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                      <span className="text-white font-bold text-lg">
                         {userItem.first_name[0]}{userItem.last_name[0]}
                       </span>
                     </div>
 
-                    {/* Datos */}
+                    {/* Información principal */}
                     <div className="flex-1 min-w-0">
-                      {/* Username y Nombre - Stack en móvil, inline en desktop */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-1">
-                        <Typography variant="h6" className="font-bold text-gray-900 dark:text-white text-base md:text-lg truncate">
-                          {userItem.username}
-                        </Typography>
-                        <Typography variant="h6" className="font-semibold text-gray-700 dark:text-gray-300 text-sm md:text-base truncate">
-                          {userItem.first_name} {userItem.last_name}
-                        </Typography>
-                      </div>
-                      {/* Email y Rol - Stack en móvil */}
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center truncate">
-                          <FiMail className="mr-1 flex-shrink-0" size={14} />
-                          <span className="truncate">{userItem.email}</span>
-                        </div>
-                        <Chip 
-                          label={userItem.role.name} 
-                          size="small"
-                          sx={{
-                            backgroundColor: '#EEF2FF',
-                            color: '#4F46E5',
-                            fontWeight: '600',
-                            fontSize: '0.75rem'
-                          }}
-                        />
-                      </div>
+                      <Typography variant="h6" className="font-bold text-gray-900 dark:text-white mb-1 truncate">
+                        {userItem.first_name} {userItem.last_name}
+                      </Typography>
+                      <Typography variant="body2" className="text-gray-600 dark:text-gray-400 font-medium truncate mb-2">
+                        @{userItem.username}
+                      </Typography>
+                      
+                      {/* Chip de rol */}
+                      <Chip 
+                        label={userItem.role.name}
+                        size="small"
+                        sx={{
+                          backgroundColor: userItem.role.name === 'Administrador' ? '#EEF2FF' : 
+                                         userItem.role.name === 'Técnico' ? '#FEF3C7' : '#DBEAFE',
+                          color: userItem.role.name === 'Administrador' ? '#4F46E5' : 
+                                userItem.role.name === 'Técnico' ? '#F59E0B' : '#3B82F6',
+                          fontWeight: '700',
+                          fontSize: '0.7rem',
+                          height: '24px'
+                        }}
+                      />
                     </div>
                   </div>
-
-                  {/* Botones de acción - Stack en móvil, inline en desktop */}
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:flex-shrink-0">
-                    <Button
-                      variant="contained"
-                      startIcon={<FiKey className="hidden sm:inline" />}
-                      onClick={() => handleResetPassword(userItem)}
-                      fullWidth
-                      sx={{
-                        backgroundColor: '#E31E24',
-                        color: 'white',
-                        borderRadius: '12px',
-                        textTransform: 'none',
-                        padding: '10px 16px',
-                        fontWeight: '600',
-                        fontSize: { xs: '0.875rem', sm: '0.875rem' },
-                        whiteSpace: 'nowrap',
-                        '&:hover': {
-                          backgroundColor: '#C41A1F'
-                        },
-                        '@media (min-width: 640px)': {
-                          width: 'auto'
-                        }
-                      }}
-                    >
-                      <span className="sm:hidden">🔑 Restaurar contraseña</span>
-                      <span className="hidden sm:inline">Restaurar contraseña</span>
-                    </Button>
-                    <Button
-                      variant="contained"
-                      startIcon={<FiTrash2 className="hidden sm:inline" />}
-                      onClick={() => handleDeleteUser(userItem)}
-                      fullWidth
-                      sx={{
-                        backgroundColor: '#E31E24',
-                        color: 'white',
-                        borderRadius: '12px',
-                        textTransform: 'none',
-                        padding: '10px 16px',
-                        fontWeight: '600',
-                        fontSize: { xs: '0.875rem', sm: '0.875rem' },
-                        whiteSpace: 'nowrap',
-                        '&:hover': {
-                          backgroundColor: '#C41A1F'
-                        },
-                        '@media (min-width: 640px)': {
-                          width: 'auto'
-                        }
-                      }}
-                    >
-                      <span className="sm:hidden">🗑️ Eliminar</span>
-                      <span className="hidden sm:inline">Eliminar</span>
-                    </Button>
-                  </div>
                 </div>
-              </div>
-            </div>
+
+                {/* Email */}
+                <div className="flex items-center space-x-2 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                  <div className="p-2 bg-white dark:bg-gray-800 rounded-lg">
+                    <FiMail className="text-gray-600 dark:text-gray-400" size={16} />
+                  </div>
+                  <Typography variant="body2" className="text-gray-700 dark:text-gray-300 truncate">
+                    {userItem.email}
+                  </Typography>
+                </div>
+
+                {/* Botones de acción */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outlined"
+                    startIcon={<FiKey />}
+                    onClick={() => handleResetPassword(userItem)}
+                    fullWidth
+                    sx={{
+                      borderColor: '#E5E7EB',
+                      color: '#6B7280',
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      padding: '10px 16px',
+                      fontWeight: '600',
+                      '&:hover': {
+                        borderColor: '#E31E24',
+                        backgroundColor: '#FEE2E2',
+                        color: '#E31E24'
+                      }
+                    }}
+                  >
+                    Restaurar
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    startIcon={<FiTrash2 />}
+                    onClick={() => handleDeleteUser(userItem)}
+                    fullWidth
+                    sx={{
+                      borderColor: '#E5E7EB',
+                      color: '#DC2626',
+                      borderRadius: '10px',
+                      textTransform: 'none',
+                      padding: '10px 16px',
+                      fontWeight: '600',
+                      '&:hover': {
+                        borderColor: '#DC2626',
+                        backgroundColor: '#FEE2E2'
+                      }
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
 
         {/* Sin resultados */}
-        {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
-            <FiUser className="mx-auto text-gray-400 mb-4" size={48} />
-            <Typography variant="h6" className="text-gray-600">
-              No se encontraron usuarios
-            </Typography>
-          </div>
+        {filteredUsers.length === 0 && !loading && (
+          <Card 
+            className="shadow-lg"
+            sx={{ borderRadius: '16px' }}
+          >
+            <CardContent className="p-12 text-center">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full">
+                  <FiUser className="text-gray-400 dark:text-gray-500" size={48} />
+                </div>
+                <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                  No se encontraron usuarios
+                </Typography>
+                <Typography variant="body2" className="text-gray-600 dark:text-gray-400 max-w-md">
+                  {searchTerm 
+                    ? `No hay usuarios que coincidan con "${searchTerm}"`
+                    : 'No hay usuarios registrados en el sistema'}
+                </Typography>
+                {!searchTerm && (
+                  <Button
+                    variant="contained"
+                    startIcon={<FiPlus />}
+                    onClick={() => navigate('/users/create')}
+                    sx={{
+                      backgroundColor: '#E31E24',
+                      color: 'white',
+                      borderRadius: '12px',
+                      textTransform: 'none',
+                      padding: '10px 24px',
+                      fontWeight: '600',
+                      marginTop: 2,
+                      '&:hover': {
+                        backgroundColor: '#C41A1F'
+                      }
+                    }}
+                  >
+                    Crear Primer Usuario
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         )}
       </div>
 
@@ -335,26 +364,46 @@ const UserList = () => {
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: '16px' }
+          sx: { 
+            borderRadius: '20px',
+            backgroundImage: 'none'
+          }
         }}
       >
-        <DialogTitle className="bg-gradient-to-r from-[#E31E24] to-[#C41A1F] text-white">
-          <div className="flex items-center space-x-2">
-            <FiKey size={24} />
-            <Typography variant="h6" className="font-bold">
-              Restaurar Contraseña
-            </Typography>
+        <DialogTitle className="dark:bg-gray-800 pb-2">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+              <FiKey className="text-blue-600 dark:text-blue-400" size={24} />
+            </div>
+            <div>
+              <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                Restaurar Contraseña
+              </Typography>
+              <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+                Configurar nueva contraseña de acceso
+              </Typography>
+            </div>
           </div>
         </DialogTitle>
-        <DialogContent className="mt-4 dark:bg-gray-800">
+        <DialogContent className="mt-2 dark:bg-gray-800">
           {selectedUser && (
             <>
-              <Alert severity="info" className="mb-4">
-                Configurar nueva contraseña para <strong>{selectedUser.first_name} {selectedUser.last_name}</strong>
-              </Alert>
+              <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                <Typography variant="body2" className="text-blue-900 dark:text-blue-200">
+                  Usuario: <strong>{selectedUser.first_name} {selectedUser.last_name}</strong>
+                </Typography>
+                <Typography variant="caption" className="text-blue-700 dark:text-blue-300">
+                  @{selectedUser.username}
+                </Typography>
+              </div>
               
               {passwordError && (
-                <Alert severity="error" className="mb-4">
+                <Alert 
+                  severity="error" 
+                  className="mb-4"
+                  sx={{ borderRadius: '12px' }}
+                  icon={<FiAlertCircle />}
+                >
                   {passwordError}
                 </Alert>
               )}
@@ -371,12 +420,14 @@ const UserList = () => {
                 margin="normal"
                 disabled={submitting}
                 variant="outlined"
+                placeholder="Mínimo 6 caracteres"
                 sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: '12px' },
-                  '& .MuiInputLabel-root': { color: 'text.secondary' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' }
+                  '& .MuiOutlinedInput-root': { 
+                    borderRadius: '12px',
+                    backgroundColor: 'background.paper'
+                  }
                 }}
-                InputProps={{ className: 'dark:text-white dark:bg-gray-700' }}
+                InputProps={{ className: 'dark:text-white' }}
                 InputLabelProps={{ className: 'dark:text-gray-300' }}
               />
 
@@ -392,27 +443,35 @@ const UserList = () => {
                 margin="normal"
                 disabled={submitting}
                 variant="outlined"
+                placeholder="Repetir contraseña"
                 sx={{
-                  '& .MuiOutlinedInput-root': { borderRadius: '12px' },
-                  '& .MuiInputLabel-root': { color: 'text.secondary' },
-                  '& .MuiOutlinedInput-notchedOutline': { borderColor: 'divider' }
+                  '& .MuiOutlinedInput-root': { 
+                    borderRadius: '12px',
+                    backgroundColor: 'background.paper'
+                  }
                 }}
-                InputProps={{ className: 'dark:text-white dark:bg-gray-700' }}
+                InputProps={{ className: 'dark:text-white' }}
                 InputLabelProps={{ className: 'dark:text-gray-300' }}
               />
             </>
           )}
         </DialogContent>
-        <DialogActions className="px-6 pb-4 dark:bg-gray-800">
+        <DialogActions className="px-6 pb-6 pt-4 dark:bg-gray-800 gap-2">
           <Button 
             onClick={() => setOpenResetPassword(false)}
             disabled={submitting}
+            variant="outlined"
             sx={{
               borderRadius: '12px',
               textTransform: 'none',
               padding: '10px 24px',
               fontWeight: '600',
-              color: 'text.primary'
+              borderColor: '#E5E7EB',
+              color: '#6B7280',
+              '&:hover': {
+                borderColor: '#D1D5DB',
+                backgroundColor: '#F9FAFB'
+              }
             }}
           >
             Cancelar
@@ -429,12 +488,15 @@ const UserList = () => {
               textTransform: 'none',
               padding: '10px 24px',
               fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(227, 30, 36, 0.3)',
               '&:hover': {
-                backgroundColor: '#C41A1F'
+                backgroundColor: '#C41A1F',
+                boxShadow: '0 6px 16px rgba(227, 30, 36, 0.4)'
               },
               '&:disabled': {
                 backgroundColor: '#FCA5A5',
-                color: 'white'
+                color: 'white',
+                boxShadow: 'none'
               }
             }}
           >
@@ -450,39 +512,70 @@ const UserList = () => {
         maxWidth="sm"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: '16px' }
+          sx: { 
+            borderRadius: '20px',
+            backgroundImage: 'none'
+          }
         }}
       >
-        <DialogTitle className="bg-gradient-to-r from-red-600 to-red-700 text-white">
-          <div className="flex items-center space-x-2">
-            <FiAlertCircle size={24} />
-            <Typography variant="h6" className="font-bold">
-              Eliminar Usuario
-            </Typography>
+        <DialogTitle className="dark:bg-gray-800 pb-2">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
+              <FiAlertCircle className="text-red-600 dark:text-red-400" size={24} />
+            </div>
+            <div>
+              <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                Eliminar Usuario
+              </Typography>
+              <Typography variant="caption" className="text-gray-600 dark:text-gray-400">
+                Esta acción no se puede deshacer
+              </Typography>
+            </div>
           </div>
         </DialogTitle>
-        <DialogContent className="mt-4 dark:bg-gray-800">
-          <Alert severity="warning" className="mb-4">
-            Esta acción no se puede deshacer
-          </Alert>
-          <Typography variant="body1" className="text-gray-700 dark:text-gray-300">
-            ¿Estás seguro que deseas eliminar a{' '}
-            <strong>{selectedUser?.first_name} {selectedUser?.last_name}</strong>?
-          </Typography>
-          <Typography variant="body2" className="text-gray-500 dark:text-gray-400 mt-2">
-            Se eliminarán todos los datos asociados a este usuario.
-          </Typography>
+        <DialogContent className="mt-2 dark:bg-gray-800">
+          <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+            <Typography variant="body2" className="text-red-900 dark:text-red-200 mb-2">
+              <strong>Usuario a eliminar:</strong>
+            </Typography>
+            <Typography variant="body1" className="text-red-900 dark:text-red-100 font-bold">
+              {selectedUser?.first_name} {selectedUser?.last_name}
+            </Typography>
+            <Typography variant="caption" className="text-red-700 dark:text-red-300">
+              @{selectedUser?.username} • {selectedUser?.email}
+            </Typography>
+          </div>
+          
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl border border-yellow-200 dark:border-yellow-800">
+            <div className="flex items-start space-x-2">
+              <FiAlertCircle className="text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" size={20} />
+              <div>
+                <Typography variant="body2" className="text-yellow-900 dark:text-yellow-200 font-semibold mb-1">
+                  Advertencia importante
+                </Typography>
+                <Typography variant="body2" className="text-yellow-800 dark:text-yellow-300">
+                  Se eliminarán todos los datos asociados a este usuario, incluyendo tickets creados y comentarios.
+                </Typography>
+              </div>
+            </div>
+          </div>
         </DialogContent>
-        <DialogActions className="px-6 pb-4 dark:bg-gray-800">
+        <DialogActions className="px-6 pb-6 pt-4 dark:bg-gray-800 gap-2">
           <Button 
             onClick={() => setOpenDeleteUser(false)}
             disabled={submitting}
+            variant="outlined"
             sx={{
               borderRadius: '12px',
               textTransform: 'none',
               padding: '10px 24px',
               fontWeight: '600',
-              color: 'text.primary'
+              borderColor: '#E5E7EB',
+              color: '#6B7280',
+              '&:hover': {
+                borderColor: '#D1D5DB',
+                backgroundColor: '#F9FAFB'
+              }
             }}
           >
             Cancelar
@@ -499,12 +592,15 @@ const UserList = () => {
               textTransform: 'none',
               padding: '10px 24px',
               fontWeight: '600',
+              boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)',
               '&:hover': {
-                backgroundColor: '#B91C1C'
+                backgroundColor: '#B91C1C',
+                boxShadow: '0 6px 16px rgba(220, 38, 38, 0.4)'
               },
               '&:disabled': {
                 backgroundColor: '#FCA5A5',
-                color: 'white'
+                color: 'white',
+                boxShadow: 'none'
               }
             }}
           >

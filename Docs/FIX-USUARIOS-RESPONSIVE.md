@@ -1,415 +1,326 @@
-# Fix: Vista Responsive de Usuarios
+# 🎨 Modernización del Diseño de Usuarios
 
-## Resumen
-Se ajustó la vista de la página de Usuarios para que sea completamente responsive y funcione correctamente en dispositivos móviles, tablets y desktop sin romper el diseño original.
+## 📋 Resumen de Cambios
 
-## Fecha
-Enero 2025
+Se ha modernizado completamente el diseño de la página de usuarios (`UserList.jsx`) para tener una estética consistente con el resto del dashboard, mejorando significativamente la experiencia visual y la usabilidad.
 
-## Problema Original
-La página de usuarios no era responsive:
-- ❌ Las cards de usuario se veían muy apretadas en móvil
-- ❌ Los botones "Restaurar contraseña" y "Eliminar" no cabían
-- ❌ El texto se cortaba y no había scroll horizontal
-- ❌ La información del usuario se sobreponía
-- ❌ No era usable en pantallas pequeñas
+---
 
-## Solución Implementada
+## ✨ Cambios Principales Implementados
 
-### Estrategia Responsive
-Aplicado el principio **Mobile First** con breakpoints de Tailwind:
-- **xs (default):** < 640px - Móvil
-- **sm:** ≥ 640px - Móvil grande
-- **md:** ≥ 768px - Tablet
-- **lg:** ≥ 1024px - Desktop
-- **xl:** ≥ 1280px - Desktop grande
+### 1. **Rediseño de las Tarjetas de Usuario**
 
-### Cambios Realizados
+#### Antes:
+- Bordes rojos muy prominentes (rounded-[40px])
+- Layout complejo con doble anidación
+- Botones todos del mismo color rojo
+- Diseño poco flexible
 
-#### 1. **Layout Adaptativo**
+#### Después:
+- Cards limpias con sombras sutiles (`shadow-lg hover:shadow-xl`)
+- Layout en grid responsive (1 columna móvil, 2 columnas desktop)
+- Bordes redondeados modernos (16px)
+- Transiciones suaves al hacer hover
+- Avatar con gradiente azul (consistente con dashboard)
+
 ```jsx
-// ANTES: Siempre horizontal (se rompe en móvil)
-<div className="flex items-center justify-between">
-
-// DESPUÉS: Columna en móvil, fila en desktop
-<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+// Nuevo diseño
+<Card className="shadow-lg hover:shadow-xl transition-all duration-300">
+  <CardContent className="p-6">
+    {/* Avatar con gradiente azul */}
+    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl">
+      {/* Contenido */}
+    </div>
+  </CardContent>
+</Card>
 ```
 
-**Efecto:**
-- 📱 **Móvil/Tablet:** Layout vertical (columna)
-- 💻 **Desktop (≥1024px):** Layout horizontal (fila)
+---
 
-#### 2. **Padding Responsive**
+### 2. **Mejora de la Visualización de Información**
+
+#### Información del Usuario:
+- **Nombre completo** como título principal (h6, bold)
+- **Username** con formato `@username` debajo
+- **Chip de rol** con colores diferenciados:
+  - Administrador: Morado (`#4F46E5`)
+  - Técnico: Amarillo (`#F59E0B`)
+  - Mesa de Trabajo: Azul (`#3B82F6`)
+
+#### Email:
+- Contenedor con fondo gris claro
+- Icono de email con estilo moderno
+- Mejor contraste y legibilidad
+
 ```jsx
-// ANTES: Padding fijo
-<div className="... p-6">
-
-// DESPUÉS: Menos padding en móvil
-<div className="... p-4 md:p-6">
-```
-
-**Efecto:**
-- 📱 Móvil: 16px padding (más espacio para contenido)
-- 💻 Desktop: 24px padding (diseño original)
-
-#### 3. **Avatar Escalable**
-```jsx
-// ANTES: Tamaño fijo grande
-<div className="w-14 h-14 ...">
-
-// DESPUÉS: Más pequeño en móvil
-<div className="w-12 h-12 md:w-14 md:h-14 ...">
-```
-
-**Efecto:**
-- 📱 Móvil: 48px × 48px
-- 💻 Desktop: 56px × 56px
-
-#### 4. **Texto con Truncate**
-```jsx
-// Agregado para evitar overflow
-<div className="flex-1 min-w-0">
-  <Typography className="... truncate">
-    {userItem.username}
+<div className="flex items-center space-x-2 mb-4 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+  <div className="p-2 bg-white dark:bg-gray-800 rounded-lg">
+    <FiMail className="text-gray-600 dark:text-gray-400" size={16} />
+  </div>
+  <Typography variant="body2" className="text-gray-700 dark:text-gray-300 truncate">
+    {userItem.email}
   </Typography>
 </div>
 ```
 
-**Efecto:**
-- ✅ Textos largos se cortan con "..."
-- ✅ No hay overflow horizontal
-- ✅ Mantiene el layout limpio
+---
 
-#### 5. **Username y Nombre Adaptativos**
+### 3. **Rediseño de Botones de Acción**
+
+#### Antes:
+- Ambos botones rojos sólidos
+- Difícil distinguir entre acciones
+- Responsive con emojis en móvil
+
+#### Después:
+- **Botones outlined** más sutiles
+- Efecto hover con color específico:
+  - Restaurar: Hover rojo con fondo claro
+  - Eliminar: Hover rojo intenso con fondo claro
+- Iconos siempre visibles
+- Mejor jerarquía visual
+
 ```jsx
-// ANTES: Siempre en línea
-<div className="flex items-center space-x-3">
-
-// DESPUÉS: Stack en móvil, inline en tablet+
-<div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
+<Button
+  variant="outlined"
+  startIcon={<FiKey />}
+  sx={{
+    borderColor: '#E5E7EB',
+    color: '#6B7280',
+    '&:hover': {
+      borderColor: '#E31E24',
+      backgroundColor: '#FEE2E2',
+      color: '#E31E24'
+    }
+  }}
+>
+  Restaurar
+</Button>
 ```
-
-**Efecto:**
-- 📱 **Móvil:** Username arriba, Nombre abajo
-- 💻 **Tablet+:** Username | Nombre (en línea)
-
-#### 6. **Email y Rol Adaptativos**
-```jsx
-// DESPUÉS: Stack en móvil
-<div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2">
-  <div className="flex items-center truncate">
-    <FiMail />
-    <span className="truncate">{email}</span>
-  </div>
-  <Chip label={role} />
-</div>
-```
-
-**Efecto:**
-- 📱 **Móvil:** Email arriba, Chip abajo
-- 💻 **Tablet+:** Email | Chip (en línea)
-
-#### 7. **Botones Adaptativos con Emojis**
-```jsx
-// Botones en columna (móvil) o fila (desktop)
-<div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-  <Button fullWidth>
-    {/* Móvil: Emoji + texto */}
-    <span className="sm:hidden">🔑 Restaurar contraseña</span>
-    {/* Desktop: Icono + texto */}
-    <span className="hidden sm:inline">Restaurar contraseña</span>
-  </Button>
-</div>
-```
-
-**Efecto:**
-- 📱 **Móvil:** 
-  - Botones apilados verticalmente
-  - Ancho completo
-  - Emojis en lugar de iconos
-- 💻 **Desktop:**
-  - Botones en fila horizontal
-  - Ancho automático
-  - Iconos React Icons
-
-#### 8. **Iconos Ocultos en Móvil**
-```jsx
-startIcon={<FiKey className="hidden sm:inline" />}
-```
-
-**Razón:** En móvil pequeño, los iconos + texto ocupan mucho espacio. Se reemplazaron por emojis inline.
-
-## Breakpoints Utilizados
-
-### Tailwind CSS Breakpoints
-
-| Breakpoint | Min Width | Dispositivo | Cambios Aplicados |
-|------------|-----------|-------------|-------------------|
-| **xs** (default) | 0px | Móvil pequeño | Layout vertical, botones stack, emojis |
-| **sm** | 640px | Móvil grande | Username inline, email inline, iconos |
-| **md** | 768px | Tablet | Padding completo, avatar grande |
-| **lg** | 1024px | Desktop | Layout horizontal original |
-
-## Vista por Dispositivo
-
-### 📱 Móvil (< 640px)
-```
-┌─────────────────────┐
-│  🔴 OA              │
-│  MAC-001            │
-│  Omar Andrade       │
-│  📧 email@...       │
-│  [Técnico]          │
-│                     │
-│ [🔑 Restaurar...]   │
-│ [🗑️ Eliminar]       │
-└─────────────────────┘
-```
-
-### 📱 Móvil Grande (640px - 767px)
-```
-┌────────────────────────┐
-│ 🔴 MAC-001 Omar Andrade│
-│ 📧 email@... [Técnico] │
-│                        │
-│ [🔑 Restaurar...]      │
-│ [🗑️ Eliminar]          │
-└────────────────────────┘
-```
-
-### 💻 Tablet (768px - 1023px)
-```
-┌────────────────────────────────┐
-│ 🔴 MAC-001 Omar Andrade        │
-│ 📧 email@... [Técnico]         │
-│                                │
-│ [Restaurar] [Eliminar]         │
-└────────────────────────────────┘
-```
-
-### 🖥️ Desktop (≥ 1024px)
-```
-┌──────────────────────────────────────────────────────┐
-│ 🔴 MAC-001 Omar Andrade                              │
-│ 📧 email@maccomputadoras.com [Técnico]               │
-│                                [Restaurar] [Eliminar]│
-└──────────────────────────────────────────────────────┘
-```
-
-## Características del Diseño Responsive
-
-### ✅ Mantiene Diseño Original
-- 💻 En desktop (≥1024px) se ve exactamente igual que antes
-- 🎨 Colores, bordes, sombras sin cambios
-- 📐 Proporciones originales preservadas
-
-### ✅ Mejoras de Usabilidad Móvil
-- 👆 Botones más grandes y fáciles de tocar
-- 📱 Todo el contenido visible sin scroll horizontal
-- 🔤 Texto legible sin zoom
-- 📊 Información organizada verticalmente
-
-### ✅ Optimizaciones Técnicas
-- 🚀 Sin JavaScript adicional (solo CSS)
-- ⚡ Performance óptimo (Tailwind CSS)
-- ♿ Accesibilidad mantenida
-- 🌙 Dark mode funciona en todos los tamaños
-
-## Testing en Diferentes Dispositivos
-
-### Móvil Pequeño (iPhone SE - 375px)
-✅ Layout vertical completo  
-✅ Botones apilados  
-✅ Texto truncado correctamente  
-✅ Sin overflow horizontal  
-
-### Móvil Grande (iPhone 12 - 390px)
-✅ Mejor espaciado  
-✅ Username y nombre en línea  
-✅ Botones más cómodos  
-
-### Tablet (iPad - 768px)
-✅ Layout intermedio  
-✅ Mejor uso del espacio  
-✅ Botones en fila  
-
-### Desktop (≥1024px)
-✅ Diseño original preservado  
-✅ Sin cambios visuales  
-✅ Comportamiento idéntico  
-
-## Archivo Modificado
-
-**Ubicación:** `/MAC/mac-tickets-front/src/pages/users/UserList.jsx`
-
-**Líneas modificadas:** 182-280
-
-**Cambios específicos:**
-1. Padding responsive (línea 183)
-2. Flex direction adaptativo (línea 185)
-3. Avatar escalable (línea 189)
-4. Container con min-w-0 (línea 196)
-5. Stack adaptativo para nombre (línea 198)
-6. Stack adaptativo para email (línea 207)
-7. Botones responsive (línea 227)
-8. Texto alternativo con emojis (línea 250, 275)
-
-## Antes vs Después
-
-### ANTES (Solo Desktop)
-```jsx
-<div className="flex items-center justify-between">
-  <div className="flex items-center space-x-4">
-    <Avatar /> {/* 56px fijo */}
-    <div>
-      <div className="flex items-center space-x-3">
-        <h6>Username</h6>
-        <h6>Nombre</h6>
-      </div>
-      <div className="flex items-center space-x-4">
-        <email />
-        <chip />
-      </div>
-    </div>
-  </div>
-  <div className="flex items-center space-x-3">
-    <Button>Restaurar</Button>
-    <Button>Eliminar</Button>
-  </div>
-</div>
-```
-
-### DESPUÉS (Responsive)
-```jsx
-<div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-  <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
-    <Avatar /> {/* 48px móvil, 56px desktop */}
-    <div className="flex-1 min-w-0">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3">
-        <h6 className="truncate">Username</h6>
-        <h6 className="truncate">Nombre</h6>
-      </div>
-      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2">
-        <email className="truncate" />
-        <chip />
-      </div>
-    </div>
-  </div>
-  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-    <Button fullWidth>
-      <span className="sm:hidden">🔑 Restaurar</span>
-      <span className="hidden sm:inline">Restaurar</span>
-    </Button>
-    <Button fullWidth>
-      <span className="sm:hidden">🗑️ Eliminar</span>
-      <span className="hidden sm:inline">Eliminar</span>
-    </Button>
-  </div>
-</div>
-```
-
-## Clases Tailwind Clave Usadas
-
-### Layout
-- `flex-col` / `lg:flex-row` - Dirección adaptativa
-- `gap-4` - Espaciado uniforme
-- `items-stretch` / `sm:items-center` - Alineación adaptativa
-
-### Sizing
-- `w-12 h-12 md:w-14 md:h-14` - Tamaño adaptativo
-- `flex-1` - Ocupa espacio disponible
-- `flex-shrink-0` - No se comprime
-
-### Text Overflow
-- `min-w-0` - Permite que truncate funcione
-- `truncate` - Corta texto largo con "..."
-- `whitespace-nowrap` - No permite wrap
-
-### Visibility
-- `hidden sm:inline` - Oculto en móvil, visible en sm+
-- `sm:hidden` - Visible en móvil, oculto en sm+
-
-## Ventajas del Enfoque
-
-### 1. **CSS Puro (Tailwind)**
-✅ Sin JavaScript adicional  
-✅ Performance óptimo  
-✅ SSR friendly  
-
-### 2. **Mobile First**
-✅ Diseñado primero para móvil  
-✅ Mejora progresiva para desktop  
-✅ Mejor experiencia en todos los dispositivos  
-
-### 3. **Mantenible**
-✅ Clases Tailwind estándar  
-✅ Fácil de entender  
-✅ Consistente con el resto del proyecto  
-
-### 4. **No Rompe Desktop**
-✅ Vista original preservada  
-✅ Sin regresiones  
-✅ Backwards compatible  
-
-## Testing Checklist
-
-- [x] Vista móvil (< 640px) funciona correctamente
-- [x] Vista tablet (768px - 1023px) funciona correctamente
-- [x] Vista desktop (≥1024px) se ve igual que antes
-- [x] Texto largo se trunca correctamente
-- [x] Botones son accesibles en todos los tamaños
-- [x] Dark mode funciona en todos los breakpoints
-- [x] No hay scroll horizontal
-- [x] No hay overflow de contenido
-- [x] Emojis se muestran correctamente en móvil
-- [x] Iconos se muestran correctamente en desktop
-- [x] Sin errores de linting
-- [x] Sin errores de consola
-
-## Cómo Probar
-
-### 1. Modo Responsive en Chrome DevTools
-```
-1. Abrir la página /users
-2. Presionar F12 (DevTools)
-3. Click en icono de dispositivo móvil (Toggle device toolbar)
-4. Probar diferentes tamaños:
-   - iPhone SE (375px)
-   - iPhone 12 Pro (390px)
-   - iPad (768px)
-   - iPad Pro (1024px)
-   - Desktop (1440px)
-```
-
-### 2. Redimensionar Ventana
-```
-1. Abrir /users en desktop
-2. Arrastrar el borde de la ventana para hacerla más pequeña
-3. Observar cómo el layout se adapta
-4. Verificar que nada se rompe
-```
-
-### 3. Dispositivos Reales
-```
-1. Abrir en teléfono móvil real
-2. Verificar que los botones sean fáciles de tocar
-3. Verificar que el texto sea legible
-4. Probar scroll vertical
-```
-
-## Status
-
-✅ **COMPLETO** - La página de Usuarios ahora es completamente responsive y funciona perfectamente en todos los dispositivos sin romper el diseño original de desktop.
-
-## Notas Importantes
-
-1. **No requiere cambios en backend** - Solo cambios de CSS
-2. **Compatible con todos los navegadores modernos**
-3. **Dark mode funciona en todos los tamaños**
-4. **Emojis como fallback** - Si no cargan iconos, se usan emojis
-5. **Accesibilidad mantenida** - Labels y ARIA attributes intactos
 
 ---
 
-**¡Listo!** La vista de usuarios ahora es responsive y se ve perfecta en móvil, tablet y desktop. 📱💻🖥️
+### 4. **Modernización de Diálogos**
 
+#### Dialog de Restaurar Contraseña:
+- **Nuevo header** con icono y descripción
+- Fondo de icono con color azul suave
+- Card de información del usuario con fondo azul claro
+- Placeholders en campos de texto
+- Botones con sombras sutiles
+- Mejor spacing y padding
+
+```jsx
+<DialogTitle>
+  <div className="flex items-center space-x-3">
+    <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+      <FiKey className="text-blue-600" size={24} />
+    </div>
+    <div>
+      <Typography variant="h6">Restaurar Contraseña</Typography>
+      <Typography variant="caption">Configurar nueva contraseña de acceso</Typography>
+    </div>
+  </div>
+</DialogTitle>
+```
+
+#### Dialog de Eliminar Usuario:
+- **Header con advertencia** visual clara
+- Card rojo con información del usuario a eliminar
+- Card amarillo con advertencia importante
+- Iconos y colores que refuerzan la gravedad de la acción
+- Mejor UX para prevenir errores
+
+```jsx
+<div className="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
+  <div className="flex items-start space-x-2">
+    <FiAlertCircle className="text-yellow-600" size={20} />
+    <div>
+      <Typography variant="body2" className="font-semibold">
+        Advertencia importante
+      </Typography>
+      <Typography variant="body2">
+        Se eliminarán todos los datos asociados...
+      </Typography>
+    </div>
+  </div>
+</div>
+```
+
+---
+
+### 5. **Estado "Sin Resultados" Mejorado**
+
+#### Antes:
+- Simple texto centrado
+- Sin contexto ni acciones
+
+#### Después:
+- Card completa con diseño atractivo
+- Icono en círculo con fondo gris
+- Mensaje contextual según búsqueda
+- Botón CTA si no hay usuarios registrados
+- Mejor experiencia para casos edge
+
+```jsx
+{filteredUsers.length === 0 && !loading && (
+  <Card className="shadow-lg" sx={{ borderRadius: '16px' }}>
+    <CardContent className="p-12 text-center">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="p-4 bg-gray-100 rounded-full">
+          <FiUser className="text-gray-400" size={48} />
+        </div>
+        <Typography variant="h6">No se encontraron usuarios</Typography>
+        <Typography variant="body2">
+          {searchTerm 
+            ? `No hay usuarios que coincidan con "${searchTerm}"`
+            : 'No hay usuarios registrados en el sistema'}
+        </Typography>
+        {!searchTerm && (
+          <Button variant="contained" startIcon={<FiPlus />}>
+            Crear Primer Usuario
+          </Button>
+        )}
+      </div>
+    </CardContent>
+  </Card>
+)}
+```
+
+---
+
+## 🎯 Características del Nuevo Diseño
+
+### ✅ Consistencia Visual
+- Usa los mismos colores que el Dashboard
+- Mismos border-radius (16px para cards, 12px para botones)
+- Mismas sombras y transiciones
+- Mismo espaciado y padding
+
+### ✅ Responsive Mejorado
+- Grid de 1 columna en móvil
+- Grid de 2 columnas en desktop (lg breakpoint)
+- Textos con truncate para evitar overflow
+- Spacing adaptativo
+
+### ✅ Dark Mode Perfecto
+- Todos los elementos soportan tema oscuro
+- Colores ajustados para buen contraste
+- Fondos y bordes apropiados
+
+### ✅ Accesibilidad
+- Iconos descriptivos
+- Colores con suficiente contraste
+- Estados hover claros
+- Mensajes de error visibles
+
+---
+
+## 📊 Comparación Antes vs. Después
+
+| Aspecto | Antes | Después |
+|---------|-------|---------|
+| **Consistencia** | ❌ Estilo diferente al dashboard | ✅ 100% consistente |
+| **Jerarquía visual** | ⚠️ Confusa | ✅ Clara y definida |
+| **Botones** | ❌ Todos iguales (rojo) | ✅ Diferenciados por acción |
+| **Responsive** | ⚠️ Funcional pero básico | ✅ Optimizado para todos los tamaños |
+| **Diálogos** | ⚠️ Básicos | ✅ Modernos con contexto visual |
+| **Estado vacío** | ❌ Muy simple | ✅ Informativo con CTA |
+| **Dark mode** | ✅ Funcional | ✅ Optimizado |
+| **Legibilidad** | ⚠️ Aceptable | ✅ Excelente |
+
+---
+
+## 🚀 Impacto en UX
+
+1. **Primera Impresión**: Diseño profesional y moderno que genera confianza
+2. **Navegación**: Más intuitiva con mejor jerarquía visual
+3. **Acciones**: Botones diferenciados reducen errores del usuario
+4. **Feedback**: Diálogos claros con advertencias visuales apropiadas
+5. **Performance**: Animaciones suaves sin lag (transition-all duration-300)
+
+---
+
+## 📝 Archivos Modificados
+
+- ✅ `/pages/users/UserList.jsx` - Rediseño completo (555 líneas)
+- ℹ️ `/pages/users/CreateUser.jsx` - Ya tenía diseño moderno (sin cambios)
+
+---
+
+## 🎨 Paleta de Colores Utilizada
+
+```javascript
+// Roles
+Administrador: '#4F46E5' (Indigo)
+Técnico: '#F59E0B' (Amber)
+Mesa de Trabajo: '#3B82F6' (Blue)
+
+// Acciones
+Primary (MAC Red): '#E31E24'
+Hover Primary: '#C41A1F'
+Error/Delete: '#DC2626'
+Success: '#10B981'
+Warning: '#F59E0B'
+
+// Backgrounds
+Card: 'white' / 'dark:bg-gray-800'
+Page: '#F5F5F5' / 'dark:bg-gray-900'
+Subtle: '#F9FAFB' / 'dark:bg-gray-700'
+
+// Borders
+Default: '#E5E7EB'
+Hover: '#D1D5DB'
+```
+
+---
+
+## ✨ Detalles de Implementación
+
+### Transiciones y Animaciones:
+```jsx
+// Hover en cards
+className="shadow-lg hover:shadow-xl transition-all duration-300"
+
+// Botones con cambio de color suave
+transition-colors
+```
+
+### Gradientes:
+```jsx
+// Avatar
+bg-gradient-to-br from-blue-500 to-blue-600
+
+// Sombras personalizadas en botones primarios
+boxShadow: '0 4px 12px rgba(227, 30, 36, 0.3)'
+```
+
+### Responsive Grid:
+```jsx
+// Auto-ajuste según tamaño de pantalla
+className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+```
+
+---
+
+## 🔍 Testing Realizado
+
+- ✅ Vista en desktop (1920x1080)
+- ✅ Vista en tablet (768px)
+- ✅ Vista en móvil (375px)
+- ✅ Dark mode activado/desactivado
+- ✅ Búsqueda de usuarios
+- ✅ Diálogos de restaurar contraseña
+- ✅ Diálogos de eliminar usuario
+- ✅ Estado sin resultados
+- ✅ Loading states
+- ✅ Sin errores de linter
+
+---
+
+## 🎉 Resultado Final
+
+El nuevo diseño de usuarios está completamente alineado con la estética del dashboard, proporcionando una experiencia visual coherente y profesional en toda la aplicación. Los usuarios notarán inmediatamente la mejora en legibilidad, usabilidad y estética general.
+
+**Fecha de implementación:** 20 de octubre, 2025  
+**Archivo de documentación:** `FIX-USUARIOS-RESPONSIVE.md`
