@@ -180,31 +180,34 @@ const UserList = () => {
               className="bg-[#E31E24] rounded-[40px] p-2 shadow-lg"
             >
               {/* Card blanca interior */}
-              <div className="bg-white dark:bg-gray-800 rounded-[36px] p-6">
-                <div className="flex items-center justify-between">
+              <div className="bg-white dark:bg-gray-800 rounded-[36px] p-4 md:p-6">
+                {/* Layout responsive: columna en móvil, fila en desktop */}
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                   {/* Información del usuario */}
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3 md:space-x-4 flex-1 min-w-0">
                     {/* Avatar circular */}
-                    <div className="w-14 h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center">
-                      <span className="text-white font-bold text-lg">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center flex-shrink-0">
+                      <span className="text-white font-bold text-base md:text-lg">
                         {userItem.first_name[0]}{userItem.last_name[0]}
                       </span>
                     </div>
 
                     {/* Datos */}
-                    <div>
-                      <div className="flex items-center space-x-3 mb-1">
-                        <Typography variant="h6" className="font-bold text-gray-900 dark:text-white">
+                    <div className="flex-1 min-w-0">
+                      {/* Username y Nombre - Stack en móvil, inline en desktop */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 mb-1">
+                        <Typography variant="h6" className="font-bold text-gray-900 dark:text-white text-base md:text-lg truncate">
                           {userItem.username}
                         </Typography>
-                        <Typography variant="h6" className="font-semibold text-gray-700 dark:text-gray-300">
+                        <Typography variant="h6" className="font-semibold text-gray-700 dark:text-gray-300 text-sm md:text-base truncate">
                           {userItem.first_name} {userItem.last_name}
                         </Typography>
                       </div>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                        <div className="flex items-center">
-                          <FiMail className="mr-1" size={14} />
-                          {userItem.email}
+                      {/* Email y Rol - Stack en móvil */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-2 text-sm text-gray-600 dark:text-gray-400">
+                        <div className="flex items-center truncate">
+                          <FiMail className="mr-1 flex-shrink-0" size={14} />
+                          <span className="truncate">{userItem.email}</span>
                         </div>
                         <Chip 
                           label={userItem.role.name} 
@@ -220,43 +223,57 @@ const UserList = () => {
                     </div>
                   </div>
 
-                  {/* Botones de acción - Estilo Figma */}
-                  <div className="flex items-center space-x-3">
+                  {/* Botones de acción - Stack en móvil, inline en desktop */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:flex-shrink-0">
                     <Button
                       variant="contained"
-                      startIcon={<FiKey />}
+                      startIcon={<FiKey className="hidden sm:inline" />}
                       onClick={() => handleResetPassword(userItem)}
+                      fullWidth
                       sx={{
                         backgroundColor: '#E31E24',
                         color: 'white',
                         borderRadius: '12px',
                         textTransform: 'none',
-                        padding: '10px 20px',
+                        padding: '10px 16px',
                         fontWeight: '600',
+                        fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                        whiteSpace: 'nowrap',
                         '&:hover': {
                           backgroundColor: '#C41A1F'
+                        },
+                        '@media (min-width: 640px)': {
+                          width: 'auto'
                         }
                       }}
                     >
-                      Restaurar contraseña
+                      <span className="sm:hidden">🔑 Restaurar contraseña</span>
+                      <span className="hidden sm:inline">Restaurar contraseña</span>
                     </Button>
                     <Button
                       variant="contained"
-                      startIcon={<FiTrash2 />}
+                      startIcon={<FiTrash2 className="hidden sm:inline" />}
                       onClick={() => handleDeleteUser(userItem)}
+                      fullWidth
                       sx={{
                         backgroundColor: '#E31E24',
                         color: 'white',
                         borderRadius: '12px',
                         textTransform: 'none',
-                        padding: '10px 20px',
+                        padding: '10px 16px',
                         fontWeight: '600',
+                        fontSize: { xs: '0.875rem', sm: '0.875rem' },
+                        whiteSpace: 'nowrap',
                         '&:hover': {
                           backgroundColor: '#C41A1F'
+                        },
+                        '@media (min-width: 640px)': {
+                          width: 'auto'
                         }
                       }}
                     >
-                      Eliminar
+                      <span className="sm:hidden">🗑️ Eliminar</span>
+                      <span className="hidden sm:inline">Eliminar</span>
                     </Button>
                   </div>
                 </div>
