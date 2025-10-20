@@ -5,7 +5,7 @@ import authService from '../services/authService';
 import api from '../services/api';
 
 // 1. CREAR CONTEXTO
-const AuthContext = createContext(null);
+const AuthContext = createContext(undefined);
 
 // 2. PROVIDER COMPONENT
 export const AuthProvider = ({ children }) => {
@@ -186,7 +186,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Valor del contexto
-  const contextValue = {
+  const contextValue = React.useMemo(() => ({
     user,
     loading,
     error,
@@ -195,7 +195,7 @@ export const AuthProvider = ({ children }) => {
     refreshUserProfile,
     isAuthenticated: !!user,
     setError
-  };
+  }), [user, loading, error]);
 
   return (
     <AuthContext.Provider value={contextValue}>
