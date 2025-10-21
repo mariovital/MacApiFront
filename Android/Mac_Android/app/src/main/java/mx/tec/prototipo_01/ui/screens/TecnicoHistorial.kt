@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -20,29 +17,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -60,74 +56,90 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 @Composable
-fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewModel) { 
+fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewModel) {
     val state = viewModel.historyTicketsState
-
-    LaunchedEffect(Unit) {
-        viewModel.loadTickets()
-    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        when (state) {
-            is TicketsUiState.Loading -> LoadingState()
-            is TicketsUiState.Error -> EmptyTicketsState()
+        var filterExpanded by remember { mutableStateOf(false) }
+        var selectedFilter by rememberSaveable { mutableStateOf(HistoryFilter.TODOS) }
+        var searchQuery by rememberSaveable { mutableStateOf("") }
+        var lastTickets by remember { mutableStateOf<List<TecnicoTicket>>(emptyList()) }
+
+        val sourceTickets: List<TecnicoTicket> = when (state) {
             is TicketsUiState.Success -> {
-                val tickets = state.tickets
-                if (tickets.isEmpty()) EmptyTicketsState() else {
-                    var filterExpanded by remember { mutableStateOf(false) }
-                    var selectedFilter: HistoryFilter by remember { mutableStateOf(HistoryFilter.TODOS) }
-                    var searchQuery by remember { mutableStateOf("") }
+                lastTickets = state.tickets
+                state.tickets
+            }
+            is TicketsUiState.Loading -> lastTickets
+            else -> emptyList()
+        }
 
-                    // Buscador + Lista en columna para evitar superposición
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        OutlinedTextField(
-                            value = searchQuery,
-                            onValueChange = { searchQuery = it },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                            placeholder = { Text("Buscar por nombre") },
-                            singleLine = true
-                        )
+        if (state is TicketsUiState.Error) {
+            EmptyTicketsState()
+        } else if (sourceTickets.isEmpty()) {
+            EmptyTicketsState()
+        } else {
+            Column(modifier = Modifier.fillMaxSize()) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    placeholder = { Text("Buscar por nombre") },
+                    singleLine = true
+                )
 
-                        val filtered = when (selectedFilter) {
-                            HistoryFilter.TODOS -> tickets
-                            HistoryFilter.SOLO_COMPLETADOS -> tickets.filter { it.status.displayName.contains("complet", true) || it.status.displayName.contains("resuelto", true) || it.status.displayName.contains("cerrado", true) }
-                            HistoryFilter.SOLO_RECHAZADOS -> tickets.filter { it.status.displayName.contains("rechaz", true) }
-                            else -> tickets
-                        }.let { list ->
-                            if (searchQuery.isBlank()) list else list.filter { matchesSearch(it, searchQuery) }
-                        }
-                        TicketsList(tickets = filtered, navController = navController)
-                    }
-
-                    // Botón flotante de filtro (abajo-izquierda)
-                    FloatingActionButton(
-                        onClick = { filterExpanded = true },
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(16.dp)
-                    ) {
-                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar")
-                    }
-                    DropdownMenu(
-                        expanded = filterExpanded,
-                        onDismissRequest = { filterExpanded = false },
-                        modifier = Modifier.align(Alignment.BottomStart)
-                    ) {
-                        HistoryFilter.values().forEach { option ->
-                            DropdownMenuItem(text = { Text(option.label) }, onClick = {
-                                selectedFilter = option
-                                filterExpanded = false
-                            })
-                        }
-                    }
+                val filtered = when (selectedFilter) {
+                    HistoryFilter.TODOS -> sourceTickets
+                    HistoryFilter.SOLO_COMPLETADOS -> sourceTickets.filter { it.status.displayName.contains("complet", true) || it.status.displayName.contains("resuelto", true) || it.status.displayName.contains("cerrado", true) }
+                    HistoryFilter.SOLO_RECHAZADOS -> sourceTickets.filter { it.status.displayName.contains("rechaz", true) }
+                }.let { list ->
+                    if (searchQuery.isBlank()) list else list.filter { matchesSearch(it, searchQuery) }
                 }
+
+                TicketsList(tickets = filtered, navController = navController)
+            }
+
+            FloatingActionButton(
+                onClick = { filterExpanded = true },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.FilterList, contentDescription = "Filtrar")
+            }
+            DropdownMenu(
+                expanded = filterExpanded,
+                onDismissRequest = { filterExpanded = false },
+                modifier = Modifier.align(Alignment.BottomStart)
+            ) {
+                HistoryFilter.values().forEach { option ->
+                    DropdownMenuItem(text = { Text(option.label) }, onClick = {
+                        selectedFilter = option
+                        filterExpanded = false
+                    })
+                }
+            }
+        }
+
+        if (state is TicketsUiState.Loading) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .padding(top = 4.dp)
+            ) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
             }
         }
     }
@@ -140,25 +152,12 @@ private enum class HistoryFilter(val label: String) {
 }
 
 @Composable
-private fun LoadingState() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
-        contentAlignment = Alignment.Center
-    ) {
-        CircularProgressIndicator()
-    }
-}
-
-@Composable
 private fun EmptyTicketsState() {
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center
-
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -174,7 +173,7 @@ private fun EmptyTicketsState() {
                 tint = Color.Gray.copy(alpha = 0.6f)
             )
             Text(
-                text =  "Sin tickets \npasados",
+                text = "Sin tickets \npasados",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.Gray,
@@ -212,15 +211,13 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Row(
+        Column(modifier = Modifier.padding(16.dp)) {
+            androidx.compose.foundation.layout.Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
+                androidx.compose.foundation.layout.Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
@@ -237,15 +234,15 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                             tint = Color.Gray
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Row {
+                    androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(8.dp))
+                    androidx.compose.foundation.layout.Row {
                         Text(
                             text = ticket.assignedTo,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(8.dp))
                         Box(
                             modifier = Modifier
                                 .background(
@@ -263,14 +260,8 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                         }
                     }
                 }
-                Column(
-                    horizontalAlignment = Alignment.End
-                ) {
-                    Text(
-                        text = ticket.id,
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(text = ticket.id, fontSize = 12.sp, color = Color.Gray)
                     val priorityEnum = TicketPriority.values().find { it.displayName == ticket.priority }
                     if (priorityEnum != null) {
                         Box(
@@ -281,88 +272,53 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
                                 )
                                 .padding(horizontal = 8.dp, vertical = 2.dp)
                         ) {
-                            Text(
-                                text = ticket.priority,
-                                fontSize = 10.sp,
-                                color = Color.White
-                            )
+                            Text(text = ticket.priority, fontSize = 10.sp, color = Color.White)
                         }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                verticalAlignment = Alignment.Top
-            ) {
+            androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier.size(12.dp))
+            androidx.compose.foundation.layout.Row(verticalAlignment = Alignment.Top) {
                 Icon(
                     imageVector = Icons.Default.DateRange,
                     contentDescription = "Ticket",
                     modifier = Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(8.dp))
                 Column {
-                    Text(
-                        text = ticket.title,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Row{
+                    Text(text = ticket.title, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                    androidx.compose.foundation.layout.Row {
                         Box(
                             modifier = Modifier
                                 .size(5.dp)
-                                .background(
-                                    color = Color(0xFF838383),
-                                    shape = CircleShape
-                                )
+                                .background(color = Color(0xFF838383), shape = CircleShape)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = ticket.company,
-                            fontSize = 11.sp,
-                            color = Color.Gray
-                        )
+                        androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(6.dp))
+                        Text(text = ticket.company, fontSize = 11.sp, color = Color.Gray)
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+            androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier.size(8.dp))
             if (ticket.description.isNotEmpty()) {
-                Text(
-                    text = ticket.description,
-                    fontSize = 14.sp,
-                    color = Color.Gray,
-                    lineHeight = 18.sp
-                )
-                Spacer(modifier = Modifier.height(12.dp))
+                Text(text = ticket.description, fontSize = 14.sp, color = Color.Gray, lineHeight = 18.sp)
+                androidx.compose.foundation.layout.Spacer(modifier = androidx.compose.ui.Modifier.size(12.dp))
             }
-
             Button(
                 onClick = {
                     val encodedId = URLEncoder.encode(ticket.id, StandardCharsets.UTF_8.toString())
                     navController.navigate("tecnico_ticket_details/$encodedId")
                 },
                 modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
-                ),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text(
-                    text = "Ver Detalles",
-                    color = MaterialTheme.colorScheme.onSecondary,
-                    fontWeight = FontWeight.Medium
-                )
+                Text(text = "Ver Detalles", color = MaterialTheme.colorScheme.onSecondary)
             }
         }
     }
 }
 
-// Coincidencia por texto en campos comunes
 private fun matchesSearch(ticket: TecnicoTicket, query: String): Boolean {
     if (query.isBlank()) return true
     val q = query.trim()
