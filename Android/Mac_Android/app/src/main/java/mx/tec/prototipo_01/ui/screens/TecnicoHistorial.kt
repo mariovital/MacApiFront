@@ -29,8 +29,20 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,7 +67,7 @@ fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewM
         viewModel.loadTickets()
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -65,10 +77,66 @@ fun TecnicoHistorial(navController: NavController, viewModel: TecnicoSharedViewM
             is TicketsUiState.Error -> EmptyTicketsState()
             is TicketsUiState.Success -> {
                 val tickets = state.tickets
-                if (tickets.isEmpty()) EmptyTicketsState() else TicketsList(tickets = tickets, navController = navController)
+                if (tickets.isEmpty()) EmptyTicketsState() else {
+                    var filterExpanded by remember { mutableStateOf(false) }
+                    var selectedFilter: HistoryFilter by remember { mutableStateOf(HistoryFilter.TODOS) }
+                    var searchQuery by remember { mutableStateOf("") }
+
+                    // Buscador + Lista en columna para evitar superposición
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        OutlinedTextField(
+                            value = searchQuery,
+                            onValueChange = { searchQuery = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                            placeholder = { Text("Buscar por nombre") },
+                            singleLine = true
+                        )
+
+                        val filtered = when (selectedFilter) {
+                            HistoryFilter.TODOS -> tickets
+                            HistoryFilter.SOLO_COMPLETADOS -> tickets.filter { it.status.displayName.contains("complet", true) || it.status.displayName.contains("resuelto", true) || it.status.displayName.contains("cerrado", true) }
+                            HistoryFilter.SOLO_RECHAZADOS -> tickets.filter { it.status.displayName.contains("rechaz", true) }
+                            else -> tickets
+                        }.let { list ->
+                            if (searchQuery.isBlank()) list else list.filter { matchesSearch(it, searchQuery) }
+                        }
+                        TicketsList(tickets = filtered, navController = navController)
+                    }
+
+                    // Botón flotante de filtro (abajo-izquierda)
+                    FloatingActionButton(
+                        onClick = { filterExpanded = true },
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(16.dp)
+                    ) {
+                        Icon(Icons.Default.FilterList, contentDescription = "Filtrar")
+                    }
+                    DropdownMenu(
+                        expanded = filterExpanded,
+                        onDismissRequest = { filterExpanded = false },
+                        modifier = Modifier.align(Alignment.BottomStart)
+                    ) {
+                        HistoryFilter.values().forEach { option ->
+                            DropdownMenuItem(text = { Text(option.label) }, onClick = {
+                                selectedFilter = option
+                                filterExpanded = false
+                            })
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+private enum class HistoryFilter(val label: String) {
+    TODOS("Todos"),
+    SOLO_COMPLETADOS("Completados"),
+    SOLO_RECHAZADOS("Rechazados")
 }
 
 @Composable
@@ -292,4 +360,12 @@ private fun TicketCard(ticket: TecnicoTicket, navController: NavController) {
             }
         }
     }
+}
+
+// Coincidencia por texto en campos comunes
+private fun matchesSearch(ticket: TecnicoTicket, query: String): Boolean {
+    if (query.isBlank()) return true
+    val q = query.trim()
+    return listOf(ticket.id, ticket.title, ticket.company, ticket.assignedTo, ticket.description)
+        .any { it.contains(q, ignoreCase = true) }
 }
