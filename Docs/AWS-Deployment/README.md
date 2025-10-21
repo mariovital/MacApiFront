@@ -1,343 +1,306 @@
-# 📚 Documentación de Deployment AWS - MAC Tickets
+# 🚀 Guía de Despliegue y Solución de Errores - AWS Elastic Beanstalk
 
-> **🎓 ¿Estás usando AWS Academy?** → **[GUÍA ESPECÍFICA PARA AWS ACADEMY](./01-GUIA-AWS-ACADEMY.md)** (sin AWS CLI)
->
-> **💼 ¿Tienes cuenta AWS normal?** → **[GUÍA COMPLETA AWS](./01-GUIA-COMPLETA-AWS.md)** (con AWS CLI)
+## 📋 **LEE ESTO PRIMERO**
 
-Documentación completa para desplegar el sistema MAC Tickets en AWS.
+Tu API en Elastic Beanstalk tiene **2 errores críticos**:
 
----
+1. ❌ **Base de datos no existe:** `Unknown database 'macTickets'`
+2. ❌ **Rutas devuelven 404:** Estás usando `/auth/login` en vez de `/api/auth/login`
 
-## 📋 Archivos Disponibles
-
-### 📘 Guías Principales
-
-1. **[01-GUIA-AWS-ACADEMY.md](01-GUIA-AWS-ACADEMY.md)** 🎓 **NUEVO**
-   - ✅ Específica para **AWS Academy** (entorno educativo)
-   - ✅ **Sin AWS CLI** - Todo por consola web
-   - ✅ Configuración de RDS, EC2, S3
-   - ✅ Credenciales temporales (3-4 horas)
-   - ✅ Sin dominio personalizado (solo IPs)
-   - ✅ Testing y troubleshooting
-   - ⏱️ **Tiempo estimado**: 2-3 horas para setup completo
-   - 📊 **Nivel**: Principiante
-   - 💰 **Costo**: $0 (gratis con Academy)
-
-2. **[01-GUIA-COMPLETA-AWS.md](01-GUIA-COMPLETA-AWS.md)**
-   - ✅ Guía paso a paso completa para **AWS normal**
-   - ✅ Configuración de RDS, EC2, S3, CloudFront
-   - ✅ Dominio y SSL
-   - ✅ Variables de entorno
-   - ✅ Testing y troubleshooting
-   - ✅ Costos estimados
-   - ⏱️ **Tiempo estimado**: 2-4 horas para setup completo
-   - 📊 **Nivel**: Principiante a intermedio
-
-2. **[02-REFERENCIA-RAPIDA.md](02-REFERENCIA-RAPIDA.md)**
-   - ✅ Comandos esenciales
-   - ✅ PM2, MySQL, S3, CloudFront
-   - ✅ Monitoreo y logs
-   - ✅ Troubleshooting rápido
-   - ✅ Backups
-   - ⏱️ **Tiempo de consulta**: 1-5 minutos
-   - 📊 **Nivel**: Todos
-
-### 🤖 Scripts Automatizados
-
-3. **[scripts/deploy-frontend.sh](scripts/deploy-frontend.sh)**
-   - Build y deploy automático del frontend
-   - Sube a S3 e invalida CloudFront
-   
-4. **[scripts/deploy-backend.sh](scripts/deploy-backend.sh)**
-   - Deploy automático del backend
-   - Pull, install, restart con PM2
-
-5. **[scripts/README.md](scripts/README.md)**
-   - Guía de uso de los scripts
-   - Configuración y troubleshooting
+**Tiempo estimado de solución:** 10-15 minutos  
+**Dificultad:** Fácil (con script automatizado)
 
 ---
 
-## 🚀 Quick Start
+## ⚡ **Solución Rápida (5 Pasos)**
 
-### Para Primera Vez (Setup Inicial)
+### **PASO 1: Crear Base de Datos** ⏱️ 2 minutos
 
 ```bash
-# 1. Lee la guía completa
-open 01-GUIA-COMPLETA-AWS.md
-
-# 2. Sigue TODOS los pasos del 1 al 7
-# Tiempo estimado: 2-4 horas
-
-# 3. Al terminar, tendrás:
-✅ Base de datos RDS funcionando
-✅ API en EC2 corriendo con PM2
-✅ Frontend en S3 + CloudFront
-✅ Dominio y SSL configurados
+cd /Users/vital/Documents/iCloudDocuments/tec/MacApiFront/Docs/Schemas
+./setup-rds-database.sh
 ```
 
-### Para Deployments Regulares
+El script creará automáticamente:
+- ✅ Base de datos `macTickets`
+- ✅ Todas las tablas (20+)
+- ✅ Usuario admin de prueba
+
+---
+
+### **PASO 2: Configurar Variables de Entorno** ⏱️ 3 minutos
 
 ```bash
-# 1. Hacer cambios en código
-git add .
-git commit -m "feat: nueva funcionalidad"
-git push origin main
+cd /Users/vital/Documents/iCloudDocuments/tec/MacApiFront/MAC/mac-tickets-api
 
-# 2. Deploy con scripts
-cd Docs/AWS-Deployment/scripts/
-./deploy-backend.sh    # Deploy API
-./deploy-frontend.sh   # Deploy Frontend
-
-# 3. Verificar
-curl https://api.tu-dominio.com/health
-open https://tu-dominio.com
+eb setenv \
+  DB_NAME=macTickets \
+  DB_HOST=tu-rds-endpoint.rds.amazonaws.com \
+  DB_USER=admin \
+  DB_PASSWORD=tu_password \
+  NODE_ENV=production \
+  PORT=8080 \
+  JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
 ```
 
-### Para Consultas Rápidas
+---
+
+### **PASO 3: Reiniciar Aplicación** ⏱️ 1 minuto
 
 ```bash
-# Ver referencia rápida
-open 02-REFERENCIA-RAPIDA.md
-
-# Buscar comando específico (ej: backup)
-grep -n "backup" 02-REFERENCIA-RAPIDA.md
+eb restart
 ```
 
 ---
 
-## 📊 Estructura de la Carpeta
+### **PASO 4: Verificar** ⏱️ 2 minutos
 
-```
-AWS-Deployment/
-├── README.md                      # Este archivo
-├── 01-GUIA-COMPLETA-AWS.md       # Guía paso a paso
-├── 02-REFERENCIA-RAPIDA.md       # Comandos de referencia
-└── scripts/
-    ├── README.md                  # Guía de scripts
-    ├── deploy-frontend.sh         # Script de frontend
-    └── deploy-backend.sh          # Script de backend
-```
-
----
-
-## 🎯 Casos de Uso
-
-### 1. Setup Inicial (Primera Vez)
-**Archivo**: `01-GUIA-COMPLETA-AWS.md`
 ```bash
-# Seguir pasos 1-7 de la guía
-# Tiempo: 2-4 horas
+# Health check
+curl http://tu-app.elasticbeanstalk.com/
+
+# Login (NOTA: /api/ al inicio)
+curl -X POST http://tu-app.elasticbeanstalk.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Admin123"}'
 ```
 
-### 2. Deploy de Cambios Normales
-**Archivo**: `scripts/deploy-*.sh`
+---
+
+### **PASO 5: Actualizar Rutas** ⏱️ 1 minuto
+
+**❌ Incorrecto:**
+```
+/auth/login      → 404
+/tickets         → 404
+```
+
+**✅ Correcto:**
+```
+/api/auth/login  → 200 ✅
+/api/tickets     → 200 ✅
+```
+
+**TODAS las rutas llevan `/api/` al inicio** (excepto `/` y `/health`)
+
+---
+
+## 📚 **Documentación Completa**
+
+| Documento | Para qué sirve | Cuándo usarlo |
+|-----------|----------------|---------------|
+| **[SOLUCION-RAPIDA.md](SOLUCION-RAPIDA.md)** | Pasos resumidos | Empezar aquí ⭐ |
+| **[FIX-ELASTIC-BEANSTALK-ERRORS.md](FIX-ELASTIC-BEANSTALK-ERRORS.md)** | Guía detallada | Necesitas más info |
+| **[TEST-API-ENDPOINTS.md](TEST-API-ENDPOINTS.md)** | Probar endpoints | Después de arreglar |
+| **[RESUMEN-SOLUCION.md](RESUMEN-SOLUCION.md)** | Resumen ejecutivo | Para entender todo |
+
+---
+
+## 🗄️ **Scripts y SQL**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `setup-rds-database.sh` | Script automatizado (RECOMENDADO) |
+| `CREATE-DATABASE-RDS.sql` | SQL para crear DB manualmente |
+| `FULL-SCHEMA-AWS.sql` | Schema completo con todas las tablas |
+
+---
+
+## 🎯 **Verificación Rápida**
+
+### **¿Está todo bien?**
+
+Verifica estos puntos:
+
 ```bash
-cd Docs/AWS-Deployment/scripts/
-./deploy-backend.sh && ./deploy-frontend.sh
-# Tiempo: 3-5 minutos
+# 1. Base de datos existe
+mysql -h tu-rds-endpoint -u admin -p -e "SHOW DATABASES;" | grep macTickets
+# ✅ Debe aparecer 'macTickets'
+
+# 2. Variables configuradas
+eb printenv | grep DB_NAME
+# ✅ Debe mostrar: DB_NAME=macTickets
+
+# 3. Health check funciona
+curl http://tu-app.elasticbeanstalk.com/
+# ✅ Debe responder: {"success":true,...}
+
+# 4. Login funciona
+curl -X POST http://tu-app.elasticbeanstalk.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Admin123"}'
+# ✅ Debe responder: {"success":true,"data":{"token":"..."}}
 ```
 
-### 3. Troubleshooting Urgente
-**Archivo**: `02-REFERENCIA-RAPIDA.md`
+---
+
+## 🔍 **Diagnóstico de Problemas**
+
+### **Error: "Unknown database 'macTickets'"**
+
 ```bash
-# Buscar en sección "Solución Rápida de Problemas"
-# Tiempo: 1-5 minutos
+# Solución:
+cd /Users/vital/Documents/iCloudDocuments/tec/MacApiFront/Docs/Schemas
+./setup-rds-database.sh
 ```
 
-### 4. Consulta de Comandos
-**Archivo**: `02-REFERENCIA-RAPIDA.md`
+### **Error: "404 Not Found" en /api/auth/login**
+
 ```bash
-# Buscar comando específico
-# Ejemplo: "pm2 logs"
-# Tiempo: < 1 minuto
+# Verificar que las rutas estén cargadas
+eb logs | grep "Servidor corriendo"
+
+# Ver errores recientes
+eb logs | tail -50
 ```
 
-### 5. Backup Antes de Cambios Críticos
-**Archivo**: `02-REFERENCIA-RAPIDA.md`
+### **Error: "Cannot connect to RDS"**
+
 ```bash
-# Ver sección "Backups"
-mysqldump -h RDS_HOST -u admin -p mactickets > backup.sql
-# Tiempo: 2-5 minutos
+# 1. Verificar Security Group
+# AWS Console → RDS → tu-instancia → Connectivity
+# Security Group debe permitir puerto 3306
+
+# 2. Probar conexión manual
+mysql -h tu-rds-endpoint -u admin -p
 ```
 
 ---
 
-## ✅ Checklist de Pre-requisitos
+## 📊 **Estado Actual vs Esperado**
 
-Antes de empezar, asegúrate de tener:
-
-### Cuenta y Acceso
-- [ ] Cuenta de AWS activa
-- [ ] Tarjeta de crédito registrada
-- [ ] AWS CLI instalado y configurado
-- [ ] Acceso a consola de AWS
-
-### Herramientas Locales
-- [ ] Node.js 18+ instalado
-- [ ] Git instalado
-- [ ] MySQL client instalado
-- [ ] Editor de texto (VS Code, nano, etc.)
-
-### Código
-- [ ] Repositorio clonado localmente
-- [ ] Frontend building correctamente
-- [ ] Backend corriendo en local
-- [ ] Tests pasando
-
-### Información Necesaria
-- [ ] Dominio comprado (opcional)
-- [ ] Email para certificado SSL
-- [ ] Password seguro para RDS
-- [ ] JWT secrets generados
-
----
-
-## 💰 Costos Aproximados
-
-### Opción 1: Free Tier (Primer Año)
+### **ANTES (Actual):**
 ```
-RDS t3.micro:     $0/mes
-EC2 t2.micro:     $0/mes
-S3 (5GB):         $0/mes
-CloudFront:       $0/mes (50GB)
-Route 53:         $0.50/mes
----
-Total:            ~$6/año
+🔴 Base de datos: No existe
+🟢 Health check: ✅ (200 OK)
+🔴 Login: ❌ (404 Not Found)
+🔴 Tickets: ❌ (404 Not Found)
 ```
 
-### Opción 2: Post Free Tier
+### **DESPUÉS (Esperado):**
 ```
-RDS t3.micro:     ~$15/mes
-EC2 t3.small:     ~$15/mes
-S3 (10GB):        ~$0.30/mes
-CloudFront:       ~$8/mes (100GB)
-Route 53:         $0.50/mes
----
-Total:            ~$39/mes (~$468/año)
-```
-
-### Opción 3: Producción Profesional
-```
-RDS t3.medium:    ~$60/mes
-EC2 t3.medium:    ~$30/mes
-S3 (50GB):        ~$1.50/mes
-CloudFront:       ~$40/mes (500GB)
-Load Balancer:    ~$16/mes
----
-Total:            ~$147/mes (~$1,764/año)
+🟢 Base de datos: ✅ Existe con todas las tablas
+🟢 Health check: ✅ (200 OK)
+🟢 Login: ✅ (200 OK, retorna token)
+🟢 Tickets: ✅ (200 OK, retorna lista)
 ```
 
 ---
 
-## 🕐 Tiempos Estimados
+## 🛠️ **Comandos Útiles**
 
-| Actividad | Primera Vez | Subsecuentes |
-|-----------|-------------|--------------|
-| Setup completo AWS | 2-4 horas | - |
-| Deploy backend | 15-30 min | 2-3 min |
-| Deploy frontend | 10-20 min | 3-5 min |
-| Configurar dominio | 30-60 min | - |
-| Configurar SSL | 20-40 min | - |
-| Testing completo | 30 min | 10 min |
-| **Total inicial** | **4-6 horas** | **5-10 min** |
+```bash
+# Ver estado de la aplicación
+eb status
 
----
+# Ver variables de entorno
+eb printenv
 
-## 📞 Soporte y Recursos
+# Ver logs en tiempo real
+eb logs --stream
 
-### Documentación AWS
-- [AWS Console](https://console.aws.amazon.com/)
-- [AWS Documentation](https://docs.aws.amazon.com/)
-- [AWS CLI Reference](https://docs.aws.amazon.com/cli/)
-- [AWS Free Tier](https://aws.amazon.com/free/)
+# Reiniciar aplicación
+eb restart
 
-### Herramientas
-- [PM2 Docs](https://pm2.keymetrics.io/docs/)
-- [MySQL Docs](https://dev.mysql.com/doc/)
-- [Nginx Docs](https://nginx.org/en/docs/)
+# Desplegar cambios
+eb deploy
 
-### Estado de Servicios
-- [AWS Status](https://status.aws.amazon.com/)
-- [GitHub Status](https://www.githubstatus.com/)
+# Conectar a RDS
+mysql -h tu-rds-endpoint -u admin -p
+
+# Generar JWT secret
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
 
 ---
 
-## 🎓 Recomendaciones
+## 📋 **Checklist Final**
 
-### Para el Equipo de Desarrollo
-1. **Leer la guía completa** antes del primer deployment
-2. **Hacer el setup inicial en viernes** (por si hay issues)
-3. **Tener backups** antes de cualquier cambio importante
-4. **Documentar** cualquier cambio en configuración
-5. **Usar los scripts automatizados** para deployments regulares
+Marca estos puntos antes de considerar el problema resuelto:
 
-### Para Producción
-1. ✅ Configurar **monitoreo** con CloudWatch
-2. ✅ Habilitar **backups automáticos** de RDS
-3. ✅ Configurar **alertas** para errores críticos
-4. ✅ Implementar **Auto Scaling** para EC2
-5. ✅ Usar **Load Balancer** para alta disponibilidad
-6. ✅ Configurar **CI/CD** con GitHub Actions
-
-### Seguridad
-1. 🔐 **Cambiar passwords** default inmediatamente
-2. 🔐 **Rotar JWT secrets** cada 3-6 meses
-3. 🔐 **Restringir Security Groups** a IPs específicas
-4. 🔐 **Habilitar MFA** en cuenta AWS
-5. 🔐 **No commitear** keys ni secrets a Git
-6. 🔐 **Usar variables de entorno** para todo
+- [ ] Base de datos `macTickets` existe
+- [ ] Schema ejecutado (20+ tablas creadas)
+- [ ] Usuario admin existe (username: admin, password: Admin123)
+- [ ] Variables de entorno configuradas en EB
+- [ ] Aplicación reiniciada
+- [ ] `GET /` responde 200 OK
+- [ ] `POST /api/auth/login` responde 200 (no 404)
+- [ ] Login retorna token válido
+- [ ] `GET /api/tickets` funciona con token
+- [ ] No hay "Unknown database" en logs
 
 ---
 
-## 📝 Notas Importantes
+## 🎯 **Siguiente Paso**
 
-### ⚠️ Antes de Empezar
-- AWS cobrará después del Free Tier (12 meses)
-- Los dominios tienen costo anual (~$12/año)
-- CloudFront puede tardar 15 min en propagarse
-- DNS puede tardar 24-48h en propagarse completamente
+Una vez que tu backend funcione:
 
-### ✅ Después de Deployment
-- Guardar todas las URLs y endpoints
-- Documentar passwords y secrets (en lugar seguro)
-- Configurar monitoreo desde el día 1
-- Hacer backup inicial de la base de datos
+### **Configurar Frontend**
 
-### 🔄 Mantenimiento Regular
-- Actualizar dependencias mensualmente
-- Revisar logs semanalmente
-- Hacer backups semanales
-- Rotar secrets cada 3-6 meses
-- Revisar costos mensualmente
+```bash
+cd /Users/vital/Documents/iCloudDocuments/tec/MacApiFront/MAC/mac-tickets-front
+
+# Crear/editar .env
+echo "VITE_API_URL=http://tu-app.elasticbeanstalk.com/api" > .env
+
+# Rebuild
+npm run build
+```
 
 ---
 
-## 🎉 ¡Éxito!
+## 📞 **¿Necesitas Ayuda?**
 
-Con esta documentación, tu equipo puede:
-- ✅ Desplegar el sistema completo a AWS
-- ✅ Mantenerlo actualizado fácilmente
-- ✅ Resolver problemas rápidamente
-- ✅ Escalarlo cuando sea necesario
-- ✅ Presentarlo profesionalmente a clientes
+### **1. Revisar Logs**
+```bash
+eb logs > error-logs.txt
+cat error-logs.txt
+```
+
+### **2. Verificar Configuración**
+```bash
+eb printenv
+eb status
+```
+
+### **3. Probar Conexión a RDS**
+```bash
+mysql -h tu-rds-endpoint -u admin -p
+```
+
+### **4. Verificar Security Groups**
+- AWS Console → RDS → tu-instancia → Connectivity
+- Security Group debe permitir conexiones desde Elastic Beanstalk
 
 ---
 
-## 📅 Próximos Pasos Recomendados
+## 🚀 **Documentos Adicionales**
 
-Después del deployment inicial:
-
-1. **Semana 1**: Testing intensivo con el equipo
-2. **Semana 2**: Monitoreo y ajustes de performance
-3. **Semana 3**: Implementar features adicionales
-4. **Semana 4**: Presentación al cliente
+- [Configuración de Variables de Entorno](../AWS-ENV-PRODUCTION.md)
+- [Guía Completa de AWS Deployment](01-GUIA-COMPLETA-AWS.md)
+- [Referencia de Endpoints](../ENDPOINTS-REFERENCE.md)
+- [Schema SQL Completo](../Schemas/FULL-SCHEMA-AWS.sql)
 
 ---
 
-**¿Dudas?** Consulta:
-1. La guía completa para setup inicial
-2. La referencia rápida para comandos
-3. Los scripts README para automatización
+## ⚡ **Quick Commands**
 
-**¡Buena suerte con el deployment!** 🚀
+```bash
+# TODO EN UNO - Copiar y ejecutar
+cd /Users/vital/Documents/iCloudDocuments/tec/MacApiFront/Docs/Schemas && \
+./setup-rds-database.sh && \
+cd ../../MAC/mac-tickets-api && \
+eb restart && \
+echo "✅ Listo! Probando..." && \
+curl http://tu-app.elasticbeanstalk.com/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"Admin123"}'
+```
+
+---
+
+**¡Listo para arreglar tu API! 🎉**
+
+**Tiempo total:** 10-15 minutos  
+**Dificultad:** ⭐⭐☆☆☆ Fácil  
+**Resultado:** API funcionando al 100%

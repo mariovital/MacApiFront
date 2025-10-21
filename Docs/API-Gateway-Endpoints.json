@@ -1,0 +1,1279 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "MAC Tickets API",
+    "description": "Sistema de Gestión de Tickets para MAC Computadoras - API completa para importar en AWS API Gateway",
+    "version": "1.0.0",
+    "contact": {
+      "name": "MAC Computadoras",
+      "email": "soporte@maccomputadoras.com"
+    }
+  },
+  "host": "macticketsv.us-east-1.elasticbeanstalk.com",
+  "basePath": "/api",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "securityDefinitions": {
+    "BearerAuth": {
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header",
+      "description": "JWT Bearer Token - Formato: Bearer {token}"
+    }
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Health Check - Root",
+        "description": "Verificar que el servidor está funcionando",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "Servidor funcionando correctamente"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check - Detailed",
+        "description": "Información detallada del estado del servidor",
+        "tags": ["Health"],
+        "responses": {
+          "200": {
+            "description": "Estado detallado del servidor"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Iniciar sesión",
+        "description": "Autenticación de usuario y generación de JWT",
+        "tags": ["Autenticación"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "credentials",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string",
+                  "example": "admin"
+                },
+                "password": {
+                  "type": "string",
+                  "example": "password123"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login exitoso"
+          },
+          "401": {
+            "description": "Credenciales inválidas"
+          }
+        }
+      }
+    },
+    "/auth/profile": {
+      "get": {
+        "summary": "Obtener perfil del usuario",
+        "description": "Información del usuario autenticado",
+        "tags": ["Autenticación"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Perfil del usuario"
+          },
+          "401": {
+            "description": "No autenticado"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Cerrar sesión",
+        "description": "Invalidar token y cerrar sesión del usuario",
+        "tags": ["Autenticación"],
+        "responses": {
+          "200": {
+            "description": "Sesión cerrada exitosamente"
+          }
+        }
+      }
+    },
+    "/tickets": {
+      "get": {
+        "summary": "Listar tickets",
+        "description": "Obtener lista de tickets con filtros y paginación",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "type": "integer",
+            "description": "Número de página (default: 1)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "type": "integer",
+            "description": "Tickets por página (default: 20)"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "type": "integer",
+            "description": "Filtrar por estado"
+          },
+          {
+            "in": "query",
+            "name": "priority",
+            "type": "integer",
+            "description": "Filtrar por prioridad"
+          },
+          {
+            "in": "query",
+            "name": "assignedTo",
+            "type": "integer",
+            "description": "Filtrar por técnico asignado"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "type": "string",
+            "description": "Buscar en título y descripción"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de tickets"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear ticket",
+        "description": "Crear un nuevo ticket",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "ticket",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "category_id": {
+                  "type": "integer"
+                },
+                "priority_id": {
+                  "type": "integer"
+                },
+                "client_company": {
+                  "type": "string"
+                },
+                "client_contact": {
+                  "type": "string"
+                },
+                "location": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Ticket creado exitosamente"
+          }
+        }
+      }
+    },
+    "/tickets/stats": {
+      "get": {
+        "summary": "Estadísticas de tickets",
+        "description": "Obtener estadísticas generales de tickets",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadísticas de tickets"
+          }
+        }
+      }
+    },
+    "/tickets/{id}": {
+      "get": {
+        "summary": "Obtener detalle de ticket",
+        "description": "Información completa de un ticket específico",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "description": "ID del ticket"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detalle del ticket"
+          },
+          "404": {
+            "description": "Ticket no encontrado"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar ticket",
+        "description": "Actualización completa de un ticket",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer",
+            "description": "ID del ticket"
+          },
+          {
+            "in": "body",
+            "name": "ticket",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket actualizado"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/status": {
+      "patch": {
+        "summary": "Cambiar estado del ticket",
+        "description": "Actualizar solo el estado del ticket",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "status",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "status_id": {
+                  "type": "integer"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado actualizado"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/assign": {
+      "post": {
+        "summary": "Asignar ticket a técnico",
+        "description": "Asignar un ticket a un técnico específico (solo admin)",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "assignment",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "assigned_to": {
+                  "type": "integer"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket asignado"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/accept": {
+      "post": {
+        "summary": "Aceptar ticket",
+        "description": "Técnico acepta el ticket asignado",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket aceptado"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/reject": {
+      "post": {
+        "summary": "Rechazar ticket",
+        "description": "Técnico rechaza el ticket asignado",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "rejection",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket rechazado"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/resolve": {
+      "post": {
+        "summary": "Resolver ticket",
+        "description": "Marcar ticket como resuelto con informe de resolución",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "resolution",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "resolution_report": {
+                  "type": "string"
+                },
+                "signature": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket resuelto"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/close": {
+      "post": {
+        "summary": "Cerrar ticket",
+        "description": "Cerrar ticket definitivamente (solo admin)",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket cerrado"
+          }
+        }
+      }
+    },
+    "/tickets/{id}/reopen": {
+      "post": {
+        "summary": "Reabrir ticket",
+        "description": "Reabrir un ticket cerrado (solo admin)",
+        "tags": ["Tickets"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "reason",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket reabierto"
+          }
+        }
+      }
+    },
+    "/tickets/{ticketId}/comments": {
+      "get": {
+        "summary": "Obtener comentarios del ticket",
+        "description": "Lista de comentarios de un ticket",
+        "tags": ["Comentarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de comentarios"
+          }
+        }
+      },
+      "post": {
+        "summary": "Agregar comentario",
+        "description": "Agregar un nuevo comentario al ticket",
+        "tags": ["Comentarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "comment",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "comment": {
+                  "type": "string"
+                },
+                "is_internal": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Comentario agregado"
+          }
+        }
+      }
+    },
+    "/tickets/{ticketId}/attachments": {
+      "get": {
+        "summary": "Listar archivos adjuntos",
+        "description": "Obtener lista de archivos adjuntos del ticket",
+        "tags": ["Archivos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de archivos"
+          }
+        }
+      },
+      "post": {
+        "summary": "Subir archivo adjunto",
+        "description": "Subir un archivo al ticket (multipart/form-data)",
+        "tags": ["Archivos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "formData",
+            "name": "file",
+            "type": "file",
+            "required": true,
+            "description": "Archivo a subir"
+          },
+          {
+            "in": "formData",
+            "name": "description",
+            "type": "string",
+            "description": "Descripción del archivo"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Archivo subido exitosamente"
+          }
+        }
+      }
+    },
+    "/tickets/{ticketId}/attachments/multiple": {
+      "post": {
+        "summary": "Subir múltiples archivos",
+        "description": "Subir varios archivos al ticket (máximo 5)",
+        "tags": ["Archivos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticketId",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "formData",
+            "name": "files",
+            "type": "file",
+            "required": true,
+            "description": "Archivos a subir (máximo 5)"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Archivos subidos exitosamente"
+          }
+        }
+      }
+    },
+    "/attachments/{id}": {
+      "get": {
+        "summary": "Obtener información del archivo",
+        "description": "Información de un archivo específico",
+        "tags": ["Archivos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Información del archivo"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar archivo",
+        "description": "Eliminar un archivo adjunto",
+        "tags": ["Archivos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo eliminado"
+          }
+        }
+      }
+    },
+    "/attachments/{id}/download": {
+      "get": {
+        "summary": "Descargar archivo",
+        "description": "Descargar el archivo adjunto",
+        "tags": ["Archivos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": [
+          "application/octet-stream"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo descargado"
+          }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "summary": "Listar usuarios",
+        "description": "Obtener lista de usuarios con filtros y paginación",
+        "tags": ["Usuarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "role",
+            "type": "integer"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "type": "string"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de usuarios"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear usuario",
+        "description": "Crear un nuevo usuario (solo admin)",
+        "tags": ["Usuarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                },
+                "first_name": {
+                  "type": "string"
+                },
+                "last_name": {
+                  "type": "string"
+                },
+                "role_id": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Usuario creado"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "summary": "Obtener usuario por ID",
+        "description": "Información de un usuario específico",
+        "tags": ["Usuarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Información del usuario"
+          }
+        }
+      },
+      "put": {
+        "summary": "Actualizar usuario",
+        "description": "Actualizar información de usuario (solo admin)",
+        "tags": ["Usuarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "type": "object"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario actualizado"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Eliminar usuario",
+        "description": "Desactivar usuario (soft delete, solo admin)",
+        "tags": ["Usuarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Usuario eliminado"
+          }
+        }
+      }
+    },
+    "/users/{id}/reset-password": {
+      "post": {
+        "summary": "Resetear contraseña",
+        "description": "Resetear la contraseña de un usuario (solo admin)",
+        "tags": ["Usuarios"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          },
+          {
+            "in": "body",
+            "name": "password",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "new_password": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contraseña reseteada"
+          }
+        }
+      }
+    },
+    "/catalog/categories": {
+      "get": {
+        "summary": "Obtener categorías",
+        "description": "Lista de categorías activas",
+        "tags": ["Catálogos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de categorías"
+          }
+        }
+      }
+    },
+    "/catalog/priorities": {
+      "get": {
+        "summary": "Obtener prioridades",
+        "description": "Lista de prioridades activas",
+        "tags": ["Catálogos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de prioridades"
+          }
+        }
+      }
+    },
+    "/catalog/ticket-statuses": {
+      "get": {
+        "summary": "Obtener estados de tickets",
+        "description": "Lista de todos los estados de tickets",
+        "tags": ["Catálogos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de estados"
+          }
+        }
+      }
+    },
+    "/catalog/technicians": {
+      "get": {
+        "summary": "Obtener técnicos",
+        "description": "Lista de técnicos activos para asignación",
+        "tags": ["Catálogos"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de técnicos"
+          }
+        }
+      }
+    },
+    "/reports/dashboard": {
+      "get": {
+        "summary": "Estadísticas del dashboard",
+        "description": "Métricas y estadísticas generales del sistema",
+        "tags": ["Reportes"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dateRange",
+            "type": "string",
+            "description": "Rango de fechas: 7days, 30days, 90days, 1year"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadísticas del dashboard"
+          }
+        }
+      }
+    },
+    "/reports/export": {
+      "get": {
+        "summary": "Exportar reporte a Excel",
+        "description": "Generar y descargar reporte en formato Excel",
+        "tags": ["Reportes"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": [
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "dateRange",
+            "type": "string",
+            "description": "Rango de fechas: 7days, 30days, 90days, 1year"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Archivo Excel descargado"
+          }
+        }
+      }
+    },
+    "/pdf/ticket/{id}": {
+      "get": {
+        "summary": "Generar PDF del ticket",
+        "description": "Generar y descargar PDF con información completa del ticket",
+        "tags": ["PDF"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": [
+          "application/pdf"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "PDF generado"
+          }
+        }
+      }
+    },
+    "/pdf/ticket/{id}/info": {
+      "get": {
+        "summary": "Información de PDF generado",
+        "description": "Obtener metadatos de PDFs generados para el ticket",
+        "tags": ["PDF"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Información del PDF"
+          }
+        }
+      }
+    },
+    "/password-resets": {
+      "get": {
+        "summary": "Listar solicitudes de reseteo",
+        "description": "Lista de solicitudes de reseteo de contraseña (solo admin)",
+        "tags": ["Password Reset"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de solicitudes"
+          }
+        }
+      },
+      "post": {
+        "summary": "Crear solicitud de reseteo",
+        "description": "Crear nueva solicitud de reseteo de contraseña (público)",
+        "tags": ["Password Reset"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "request",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Solicitud creada"
+          }
+        }
+      }
+    },
+    "/password-resets/{id}/process": {
+      "patch": {
+        "summary": "Procesar solicitud de reseteo",
+        "description": "Marcar solicitud como procesada (solo admin)",
+        "tags": ["Password Reset"],
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "type": "integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Solicitud procesada"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Endpoints de salud del servidor"
+    },
+    {
+      "name": "Autenticación",
+      "description": "Endpoints de autenticación y autorización"
+    },
+    {
+      "name": "Tickets",
+      "description": "Gestión completa de tickets"
+    },
+    {
+      "name": "Comentarios",
+      "description": "Sistema de comentarios en tickets"
+    },
+    {
+      "name": "Archivos",
+      "description": "Gestión de archivos adjuntos"
+    },
+    {
+      "name": "Usuarios",
+      "description": "Administración de usuarios"
+    },
+    {
+      "name": "Catálogos",
+      "description": "Catálogos del sistema (categorías, prioridades, estados)"
+    },
+    {
+      "name": "Reportes",
+      "description": "Reportes y estadísticas"
+    },
+    {
+      "name": "PDF",
+      "description": "Generación de documentos PDF"
+    },
+    {
+      "name": "Password Reset",
+      "description": "Sistema de reseteo de contraseñas"
+    }
+  ]
+}
+
