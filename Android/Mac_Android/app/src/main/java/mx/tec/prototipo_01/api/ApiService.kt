@@ -18,6 +18,9 @@ import mx.tec.prototipo_01.models.api.AttachmentResponse
 import mx.tec.prototipo_01.models.api.AttachmentListResponse
 import mx.tec.prototipo_01.models.api.PasswordResetRequest
 import mx.tec.prototipo_01.models.api.PasswordResetCreateResponse
+import mx.tec.prototipo_01.models.api.CommentListResponse
+import mx.tec.prototipo_01.models.api.CreateCommentRequest
+import mx.tec.prototipo_01.models.api.CreateCommentResponse
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -100,6 +103,15 @@ interface ApiService {
     // Marcar ticket como resuelto (técnico) con comentario obligatorio
     @POST("tickets/{id}/resolve")
     suspend fun resolveTicket(@Path("id") ticketId: Int, @Body body: ResolveTicketRequest): Response<TicketDetailResponse>
+
+    // =====================================================================
+    // COMENTARIOS
+    // =====================================================================
+    @GET("tickets/{ticketId}/comments")
+    suspend fun getTicketComments(@Path("ticketId") ticketId: Int): Response<CommentListResponse>
+
+    @POST("tickets/{ticketId}/comments")
+    suspend fun addTicketComment(@Path("ticketId") ticketId: Int, @Body body: CreateCommentRequest): Response<CreateCommentResponse>
 
     // =====================================================================
     // ADJUNTOS

@@ -234,7 +234,8 @@ data class CommentItem(
     val user_id: Int,
     val comment: String,
     val is_internal: Boolean,
-    val created_at: String
+    val created_at: String,
+    val author: CommentAuthor?
 )
 
 data class CommentListResponse(
@@ -256,4 +257,12 @@ data class CreateCommentResponse(
 // Resolución con comentario
 data class ResolveTicketRequest(
     val resolution_comment: String
+)
+
+data class CommentAuthor(
+    val id: Int,
+    val first_name: String?,
+    val last_name: String?,
+    val username: String?,
+    val email: String?
 )

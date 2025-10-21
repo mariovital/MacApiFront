@@ -30,12 +30,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.width
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.api.TicketAttachment
+import mx.tec.prototipo_01.models.api.CommentItem
+import mx.tec.prototipo_01.models.api.CreateCommentRequest
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -62,6 +65,9 @@ fun TecnicoTicketAttachments(
     val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
     var items by remember { mutableStateOf(listOf<TicketAttachment>()) }
+    var comments by remember { mutableStateOf(listOf<CommentItem>()) }
+    var commentsLoading by remember { mutableStateOf(false) }
+    var newComment by remember { mutableStateOf("") }
     val ctx = LocalContext.current
     var previewImageUrl by remember { mutableStateOf<String?>(null) }
 
@@ -175,6 +181,59 @@ fun TecnicoTicketAttachments(
                 }
             }
 
+            Spacer(modifier = Modifier.height(24.dp))
+            Divider()
+            Spacer(modifier = Modifier.height(8.dp))
+            Text("Comentarios", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+            if (commentsLoading) {
+                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            }
+            LazyColumn {
+                items(comments) { c ->
+                    val author = listOfNotNull(c.author?.first_name, c.author?.last_name).joinToString(" ").ifBlank { c.author?.username ?: "" }
+                    val meta = buildString {
+                        if (!author.isNullOrBlank()) append(author)
+                        val ts = (c.created_at).replace("T"," ").replace(".000Z","")
+                        if (isNotEmpty()) append(" · ")
+                        append(ts)
+                        if (c.is_internal) append(" · interno")
+                    }
+                    ListItem(
+                        headlineContent = { Text(c.comment) },
+                        supportingContent = { Text(meta) }
+                    )
+                    Divider()
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = newComment,
+                    onValueChange = { newComment = it },
+                    modifier = Modifier.weight(1f),
+                    label = { Text("Agregar comentario") },
+                    singleLine = false,
+                    maxLines = 4
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        val text = newComment.trim()
+                        if (text.isNotEmpty()) {
+                            scope.launch {
+                                postComment(ticketNumber, text) {
+                                    newComment = ""
+                                    scope.launch { refreshComments(ticketNumber) { comments = it } }
+                                }
+                            }
+                        }
+                    },
+                    enabled = newComment.trim().isNotEmpty()
+                ) { Text("Enviar") }
+            }
+
             // Diálogo de previsualización de imagen
             val currentPreview = previewImageUrl
             if (currentPreview != null) {
@@ -205,6 +264,8 @@ fun TecnicoTicketAttachments(
         loading = true
         try {
             refreshList(ticketNumber, onLoaded = { items = it })
+            commentsLoading = true
+            try { refreshComments(ticketNumber) { comments = it } } finally { commentsLoading = false }
         } finally {
             loading = false
         }
@@ -252,6 +313,38 @@ private suspend fun refreshList(ticketNumber: String?, onLoaded: (List<TicketAtt
         val res = RetrofitClient.instance.listAttachments(backendId)
         if (res.isSuccessful) {
             withContext(Dispatchers.Main) { onLoaded(res.body()?.data ?: emptyList()) }
+        }
+    }
+}
+
+private suspend fun refreshComments(ticketNumber: String?, onLoaded: (List<CommentItem>) -> Unit) {
+    if (ticketNumber.isNullOrBlank()) return
+    withContext(Dispatchers.IO) {
+        val listRes = RetrofitClient.instance.getTickets(limit = 200)
+        val backendId = if (listRes.isSuccessful) {
+            val items = listRes.body()?.data?.items.orEmpty()
+            items.firstOrNull { it.ticket_number == ticketNumber }?.id
+        } else null
+        if (backendId == null) return@withContext
+        val res = RetrofitClient.instance.getTicketComments(backendId)
+        if (res.isSuccessful) {
+            withContext(Dispatchers.Main) { onLoaded(res.body()?.data ?: emptyList()) }
+        }
+    }
+}
+
+private suspend fun postComment(ticketNumber: String?, text: String, onPosted: () -> Unit) {
+    if (ticketNumber.isNullOrBlank()) return
+    withContext(Dispatchers.IO) {
+        val listRes = RetrofitClient.instance.getTickets(limit = 200)
+        val backendId = if (listRes.isSuccessful) {
+            val items = listRes.body()?.data?.items.orEmpty()
+            items.firstOrNull { it.ticket_number == ticketNumber }?.id
+        } else null
+        if (backendId == null) return@withContext
+        val res = RetrofitClient.instance.addTicketComment(backendId, CreateCommentRequest(comment = text))
+        if (res.isSuccessful) {
+            withContext(Dispatchers.Main) { onPosted() }
         }
     }
 }
