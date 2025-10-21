@@ -400,7 +400,8 @@ export const uploadTicketAttachment = async (req, res) => {
 
     if (!req.file) return res.status(400).json({ success: false, message: 'Archivo requerido (campo: file)' });
 
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const uploadDir = process.env.UPLOAD_DIR || './uploads';
+    const filePath = `${uploadDir}/${req.file.filename}`;
     const record = await TicketAttachment.create({
       ticket_id: ticket.id,
       user_id: req.user.id,
@@ -408,8 +409,10 @@ export const uploadTicketAttachment = async (req, res) => {
       file_name: req.file.filename,
       file_size: req.file.size,
       file_type: req.file.mimetype,
-      s3_url: fileUrl,
-      s3_key: req.file.filename,
+      file_path: filePath,
+      storage_type: 'local',
+      s3_url: null, // DEPRECATED - mantener por compatibilidad
+      s3_key: null, // DEPRECATED - mantener por compatibilidad
       is_image: req.file.mimetype.startsWith('image/'),
       description: req.body?.description || null,
       ip_address: req.ip || req.connection?.remoteAddress,

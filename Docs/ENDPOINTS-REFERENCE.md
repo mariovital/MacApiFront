@@ -153,10 +153,12 @@
 ### POST /api/auth/login
 ```json
 {
-  "username": "admin",
-  "password": "password123"
+  "email": "admin@maccomputadoras.com",
+  "password": "Admin123"
 }
 ```
+
+> ⚠️ **NOTA:** El backend espera `email`, NO `username`
 
 ### POST /api/tickets
 ```json
@@ -304,8 +306,10 @@ curl -X POST \
 ```bash
 curl -X POST http://macticketsv.us-east-1.elasticbeanstalk.com/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"admin123"}'
+  -d '{"email":"admin@maccomputadoras.com","password":"Admin123"}'
 ```
+
+> ⚠️ **Importante:** Usa `email`, no `username`
 
 ### Get Tickets (con token)
 ```bash

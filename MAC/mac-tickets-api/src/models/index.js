@@ -8,6 +8,7 @@ import Priority from './Priority.js';
 import TicketStatus from './TicketStatus.js';
 import Ticket from './Ticket.js';
 import TicketAttachment from './TicketAttachment.js';
+import TicketHistory from './TicketHistory.js';
 import Comment from './Comment.js';
 
 // =====================================================================
@@ -64,6 +65,14 @@ Comment.belongsTo(Ticket, { foreignKey: 'ticket_id', as: 'ticket' });
 User.hasMany(Comment, { foreignKey: 'user_id', as: 'comments' });
 Comment.belongsTo(User, { foreignKey: 'user_id', as: 'author' });
 
+// Ticket <-> TicketHistory
+Ticket.hasMany(TicketHistory, { foreignKey: 'ticket_id', as: 'history' });
+TicketHistory.belongsTo(Ticket, { foreignKey: 'ticket_id', as: 'ticket' });
+
+// User <-> TicketHistory
+User.hasMany(TicketHistory, { foreignKey: 'user_id', as: 'ticketHistory' });
+TicketHistory.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
 // =====================================================================
 // EXPORTAR MODELOS Y SEQUELIZE
 // =====================================================================
@@ -80,6 +89,7 @@ const db = {
   TicketStatus,
   Ticket,
   TicketAttachment,
+  TicketHistory,
   Comment
 };
 
@@ -94,6 +104,7 @@ export {
   Ticket,
   TicketAttachment,
   TicketAttachment as Attachment, // Alias para facilitar el uso
+  TicketHistory,
   Comment
 };
 

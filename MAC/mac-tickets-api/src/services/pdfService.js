@@ -4,7 +4,7 @@ import PDFDocument from 'pdfkit';
 import db from '../models/index.js';
 import { Op } from 'sequelize';
 
-const { Ticket, User, Category, Priority, TicketStatus, TicketAttachment, Comment } = db;
+const { Ticket, User, Category, Priority, TicketStatus, TicketAttachment, TicketHistory, Comment } = db;
 
 const pdfService = {
   /**
@@ -65,7 +65,20 @@ const pdfService = {
         order: [['created_at', 'ASC']]
       });
 
-      // 3. Obtener comentarios (usaremos esto como historial)
+      // 3. Obtener historial de cambios
+      const history = await TicketHistory.findAll({
+        where: { ticket_id: ticketId },
+        include: [
+          {
+            model: User,
+            as: 'user',
+            attributes: ['first_name', 'last_name']
+          }
+        ],
+        order: [['created_at', 'ASC']]
+      });
+
+      // 4. Obtener comentarios
       const comments = await Comment.findAll({
         where: { ticket_id: ticketId },
         include: [
@@ -381,6 +394,105 @@ const pdfService = {
           { width: pageWidth - 20 }
         );
         currentY += 14;
+      });
+
+      currentY += 15;
+    }
+
+    // ========================================
+    // HISTORIAL DE CAMBIOS
+    // ========================================
+    if (history && history.length > 0) {
+      // Check if new page needed
+      if (currentY > doc.page.height - 200) {
+        doc.addPage();
+        currentY = 50;
+      }
+
+      doc.fontSize(12)
+         .font('Helvetica-Bold')
+         .fillColor('#1F2937')
+         .text('HISTORIAL DE CAMBIOS', 50, currentY);
+      
+      currentY += 18;
+
+      doc.fontSize(9)
+         .font('Helvetica')
+         .fillColor('#374151');
+
+      history.forEach(entry => {
+        const fecha = new Date(entry.created_at).toLocaleString('es-MX', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+        const usuario = entry.user 
+          ? `${entry.user.first_name} ${entry.user.last_name}`
+          : 'Sistema';
+
+        // Tipo de acción
+        const accionMap = {
+          created: 'Creado',
+          status_changed: 'Cambio de estado',
+          assigned: 'Asignado',
+          reassigned: 'Reasignado',
+          commented: 'Comentario',
+          attachment_added: 'Archivo adjuntado',
+          reopened: 'Reabierto',
+          closed: 'Cerrado',
+          first_response: 'Primera respuesta',
+          sla_breach: 'Incumplimiento SLA'
+        };
+        const accion = accionMap[entry.action_type] || entry.action_type;
+
+        doc.font('Helvetica-Bold')
+           .fillColor('#374151')
+           .text(`[${fecha}] ${accion}`, 70, currentY, { width: pageWidth - 20 });
+        currentY += 12;
+
+        doc.font('Helvetica')
+           .fillColor('#6B7280')
+           .text(`Usuario: ${usuario}`, 70, currentY, { width: pageWidth - 20 });
+        currentY += 12;
+
+        if (entry.description) {
+          doc.font('Helvetica')
+             .fillColor('#6B7280')
+             .text(entry.description, 70, currentY, { width: pageWidth - 20 });
+          
+          currentY += doc.heightOfString(entry.description, {
+            width: pageWidth - 20
+          }) + 4;
+        }
+
+        if (entry.old_value || entry.new_value) {
+          const cambio = `Cambio: "${entry.old_value || 'N/A'}" → "${entry.new_value || 'N/A'}"`;
+          doc.font('Helvetica')
+             .fillColor('#9CA3AF')
+             .text(cambio, 70, currentY, { width: pageWidth - 20 });
+          
+          currentY += doc.heightOfString(cambio, {
+            width: pageWidth - 20
+          }) + 4;
+        }
+
+        currentY += 4;
+
+        // Línea divisoria entre entradas
+        doc.moveTo(70, currentY)
+           .lineTo(doc.page.width - 70, currentY)
+           .strokeColor('#E5E7EB')
+           .lineWidth(0.3)
+           .stroke();
+        
+        currentY += 8;
+        
+        // Check if new page needed
+        if (currentY > doc.page.height - 120) {
+          doc.addPage();
+          currentY = 50;
+        }
       });
 
       currentY += 15;
