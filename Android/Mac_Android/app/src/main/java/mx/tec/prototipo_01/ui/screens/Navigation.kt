@@ -22,6 +22,12 @@ fun AppNavigation(isDark: Boolean, onThemeChange: () -> Unit) {
             LoginScreen(navController = navController)
         }
 
+        // FAQ route (global)
+        composable("faq/{role}") { backStackEntry ->
+            val role = backStackEntry.arguments?.getString("role") ?: ""
+            FaqScreen(navController = navController, role = role)
+        }
+
         // Nested graph for the technician flow.
         navigation(startDestination = "tecnico_main", route = "tecnico_home") {
             composable("tecnico_main") { backStackEntry ->

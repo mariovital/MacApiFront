@@ -3,9 +3,13 @@ package mx.tec.prototipo_01.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -18,9 +22,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 @Composable
 fun MesaAyudaConfig(
+    navController: NavController? = null,
     onThemeToggle: () -> Unit = {},
     onLogout: () -> Unit = {}
 ){
@@ -31,13 +37,16 @@ fun MesaAyudaConfig(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val scroll = rememberScrollState()
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier.padding(horizontal = 32.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .verticalScroll(scroll)
         ) {
             // Theme Toggle Button
-        Button(
+            Button(
                 onClick = onThemeToggle,
                 modifier = Modifier
                     .fillMaxWidth()
@@ -46,9 +55,7 @@ fun MesaAyudaConfig(
             containerColor = MaterialTheme.colorScheme.surface,
             contentColor = MaterialTheme.colorScheme.onSurface
                 ),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 4.dp
-                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
@@ -58,6 +65,29 @@ fun MesaAyudaConfig(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
+
+            // FAQ Button (abre pantalla dedicada)
+            Button(
+                onClick = { navController?.navigate("faq/mesa") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text(
+                    text = "Preguntas frecuentes",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Logout Button
         Button(

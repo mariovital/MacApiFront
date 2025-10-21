@@ -131,6 +131,7 @@ fun MesaAyudaHome(
                 0 -> MesaAyudaTickets(navController = navController, viewModel = viewModel, isDark = isDark)
                 1 -> MesaAyudaHistorial(navController = navController, viewModel = viewModel)
                 2 -> MesaAyudaConfig(
+                    navController = navController,
                     onThemeToggle = onThemeChange,
                     onLogout = {
                         navController.navigate("login") {

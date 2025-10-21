@@ -122,6 +122,7 @@ fun TecnicoHome(
                 0 -> TecnicoTickets(navController = navController, viewModel = viewModel)
                 1 -> TecnicoHistorial(navController = navController, viewModel = viewModel)
                 2 -> TecnicoConfig(
+                    navController = navController,
                     onLogout = {
                         navController.navigate("login") {
                             popUpTo("tecnico_home") { inclusive = true }
