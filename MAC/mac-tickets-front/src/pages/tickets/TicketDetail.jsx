@@ -51,6 +51,7 @@ import catalogService from '../../services/catalogService';
 import { useAuth } from '../../contexts/AuthContext';
 import { TICKET_STATUSES, PRIORITIES } from '../../constants';
 import GeneratePDFButton from '../../components/tickets/GeneratePDFButton';
+import GoogleMapComponent from '../../components/common/GoogleMapComponent';
 
 const TicketDetail = () => {
   const { id } = useParams();
@@ -663,13 +664,23 @@ const TicketDetail = () => {
                   {ticket.location && (
                     <div className="flex items-start">
                       <FiMapPin className="text-gray-400 mt-1 mr-3 flex-shrink-0" />
-                      <div>
+                      <div className="w-full">
                         <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block">
                           Ubicación
                         </Typography>
-                        <Typography variant="body2" className="text-gray-900 dark:text-white font-medium">
+                        <Typography variant="body2" className="text-gray-900 dark:text-white font-medium mb-3">
                           {ticket.location}
                         </Typography>
+                        
+                        {/* Mapa de Google Maps */}
+                        <div className="mt-3">
+                          <GoogleMapComponent
+                            address={ticket.location}
+                            height="300px"
+                            zoom={16}
+                            className="border border-gray-200 dark:border-gray-700"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}

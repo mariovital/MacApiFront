@@ -1,40 +1,7 @@
 
-# 🗺️ Implementación Completa de Google Maps
+# Implementación de Google Maps
 
-> **Estado:** ✅ Implementación completa y lista para usar
-> 
-> **Fecha:** 22 de octubre de 2025  
-> **Sistema:** MAC Tickets - Dashboard Web  
-> **Tecnología:** Google Maps JavaScript API + Geocoding API
-
----
-
-## 🎯 **INICIO RÁPIDO**
-
-### **Para Desarrolladores:**
-
-1. **Configura tu API key:**
-   ```bash
-   cd MAC/mac-tickets-front
-   cp env.example.txt .env
-   # Edita .env y agrega tu VITE_GOOGLE_MAPS_API_KEY
-   ```
-
-2. **Reinicia el servidor:**
-   ```bash
-   npm run dev
-   ```
-
-3. **Verifica:**
-   - Ve a http://localhost:5173/tickets
-   - Debe aparecer un mapa con marcador rojo
-
-4. **¿Necesitas ayuda?**
-   - Lee: `GOOGLE-MAPS-SETUP-GUIDE.md` (guía completa)
-
----
-
-## 📋 Resumen de Cambios Implementados
+## Resumen de Cambios Implementados
 
 ### 1. Configuración Centralizada
 - Creación de archivo `googleMapsConfig.js` para centralizar configuración
