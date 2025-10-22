@@ -449,27 +449,23 @@ aws s3 sync dist/ s3://tu-bucket-frontend --delete
 
 ---
 
-## 🔑 Credenciales de Prueba
+## 🔑 Acceso al Sistema
 
-### **🔐 Usuarios del Sistema**
+> 🔒 **Información de Acceso Restringida**
+> 
+> Las credenciales y datos de prueba son confidenciales y están disponibles solo para el equipo de desarrollo autorizado. 
+> 
+> Para obtener acceso al sistema, contacta al administrador:
+> - 📧 Email: soporte@maccomputadoras.com
 
-| Rol | Username | Password | Email |
-|-----|----------|----------|-------|
-| **Administrador** | `admin` | `Admin123` | admin@maccomputadoras.com |
-| **Técnico 1** | `jtecnico` | `Tecnico123` | jtecnico@maccomputadoras.com |
-| **Técnico 2** | `mtecnico` | `Tecnico123` | mtecnico@maccomputadoras.com |
-| **Técnico 3** | `ctecnico` | `Tecnico123` | ctecnico@maccomputadoras.com |
-| **Mesa de Trabajo 1** | `lperez` | `Usuario123` | lperez@maccomputadoras.com |
-| **Mesa de Trabajo 2** | `agomez` | `Usuario123` | agomez@maccomputadoras.com |
-
-### **📊 Datos de Prueba**
+### **📊 Datos del Sistema**
 
 El sistema incluye:
-- ✅ 7 Categorías (Hardware, Software, Red, Cuenta, Periféricos, Sistema, Otro)
-- ✅ 4 Prioridades (Baja, Media, Alta, Crítica)
+- ✅ 7 Categorías de tickets
+- ✅ 4 Niveles de prioridad con SLA
 - ✅ 7 Estados de tickets
-- ✅ 3 Roles (Administrador, Técnico, Mesa de Trabajo)
-- ✅ 6 Usuarios de prueba
+- ✅ 3 Roles de usuario (Administrador, Técnico, Mesa de Trabajo)
+- ✅ Sistema de gestión de usuarios completo
 
 ---
 
@@ -480,57 +476,10 @@ El sistema incluye:
 | Documento | Descripción |
 |-----------|-------------|
 | [`DEVELOPMENT-RULES.md`](Docs/DEVELOPMENT-RULES.md) | Guía definitiva de reglas de desarrollo |
-| [`ENDPOINTS-REFERENCE.md`](Docs/ENDPOINTS-REFERENCE.md) | Referencia completa de API endpoints |
 | [`AWS-Deployment/`](Docs/AWS-Deployment/) | Guías de deployment en AWS |
 | [`Schemas/`](Docs/Schemas/) | Schemas SQL y seed data |
-| [`API-Gateway-Endpoints.json`](Docs/API-Gateway-Endpoints.json) | Especificación OpenAPI |
 
-### **🔗 Endpoints Principales**
-
-**Base URL (Producción):** `http://macticketsv.us-east-1.elasticbeanstalk.com/api`  
-**Base URL (Local):** `http://localhost:3001/api`
-
-#### **Autenticación**
-```
-POST   /api/auth/login       # Login
-POST   /api/auth/refresh     # Renovar token
-POST   /api/auth/logout      # Logout
-```
-
-#### **Tickets**
-```
-GET    /api/tickets          # Lista de tickets
-POST   /api/tickets          # Crear ticket
-GET    /api/tickets/:id      # Detalle de ticket
-PUT    /api/tickets/:id      # Actualizar ticket
-POST   /api/tickets/:id/assign    # Asignar técnico
-POST   /api/tickets/:id/resolve   # Resolver ticket
-POST   /api/tickets/:id/close     # Cerrar ticket
-```
-
-#### **Usuarios (Admin)**
-```
-GET    /api/users            # Lista de usuarios
-POST   /api/users            # Crear usuario
-PUT    /api/users/:id        # Actualizar usuario
-DELETE /api/users/:id        # Eliminar usuario
-```
-
-#### **Catálogos**
-```
-GET    /api/catalog/categories      # Categorías
-GET    /api/catalog/priorities      # Prioridades
-GET    /api/catalog/ticket-statuses # Estados
-GET    /api/catalog/technicians     # Técnicos disponibles
-```
-
-#### **Reportes**
-```
-GET    /api/reports/dashboard # Métricas del dashboard
-GET    /api/reports/export    # Exportar a Excel
-```
-
-Ver documentación completa: [`ENDPOINTS-REFERENCE.md`](Docs/ENDPOINTS-REFERENCE.md)
+> 🔒 **Nota:** La documentación de API endpoints es privada y está disponible solo para el equipo de desarrollo.
 
 ---
 
@@ -579,12 +528,7 @@ Ver documentación completa: [`ENDPOINTS-REFERENCE.md`](Docs/ENDPOINTS-REFERENCE
 
 ### **🌐 Demo en Vivo**
 
-- **Dashboard Web:** [http://macticketsv.us-east-1.elasticbeanstalk.com](http://macticketsv.us-east-1.elasticbeanstalk.com)
-- **API Base URL:** [http://macticketsv.us-east-1.elasticbeanstalk.com/api](http://macticketsv.us-east-1.elasticbeanstalk.com/api)
-
-**Credenciales de demo:**
-- Usuario: `admin`
-- Password: `Admin123`
+> 🔒 **Nota:** El acceso a la demo está restringido al equipo de desarrollo. Contacta al administrador del sistema para obtener acceso.
 
 ### **📱 APK Android**
 
