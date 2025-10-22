@@ -33,9 +33,12 @@ object ApiConfig {
     private const val PHYSICAL_DEVICE_BASE_URL = "http://192.168.1.100:3001/api/"
     
     // URL del servidor en producción (AWS o dominio)
-    private const val PRODUCTION_BASE_URL = "https://api.mactickets.com/api/"
+    // Ejemplo de API Gateway: https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod/api/
+    // Reemplaza con tu URL de API Gateway (Docs/AWS-RUTAS-API-GATEWAY.txt)
+    private const val PRODUCTION_BASE_URL = "https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod/api/"
     
     // ====== URL ACTUAL ======
+    // Nota: Si BuildConfig.API_BASE_URL está configurado (app/build.gradle.kts), RetrofitClient lo usará en lugar de esta constante.
     val BASE_URL: String
         get() = when (CURRENT_ENVIRONMENT) {
             Environment.EMULATOR -> EMULATOR_BASE_URL
@@ -54,6 +57,7 @@ object ApiConfig {
             Ambiente: ${CURRENT_ENVIRONMENT.name}
             Base URL: $BASE_URL
             Timeout: $CONNECT_TIMEOUT segundos
+            Override (BuildConfig.API_BASE_URL): configurable en local.properties (API_BASE_URL)
         """.trimIndent()
     }
 }
