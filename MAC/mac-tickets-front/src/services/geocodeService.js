@@ -1,47 +1,52 @@
-// /services/geocodeService.js - Servicio de geocodificación usando OpenStreetMap Nominatim
+// src/services/geocodeService.js
+// Servicio de geocodificación usando Google Maps Geocoding API
+
+import { 
+  isValidAddress, 
+  sanitizeAddress, 
+  formatAddressForMexico,
+  DEFAULT_GEOCODING_REGION 
+} from '../config/googleMapsConfig';
 
 // Cache para evitar llamadas repetidas a la API
 const geocodeCache = new Map();
 const MAX_CACHE_SIZE = 100;
 
 /**
- * Sanitiza una dirección eliminando caracteres problemáticos
- */
-const sanitizeAddress = (address) => {
-  if (!address) return '';
-  return address
-    .replace(/[\n\r\t]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-/**
- * Geocodifica una dirección usando OpenStreetMap Nominatim API
- * Sigue la misma lógica que la app Android
+ * Geocodifica una dirección usando Google Maps Geocoding API
+ * @param {string} address - Dirección a geocodificar
+ * @returns {Promise<{lat: number, lng: number, formatted_address: string} | null>}
  */
 const geocodeAddress = async (address) => {
   const cleanAddress = sanitizeAddress(address);
   
-  if (!cleanAddress || cleanAddress === '—') {
+  // Validar dirección
+  if (!isValidAddress(cleanAddress)) {
+    console.warn('Dirección inválida o demasiado genérica:', address);
     return null;
   }
 
   // Verificar cache
   if (geocodeCache.has(cleanAddress)) {
+    console.log('Usando dirección desde cache:', cleanAddress);
     return geocodeCache.get(cleanAddress);
   }
 
   try {
-    // Intentar geocodificar la dirección original
-    let result = await callNominatimAPI(cleanAddress);
+    // Formatear dirección para México
+    const formattedAddress = formatAddressForMexico(cleanAddress);
+    console.log('Geocodificando dirección:', formattedAddress);
+    
+    // Intentar geocodificar
+    let result = await callGoogleGeocodingAPI(formattedAddress);
 
-    // Si falla, intentar agregando ", México"
-    if (!result) {
-      const addressWithCountry = `${cleanAddress}, México`;
-      result = await callNominatimAPI(addressWithCountry);
+    // Si falla con formato México, intentar sin él
+    if (!result && formattedAddress !== cleanAddress) {
+      console.log('Reintentando sin formato México...');
+      result = await callGoogleGeocodingAPI(cleanAddress);
     }
 
-    // Guardar en cache
+    // Guardar en cache si fue exitoso
     if (result) {
       // Limitar el tamaño del cache
       if (geocodeCache.size >= MAX_CACHE_SIZE) {
@@ -49,6 +54,9 @@ const geocodeAddress = async (address) => {
         geocodeCache.delete(firstKey);
       }
       geocodeCache.set(cleanAddress, result);
+      console.log('Geocodificación exitosa:', result);
+    } else {
+      console.warn('No se pudo geocodificar la dirección:', address);
     }
 
     return result;
@@ -59,47 +67,93 @@ const geocodeAddress = async (address) => {
 };
 
 /**
- * Llama a la API de OpenStreetMap Nominatim
- * Misma API que usa la app Android
+ * Llama a Google Maps Geocoding API usando el objeto Geocoder
+ * @param {string} address - Dirección a geocodificar
+ * @returns {Promise<{lat: number, lng: number, formatted_address: string} | null>}
  */
-const callNominatimAPI = async (address) => {
-  try {
-    const encodedAddress = encodeURIComponent(address);
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodedAddress}&format=json&limit=1&addressdetails=0&countrycodes=mx`;
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'MAC-Tickets/1.0 (web-dashboard)',
-        'Accept-Language': 'es-MX,es;q=0.9'
-      }
-    });
-
-    if (!response.ok) {
-      return null;
+const callGoogleGeocodingAPI = async (address) => {
+  return new Promise((resolve) => {
+    // Verificar que Google Maps esté cargado
+    if (!window.google || !window.google.maps || !window.google.maps.Geocoder) {
+      console.error('Google Maps API no está cargada');
+      resolve(null);
+      return;
     }
 
-    const data = await response.json();
-
-    if (data && data.length > 0) {
-      const result = data[0];
-      const lat = parseFloat(result.lat);
-      const lon = parseFloat(result.lon);
-
-      if (!isNaN(lat) && !isNaN(lon)) {
-        return {
-          lat,
-          lng: lon,
-          display_name: result.display_name
-        };
+    const geocoder = new window.google.maps.Geocoder();
+    
+    geocoder.geocode(
+      {
+        address: address,
+        region: DEFAULT_GEOCODING_REGION,
+        language: 'es-MX'
+      },
+      (results, status) => {
+        if (status === 'OK' && results && results.length > 0) {
+          const result = results[0];
+          const location = result.geometry.location;
+          
+          resolve({
+            lat: location.lat(),
+            lng: location.lng(),
+            formatted_address: result.formatted_address
+          });
+        } else {
+          console.warn('Geocoding status:', status);
+          resolve(null);
+        }
       }
-    }
+    );
+  });
+};
 
-    return null;
-  } catch (error) {
-    console.error('Error llamando a Nominatim API:', error);
-    return null;
+/**
+ * Geocodifica una dirección con reintentos
+ * @param {string} address - Dirección a geocodificar
+ * @param {number} maxRetries - Número máximo de reintentos
+ * @returns {Promise<{lat: number, lng: number, formatted_address: string} | null>}
+ */
+const geocodeAddressWithRetry = async (address, maxRetries = 2) => {
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      const result = await geocodeAddress(address);
+      if (result) return result;
+      
+      // Esperar antes de reintentar
+      if (i < maxRetries) {
+        console.log(`Reintento ${i + 1}/${maxRetries}...`);
+        await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+      }
+    } catch (error) {
+      console.error(`Error en intento ${i + 1}:`, error);
+    }
   }
+  
+  return null;
+};
+
+/**
+ * Obtiene coordenadas de múltiples direcciones en lote
+ * @param {string[]} addresses - Array de direcciones
+ * @returns {Promise<Array<{address: string, coordinates: object | null}>>}
+ */
+const geocodeBatch = async (addresses) => {
+  const results = [];
+  
+  for (const address of addresses) {
+    try {
+      const coordinates = await geocodeAddress(address);
+      results.push({ address, coordinates });
+      
+      // Pequeña pausa entre requests para evitar rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      console.error('Error en geocodificación batch:', error);
+      results.push({ address, coordinates: null });
+    }
+  }
+  
+  return results;
 };
 
 /**
@@ -107,6 +161,7 @@ const callNominatimAPI = async (address) => {
  */
 const clearCache = () => {
   geocodeCache.clear();
+  console.log('Cache de geocodificación limpiado');
 };
 
 /**
@@ -116,12 +171,36 @@ const getCacheSize = () => {
   return geocodeCache.size;
 };
 
+/**
+ * Obtiene estadísticas del cache
+ */
+const getCacheStats = () => {
+  return {
+    size: geocodeCache.size,
+    maxSize: MAX_CACHE_SIZE,
+    entries: Array.from(geocodeCache.keys())
+  };
+};
+
+/**
+ * Elimina una entrada específica del cache
+ */
+const removeCacheEntry = (address) => {
+  const cleanAddress = sanitizeAddress(address);
+  return geocodeCache.delete(cleanAddress);
+};
+
 const geocodeService = {
   geocodeAddress,
+  geocodeAddressWithRetry,
+  geocodeBatch,
   sanitizeAddress,
+  isValidAddress,
+  formatAddressForMexico,
   clearCache,
-  getCacheSize
+  getCacheSize,
+  getCacheStats,
+  removeCacheEntry
 };
 
 export default geocodeService;
-
