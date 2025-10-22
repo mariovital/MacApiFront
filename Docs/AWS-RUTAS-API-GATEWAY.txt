@@ -1,0 +1,210 @@
+================================================================================
+RUTAS API GATEWAY - MAC TICKETS
+================================================================================
+
+Backend Endpoint: http://macticketsv.us-east-1.elasticbeanstalk.com
+
+================================================================================
+AUTENTICACIÓN (/api/auth)
+================================================================================
+
+POST   /api/auth/login
+POST   /api/auth/refresh
+POST   /api/auth/logout
+
+================================================================================
+TICKETS (/api/tickets)
+================================================================================
+
+GET    /api/tickets
+POST   /api/tickets
+GET    /api/tickets/{ticketId}
+PUT    /api/tickets/{ticketId}
+DELETE /api/tickets/{ticketId}
+PATCH  /api/tickets/{ticketId}/status
+POST   /api/tickets/{ticketId}/assign
+POST   /api/tickets/{ticketId}/accept
+POST   /api/tickets/{ticketId}/reject
+POST   /api/tickets/{ticketId}/close
+POST   /api/tickets/{ticketId}/reopen
+
+================================================================================
+COMENTARIOS (/api/tickets/{ticketId}/comments)
+================================================================================
+
+GET    /api/tickets/{ticketId}/comments
+POST   /api/tickets/{ticketId}/comments
+PUT    /api/tickets/{ticketId}/comments/{commentId}
+DELETE /api/tickets/{ticketId}/comments/{commentId}
+
+================================================================================
+ARCHIVOS ADJUNTOS (/api/tickets/{ticketId}/attachments)
+================================================================================
+
+GET    /api/tickets/{ticketId}/attachments
+POST   /api/tickets/{ticketId}/attachments
+POST   /api/tickets/{ticketId}/attachments/multiple
+DELETE /api/attachments/{attachmentId}
+GET    /api/attachments/{attachmentId}/download
+
+================================================================================
+USUARIOS (/api/users)
+================================================================================
+
+GET    /api/users
+POST   /api/users
+GET    /api/users/{userId}
+PUT    /api/users/{userId}
+DELETE /api/users/{userId}
+PATCH  /api/users/{userId}/status
+POST   /api/users/{userId}/reset-password
+
+================================================================================
+CATÁLOGOS (/api/catalog)
+================================================================================
+
+GET    /api/catalog/categories
+POST   /api/catalog/categories
+PUT    /api/catalog/categories/{categoryId}
+DELETE /api/catalog/categories/{categoryId}
+GET    /api/catalog/priorities
+GET    /api/catalog/statuses
+GET    /api/catalog/roles
+
+================================================================================
+REPORTES (/api/reports)
+================================================================================
+
+GET    /api/reports/dashboard
+GET    /api/reports/tickets
+GET    /api/reports/users
+GET    /api/reports/performance
+
+================================================================================
+PDF (/api/pdf)
+================================================================================
+
+GET    /api/pdf/ticket/{ticketId}
+
+================================================================================
+RESET DE CONTRASEÑA (/api/password-resets)
+================================================================================
+
+POST   /api/password-resets/request
+POST   /api/password-resets/verify
+POST   /api/password-resets/reset
+
+================================================================================
+TOTAL: 43 ENDPOINTS
+================================================================================
+
+================================================================================
+CONFIGURACIÓN PARA API GATEWAY (OPCIÓN SIMPLE)
+================================================================================
+
+En lugar de agregar cada ruta manualmente, USA EL PROXY:
+
+1. Crear recurso proxy:
+   Recurso: {proxy+}
+   Método: ANY
+   
+2. Integration:
+   Type: HTTP Proxy
+   Method: ANY
+   Endpoint URL: http://macticketsv.us-east-1.elasticbeanstalk.com/{proxy}
+   
+3. Deploy a stage "prod"
+
+¡Esto maneja TODOS los endpoints automáticamente!
+
+================================================================================
+CONFIGURACIÓN MANUAL (Si quieres agregar uno por uno)
+================================================================================
+
+Para cada ruta:
+
+1. Resources → Actions → Create Resource
+   Resource Path: [ruta sin /api]
+   Ejemplo: "tickets" para /api/tickets
+
+2. Actions → Create Method → [método HTTP]
+   Ejemplo: GET, POST, PUT, PATCH, DELETE
+
+3. Integration Request:
+   Integration type: HTTP Proxy
+   HTTP method: [mismo método]
+   Endpoint URL: http://macticketsv.us-east-1.elasticbeanstalk.com[ruta completa]
+   Ejemplo: http://macticketsv.us-east-1.elasticbeanstalk.com/api/tickets
+
+4. Repetir para cada endpoint
+
+================================================================================
+EJEMPLO PRÁCTICO: Agregar POST /api/auth/login
+================================================================================
+
+Paso 1: Crear recurso "api"
+  Resources → Actions → Create Resource
+  Resource Name: api
+  Resource Path: /api
+
+Paso 2: Crear recurso "auth" dentro de "api"
+  Seleccionar /api → Actions → Create Resource
+  Resource Name: auth
+  Resource Path: /auth
+
+Paso 3: Crear recurso "login" dentro de "auth"
+  Seleccionar /api/auth → Actions → Create Resource
+  Resource Name: login
+  Resource Path: /login
+
+Paso 4: Crear método POST en "login"
+  Seleccionar /api/auth/login → Actions → Create Method → POST
+  
+Paso 5: Configurar Integration
+  Integration type: HTTP Proxy
+  HTTP method: POST
+  Endpoint URL: http://macticketsv.us-east-1.elasticbeanstalk.com/api/auth/login
+
+¡TEDIOSO! Por eso recomendamos usar el PROXY que maneja todo automáticamente.
+
+================================================================================
+CORS (Muy importante)
+================================================================================
+
+Después de agregar rutas:
+
+1. Seleccionar recurso raíz "/"
+2. Actions → Enable CORS
+3. Configurar:
+   Access-Control-Allow-Origin: *
+   Access-Control-Allow-Headers: Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token
+   Access-Control-Allow-Methods: DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT
+4. Enable CORS
+
+================================================================================
+URL FINAL (Después de Deploy)
+================================================================================
+
+Tu API Gateway te dará una URL como:
+https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod
+
+Actualiza en Vercel:
+VITE_API_URL=https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod/api
+VITE_SOCKET_URL=https://abc123xyz.execute-api.us-east-1.amazonaws.com/prod
+
+================================================================================
+RECOMENDACIÓN FINAL
+================================================================================
+
+NO agregues las 43 rutas manualmente.
+
+USA EL PROXY:
+- 1 recurso {proxy+}
+- 1 método ANY
+- ¡Todos los endpoints funcionan!
+
+Ver documentación completa:
+/Docs/AWS-Deployment/SETUP-API-GATEWAY.md
+
+================================================================================
+
