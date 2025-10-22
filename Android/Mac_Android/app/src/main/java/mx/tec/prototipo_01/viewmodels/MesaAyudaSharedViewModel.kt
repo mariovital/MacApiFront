@@ -53,6 +53,9 @@ class MesaAyudaSharedViewModel : ViewModel() {
         return (pendingTickets + historyTickets).find { it.id == id }
     }
 
+    // Exponer el id interno del backend a partir del ticket_number
+    fun getBackendIdByTicketNumber(ticketNumber: String): Int? = ticketIdMap[ticketNumber]
+
     fun refreshTicketDetail(ticketNumber: String) {
         viewModelScope.launch {
             try {

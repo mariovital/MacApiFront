@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -295,6 +296,18 @@ fun MesaTicketDetailsReadOnly(
                             Text(text = "No se pudo ubicar la dirección en el mapa", color = Color.Gray, fontSize = 12.sp)
                         }
 
+                        // Botón para ver evidencias (comentarios y adjuntos) como lo hace técnico
+                        Spacer(modifier = Modifier.height(16.dp))
+                        OutlinedButton(
+                            onClick = {
+                                val encoded = java.net.URLEncoder.encode(ticket.id, java.nio.charset.StandardCharsets.UTF_8.toString())
+                                navController.navigate("mesa_ticket_attachments/$encoded/${ticket.title.encodeUrl()}/${ticket.company.encodeUrl()}/${ticket.assignedTo.encodeUrl()}/${ticket.status.displayName.encodeUrl()}/${ticket.priority.encodeUrl()}")
+                            },
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Ver evidencias")
+                        }
+
                         if (ticket.status == TicketStatus.RECHAZADO) {
                             Spacer(modifier = Modifier.height(24.dp))
                             Text("Reasignar a técnico:", fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -456,3 +469,6 @@ private fun cleanDescription(description: String): String {
         .replace("\n\n\n", "\n\n")
         .trim()
 }
+
+// Extensión local para codificar segmentos de URL
+private fun String.encodeUrl(): String = URLEncoder.encode(this, StandardCharsets.UTF_8.toString())

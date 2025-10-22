@@ -85,6 +85,18 @@ fun AppNavigation(isDark: Boolean, onThemeChange: () -> Unit) {
                     )
                 }
             }
+            // Evidencias (comentarios y adjuntos) para Mesa de Ayuda (solo lectura)
+            composable("mesa_ticket_attachments/{id}/{title}/{company}/{assignedTo}/{status}/{priority}") { backStackEntry ->
+                MesaTicketAttachments(
+                    navController = navController,
+                    id = backStackEntry.arguments?.getString("id"),
+                    title = backStackEntry.arguments?.getString("title"),
+                    company = backStackEntry.arguments?.getString("company"),
+                    assignedTo = backStackEntry.arguments?.getString("assignedTo"),
+                    status = backStackEntry.arguments?.getString("status"),
+                    priority = backStackEntry.arguments?.getString("priority")
+                )
+            }
             composable(
                 route = "assign_ticket/{ticketId}",
                 arguments = listOf(navArgument("ticketId") { type = NavType.IntType })
