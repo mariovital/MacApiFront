@@ -179,6 +179,22 @@ data class UpdateStatusRequest(
     val status_id: Int
 )
 
+// Actualizar ticket
+data class UpdateTicketRequest(
+    val title: String? = null,
+    val description: String? = null,
+    val category_id: Int? = null,
+    val priority_id: Int? = null,
+    val client_company: String? = null,
+    val client_contact: String? = null,
+    val client_email: String? = null,
+    val client_phone: String? = null,
+    val client_department: String? = null,
+    val location: String? = null,
+    val priority_justification: String? = null,
+    val technician_id: Int? = null
+)
+
 // Adjuntos
 data class TicketAttachment(
     val id: Int,
@@ -254,6 +270,11 @@ data class CreateCommentResponse(
     val data: CommentItem?
 )
 
+data class UpdateCommentRequest(
+    val comment: String,
+    val is_internal: Boolean = false
+)
+
 // Resolución con comentario
 data class ResolveTicketRequest(
     val resolution_comment: String
@@ -265,4 +286,73 @@ data class CommentAuthor(
     val last_name: String?,
     val username: String?,
     val email: String?
+)
+
+// Respuestas genéricas y catálogos adicionales
+data class SimpleResponse(
+    val success: Boolean,
+    val message: String?
+)
+
+data class StatusDto(
+    val id: Int,
+    val name: String,
+    val color: String?
+)
+
+data class RoleDto(
+    val id: Int,
+    val name: String
+)
+
+data class StatusesResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: List<StatusDto>
+)
+
+data class RolesResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: List<RoleDto>
+)
+
+// PDF
+data class PdfTicketResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: String? // puede ser URL o base64 según backend
+)
+
+// Auth refresh
+data class AuthRefreshRequest(
+    val refresh_token: String
+)
+data class AuthRefreshResponse(
+    val success: Boolean,
+    val message: String?,
+    val data: LoginDataSlim?
+)
+data class LoginDataSlim(
+    val token: String,
+    val refresh_token: String
+)
+
+// Password reset verify / reset
+data class PasswordResetVerifyRequest(
+    val token: String,
+    val email: String
+)
+data class PasswordResetVerifyResponse(
+    val success: Boolean,
+    val message: String?
+)
+data class PasswordDoResetRequest(
+    val token: String,
+    val email: String,
+    val new_password: String
+)
+data class PasswordDoResetResponse(
+    val success: Boolean,
+    val message: String?
 )

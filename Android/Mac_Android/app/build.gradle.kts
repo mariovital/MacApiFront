@@ -55,6 +55,13 @@ android {
         if (mapsApiKey.isBlank()) {
             println("WARNING: MAPS_API_KEY is empty. Google Maps tiles will not render. Set it in Android/Mac_Android/local.properties or app/local.properties or as env var MAPS_API_KEY.")
         }
+
+        // API base URL override (for AWS API Gateway). If set, the app usará este valor directamente.
+        val apiBaseUrl = resolveSecret("API_BASE_URL") ?: ""
+        buildConfigField("String", "API_BASE_URL", "\"${apiBaseUrl}\"")
+        if (apiBaseUrl.isNotBlank()) {
+            println("INFO: Using API_BASE_URL override: $apiBaseUrl")
+        }
     }
 
     buildTypes {

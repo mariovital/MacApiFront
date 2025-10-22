@@ -147,13 +147,8 @@ class TecnicoSharedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val backendId = ticketIdMap[ticketId] ?: return@launch
-                // Marcar ticket como resuelto con comentario obligatorio
-                val response = RetrofitClient.instance.resolveTicket(
-                    backendId,
-                    mx.tec.prototipo_01.models.api.ResolveTicketRequest(
-                        resolution_comment = "Trabajo completado desde la app Android"
-                    )
-                )
+                // Cerrar ticket usando el endpoint documentado en AWS Gateway
+                val response = RetrofitClient.instance.closeTicket(backendId)
                 if (response.isSuccessful) {
                     Log.d("TecnicoSharedViewModel", "Ticket cerrado exitosamente")
                     // Recargar tickets para reflejar el cambio
