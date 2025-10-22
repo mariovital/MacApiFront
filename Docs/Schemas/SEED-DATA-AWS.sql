@@ -32,24 +32,24 @@ INSERT INTO categories (id, name, description, color, is_active, created_by) VAL
 -- 3. PRIORIDADES
 -- =====================================================================
 
-INSERT INTO priorities (id, name, level, color, sla_hours, description) VALUES
-(1, 'Baja', 1, '#4CAF50', 72, 'Problema menor, no afecta trabajo diario'),
-(2, 'Media', 2, '#FF9800', 24, 'Problema que afecta parcialmente el trabajo'),
-(3, 'Alta', 3, '#FF5722', 8, 'Problema que impide trabajo normal'),
-(4, 'Crítica', 4, '#F44336', 4, 'Problema crítico que requiere atención inmediata');
+INSERT INTO priorities (id, name, level, color, sla_hours, is_active) VALUES
+(1, 'Baja', 1, '#4CAF50', 72, 1),
+(2, 'Media', 2, '#FF9800', 24, 1),
+(3, 'Alta', 3, '#FF5722', 8, 1),
+(4, 'Crítica', 4, '#F44336', 4, 1);
 
 -- =====================================================================
 -- 4. ESTADOS DE TICKETS
 -- =====================================================================
 
-INSERT INTO ticket_statuses (id, name, color, description, is_final) VALUES
-(1, 'Nuevo', '#6B7280', 'Ticket recién creado, pendiente de asignación', 0),
-(2, 'Asignado', '#3B82F6', 'Ticket asignado a un técnico', 0),
-(3, 'En Proceso', '#F59E0B', 'Técnico trabajando en el ticket', 0),
-(4, 'Pendiente Cliente', '#8B5CF6', 'Esperando respuesta o acción del cliente', 0),
-(5, 'Resuelto', '#10B981', 'Problema resuelto, pendiente de cerrar', 0),
-(6, 'Cerrado', '#4B5563', 'Ticket cerrado y finalizado', 1),
-(7, 'Reabierto', '#EF4444', 'Ticket reabierto después de estar cerrado', 0);
+INSERT INTO ticket_statuses (id, name, description, color, is_final, order_index) VALUES
+(1, 'Nuevo', 'Ticket recién creado, pendiente de asignación', '#6B7280', 0, 1),
+(2, 'Asignado', 'Ticket asignado a un técnico', '#3B82F6', 0, 2),
+(3, 'En Proceso', 'Técnico trabajando en el ticket', '#F59E0B', 0, 3),
+(4, 'Pendiente Cliente', 'Esperando respuesta o acción del cliente', '#8B5CF6', 0, 4),
+(5, 'Resuelto', 'Problema resuelto, pendiente de cerrar', '#10B981', 0, 5),
+(6, 'Cerrado', 'Ticket cerrado y finalizado', '#4B5563', 1, 6),
+(7, 'Reabierto', 'Ticket reabierto después de estar cerrado', '#EF4444', 0, 7);
 
 -- =====================================================================
 -- 5. USUARIO ADMINISTRADOR POR DEFECTO
@@ -64,10 +64,8 @@ INSERT INTO users (
     password_hash, 
     first_name, 
     last_name, 
-    role_id, 
-    phone,
-    is_active, 
-    created_by
+    role_id,
+    is_active
 ) VALUES (
     1,
     'admin',
@@ -75,8 +73,6 @@ INSERT INTO users (
     '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5NU7TmQ8QC8Uu',
     'Administrador',
     'Sistema',
-    1,
-    '555-0100',
     1,
     1
 );
@@ -92,10 +88,8 @@ INSERT INTO users (
     password_hash, 
     first_name, 
     last_name, 
-    role_id, 
-    phone,
-    is_active, 
-    created_by
+    role_id,
+    is_active
 ) VALUES 
 (
     'jtecnico',
@@ -104,8 +98,6 @@ INSERT INTO users (
     'Juan',
     'Técnico',
     2,
-    '555-0101',
-    1,
     1
 ),
 (
@@ -115,8 +107,6 @@ INSERT INTO users (
     'María',
     'Técnico',
     2,
-    '555-0102',
-    1,
     1
 ),
 (
@@ -126,8 +116,6 @@ INSERT INTO users (
     'Carlos',
     'Técnico',
     2,
-    '555-0103',
-    1,
     1
 );
 
@@ -142,10 +130,8 @@ INSERT INTO users (
     password_hash, 
     first_name, 
     last_name, 
-    role_id, 
-    phone,
-    is_active, 
-    created_by
+    role_id,
+    is_active
 ) VALUES 
 (
     'lperez',
@@ -154,8 +140,6 @@ INSERT INTO users (
     'Luis',
     'Pérez',
     3,
-    '555-0201',
-    1,
     1
 ),
 (
@@ -165,8 +149,6 @@ INSERT INTO users (
     'Ana',
     'Gómez',
     3,
-    '555-0202',
-    1,
     1
 );
 
