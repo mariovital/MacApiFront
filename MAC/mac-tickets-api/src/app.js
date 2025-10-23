@@ -38,10 +38,10 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Rate limiting para prevenir ataques
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutos
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // límite de requests por IP
+// Rate limiting GENERAL (más permisivo)
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 500, // 500 requests por IP cada 15 min (muy permisivo)
   message: {
     success: false,
     message: 'Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde.',
@@ -49,9 +49,25 @@ const limiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip health check y otras rutas
+  skip: (req) => req.path === '/api/health' || req.path === '/health'
 });
 
-app.use('/api/', limiter);
+// Rate limiting ESPECÍFICO para AUTH (más estricto pero razonable)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 20, // 20 intentos de login cada 15 min
+  message: {
+    success: false,
+    message: 'Demasiados intentos de login, intenta de nuevo en 15 minutos.',
+    code: 'AUTH_RATE_LIMIT_EXCEEDED'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Aplicar rate limiter general a todas las rutas API
+app.use('/api/', generalLimiter);
 
 // =====================================================================
 // MIDDLEWARES GENERALES
@@ -120,7 +136,8 @@ import reportRoutes from './routes/reports.js';
 import pdfRoutes from './routes/pdf.js';
 
 // Usar rutas
-app.use('/api/auth', authRoutes);
+// Auth tiene su propio rate limiter más estricto
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/catalog', catalogRoutes); // Categories, Priorities, Statuses, Technicians
