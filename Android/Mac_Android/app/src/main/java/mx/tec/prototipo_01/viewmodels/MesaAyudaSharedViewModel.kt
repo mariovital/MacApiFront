@@ -3,6 +3,8 @@ package mx.tec.prototipo_01.viewmodels
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.TecnicoTicket
@@ -21,27 +23,38 @@ class MesaAyudaSharedViewModel : ViewModel() {
     fun loadTickets() {
         viewModelScope.launch {
             try {
-                val response = RetrofitClient.instance.getTickets(limit = 100)
-                if (response.isSuccessful) {
-                    val body = response.body()
-                    val items = body?.data?.items ?: emptyList()
-                    ticketIdMap.clear()
-                    items.forEach { ticketIdMap[it.ticket_number] = it.id }
+                // Hacer I/O y mapeo fuera del hilo principal
+                val result = withContext(Dispatchers.IO) {
+                    val response = RetrofitClient.instance.getTickets(limit = 100)
+                    if (!response.isSuccessful) return@withContext null
+                    val items = response.body()?.data?.items ?: emptyList()
+                    val idMap = items.associate { it.ticket_number to it.id }
                     val mapped = items.map { it.toUiModel() }
-                    pendingTickets.clear()
-                    historyTickets.clear()
-                    mapped.forEach { t ->
+                    val pending = ArrayList<TecnicoTicket>(mapped.size)
+                    val history = ArrayList<TecnicoTicket>(mapped.size)
+                    for (t in mapped) {
                         when (t.status) {
-                            TicketStatus.COMPLETADO -> historyTickets.add(t)
-                            // Tickets rechazados quedan en la lista principal para permitir reasignación
-                            TicketStatus.RECHAZADO -> pendingTickets.add(t)
-                            else -> pendingTickets.add(t)
+                            TicketStatus.COMPLETADO -> history.add(t)
+                            TicketStatus.RECHAZADO -> pending.add(t)
+                            else -> pending.add(t)
                         }
                     }
-                } else {
+                    Triple(idMap, pending, history)
+                }
+
+                // Actualizar estado en bloque en el hilo principal
+                if (result == null) {
                     pendingTickets.clear()
                     historyTickets.clear()
+                    return@launch
                 }
+                val (idMap, pending, history) = result
+                ticketIdMap.clear()
+                ticketIdMap.putAll(idMap)
+                pendingTickets.clear()
+                pendingTickets.addAll(pending)
+                historyTickets.clear()
+                historyTickets.addAll(history)
             } catch (_: Exception) {
                 pendingTickets.clear()
                 historyTickets.clear()

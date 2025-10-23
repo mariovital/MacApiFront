@@ -46,6 +46,12 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Scale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalConfiguration
+import android.graphics.Bitmap
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.layout.ContentScale
@@ -154,8 +160,21 @@ fun TecnicoTicketAttachments(
                     ListItem(
                         leadingContent = {
                             if (isImage) {
+                                val density = LocalDensity.current
+                                val ctxLocal = LocalContext.current
+                                val thumbPx = with(density) { 48.dp.roundToPx() }
+                                val thumbReq = remember(fileUrl) {
+                                    ImageRequest.Builder(ctxLocal)
+                                        .data(fileUrl)
+                                        .size(thumbPx) // cuadrado 48dp
+                                        .scale(Scale.FILL)
+                                        .precision(Precision.INEXACT)
+                                        .bitmapConfig(Bitmap.Config.RGB_565)
+                                        .crossfade(false)
+                                        .build()
+                                }
                                 AsyncImage(
-                                    model = fileUrl,
+                                    model = thumbReq,
                                     contentDescription = "miniatura",
                                     modifier = Modifier.size(48.dp),
                                     contentScale = ContentScale.Crop
@@ -242,8 +261,23 @@ fun TecnicoTicketAttachments(
                         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp)) {
+                            val ctxLocal = LocalContext.current
+                            val density = LocalDensity.current
+                            val cfg = LocalConfiguration.current
+                            val previewWidthPx = with(density) { cfg.screenWidthDp.dp.roundToPx() }
+                            val previewHeightPx = with(density) { 400.dp.roundToPx() }
+                            val previewReq = remember(currentPreview) {
+                                ImageRequest.Builder(ctxLocal)
+                                    .data(currentPreview)
+                                    .size(previewWidthPx, previewHeightPx)
+                                    .scale(Scale.FIT)
+                                    .precision(Precision.INEXACT)
+                                    .bitmapConfig(Bitmap.Config.ARGB_8888)
+                                    .crossfade(true)
+                                    .build()
+                            }
                             AsyncImage(
-                                model = currentPreview,
+                                model = previewReq,
                                 contentDescription = "vista previa",
                                 modifier = Modifier
                                     .fillMaxWidth()

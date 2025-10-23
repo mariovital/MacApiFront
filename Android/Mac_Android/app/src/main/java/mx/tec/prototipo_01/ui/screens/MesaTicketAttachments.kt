@@ -41,6 +41,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.size.Scale
+import androidx.compose.ui.platform.LocalDensity
+import android.graphics.Bitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -112,8 +117,21 @@ fun MesaTicketAttachments(
                     ListItem(
                         leadingContent = {
                             if (isImage) {
+                                val density = LocalDensity.current
+                                val ctxLocal = LocalContext.current
+                                val thumbPx = with(density) { 48.dp.roundToPx() }
+                                val thumbReq = remember(fileUrl) {
+                                    ImageRequest.Builder(ctxLocal)
+                                        .data(fileUrl)
+                                        .size(thumbPx)
+                                        .scale(Scale.FILL)
+                                        .precision(Precision.INEXACT)
+                                        .bitmapConfig(Bitmap.Config.RGB_565)
+                                        .crossfade(false)
+                                        .build()
+                                }
                                 AsyncImage(
-                                    model = fileUrl,
+                                    model = thumbReq,
                                     contentDescription = "miniatura",
                                     modifier = Modifier.size(48.dp),
                                     contentScale = ContentScale.Crop

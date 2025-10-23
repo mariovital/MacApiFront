@@ -37,10 +37,12 @@ object RetrofitClient {
     }
 
     private val httpClient by lazy {
-        val loggingInterceptor = Interceptor { chain ->
-            val request = chain.request()
-            Log.d("Api", "Request: ${request.method} ${request.url}")
-            chain.proceed(request)
+        val loggingInterceptor = object : Interceptor {
+            override fun intercept(chain: Interceptor.Chain): Response {
+                val request = chain.request()
+                Log.d("Api", "Request: ${request.method} ${request.url}")
+                return chain.proceed(request)
+            }
         }
         // DNS fallback: si el dispositivo no resuelve el host, usar IP alternativa si está configurada
         val dnsFallback: Dns = object : Dns {

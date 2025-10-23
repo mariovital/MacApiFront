@@ -42,6 +42,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,6 +86,13 @@ fun MesaAyudaTickets(
         var filterExpanded by remember { mutableStateOf(false) }
         var selectedFilter by remember { mutableStateOf(PendingFilterMesa.TODOS) }
         var searchQuery by remember { mutableStateOf("") }
+        var debouncedQuery by remember { mutableStateOf("") }
+
+        // Debounce de búsqueda para evitar recomputar filtros en cada tecla
+        LaunchedEffect(searchQuery) {
+            kotlinx.coroutines.delay(200)
+            debouncedQuery = searchQuery
+        }
 
         Box(
             modifier = Modifier
@@ -107,13 +116,16 @@ fun MesaAyudaTickets(
                         singleLine = true
                     )
 
-                    val filtered = remember(tickets, selectedFilter, searchQuery) {
-                        val byStatus = when (selectedFilter) {
-                            PendingFilterMesa.TODOS -> tickets
-                            PendingFilterMesa.SOLO_PENDIENTE -> tickets.filter { it.status.displayName.equals("Pendiente", true) }
-                            PendingFilterMesa.SOLO_EN_PROCESO -> tickets.filter { it.status.displayName.contains("proceso", true) }
+                    val filtered by remember(tickets, selectedFilter) {
+                        derivedStateOf {
+                            val byStatus = when (selectedFilter) {
+                                PendingFilterMesa.TODOS -> tickets
+                                PendingFilterMesa.SOLO_PENDIENTE -> tickets.filter { it.status.displayName.equals("Pendiente", true) }
+                                PendingFilterMesa.SOLO_EN_PROCESO -> tickets.filter { it.status.displayName.contains("proceso", true) }
+                            }
+                            val q = debouncedQuery
+                            if (q.isBlank()) byStatus else byStatus.filter { matchesSearchMesa(it, q) }
                         }
-                        if (searchQuery.isBlank()) byStatus else byStatus.filter { matchesSearchMesa(it, searchQuery) }
                     }
                     TicketsList(tickets = filtered, navController = navController)
                 }
