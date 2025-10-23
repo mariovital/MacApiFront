@@ -276,21 +276,43 @@ const TicketDetail = () => {
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`${API_BASE_URL}/tickets/${id}/attachments/${file.id}/download`, {
+      // Construir URL completa
+      const downloadUrl = `${API_BASE_URL}/tickets/${id}/attachments/${file.id}/download`;
+      
+      console.log('🔍 DEBUG - Intentando descargar imagen:');
+      console.log('   API_BASE_URL:', API_BASE_URL);
+      console.log('   Ticket ID:', id);
+      console.log('   File ID:', file.id);
+      console.log('   URL completa:', downloadUrl);
+      console.log('   Token presente:', !!token);
+      
+      const response = await fetch(downloadUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
+      console.log('   Response status:', response.status);
+      console.log('   Response URL:', response.url);
+      
       if (!response.ok) {
-        console.error('Error descargando imagen:', response.status);
+        console.error('❌ Error descargando imagen:', response.status);
+        // Intentar leer el error del body
+        try {
+          const errorData = await response.text();
+          console.error('   Error body:', errorData);
+        } catch (e) {
+          console.error('   No se pudo leer el body del error');
+        }
         return null;
       }
       
       const blob = await response.blob();
-      return URL.createObjectURL(blob);
+      const blobUrl = URL.createObjectURL(blob);
+      console.log('✅ Imagen cargada exitosamente, Blob URL:', blobUrl);
+      return blobUrl;
     } catch (error) {
-      console.error('Error obteniendo preview de imagen:', error);
+      console.error('❌ Error obteniendo preview de imagen:', error);
       return null;
     }
   };
