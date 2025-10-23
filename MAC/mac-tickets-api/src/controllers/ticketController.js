@@ -411,8 +411,6 @@ export const uploadTicketAttachment = async (req, res) => {
       file_type: req.file.mimetype,
       file_path: filePath,
       storage_type: 'local',
-      s3_url: null, // DEPRECATED - mantener por compatibilidad
-      s3_key: null, // DEPRECATED - mantener por compatibilidad
       is_image: req.file.mimetype.startsWith('image/'),
       description: req.body?.description || null,
       ip_address: req.ip || req.connection?.remoteAddress,

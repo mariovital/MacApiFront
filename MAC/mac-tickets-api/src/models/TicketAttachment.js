@@ -13,8 +13,6 @@ const TicketAttachment = sequelize.define('TicketAttachment', {
   file_type: { type: DataTypes.STRING(100), allowNull: false },
   file_path: { type: DataTypes.STRING(500), allowNull: false, comment: 'Ruta local del archivo' },
   storage_type: { type: DataTypes.ENUM('local', 'external'), defaultValue: 'local', allowNull: false },
-  s3_url: { type: DataTypes.STRING(500), allowNull: true, comment: 'DEPRECATED - Migración de S3' },
-  s3_key: { type: DataTypes.STRING(500), allowNull: true, comment: 'DEPRECATED - Migración de S3' },
   is_image: { type: DataTypes.BOOLEAN, defaultValue: false },
   description: { type: DataTypes.TEXT, allowNull: true },
   ip_address: { type: DataTypes.STRING(45), allowNull: true },
