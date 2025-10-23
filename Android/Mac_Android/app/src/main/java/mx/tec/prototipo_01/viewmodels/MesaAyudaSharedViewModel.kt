@@ -1,15 +1,20 @@
 package mx.tec.prototipo_01.viewmodels
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.TecnicoTicket
 import mx.tec.prototipo_01.models.TicketPriority
 import mx.tec.prototipo_01.models.TicketStatus
+import mx.tec.prototipo_01.models.api.AssignTicketRequest
+import mx.tec.prototipo_01.models.api.TechnicianDto
 import mx.tec.prototipo_01.models.api.TicketItem
 
 class MesaAyudaSharedViewModel : ViewModel() {
@@ -17,47 +22,59 @@ class MesaAyudaSharedViewModel : ViewModel() {
     val pendingTickets = mutableStateListOf<TecnicoTicket>()
     val historyTickets = mutableStateListOf<TecnicoTicket>()
 
+    // Estado auxiliar para la UI
+    var isLoading by mutableStateOf(false)
+        private set
+    var lastError by mutableStateOf<String?>(null)
+        private set
+    var assigningTicketNumber by mutableStateOf<String?>(null)
+        private set
+
+    // Catalogo de tecnicos + flags de carga/error
+    var technicians by mutableStateOf<List<TechnicianDto>>(emptyList())
+        private set
+    var isLoadingTechnicians by mutableStateOf(false)
+        private set
+    var techniciansError by mutableStateOf<String?>(null)
+        private set
+
     // Mapa ticket_number -> id interno backend
     private val ticketIdMap = mutableMapOf<String, Int>()
 
     fun loadTickets() {
         viewModelScope.launch {
+            isLoading = true
+            lastError = null
             try {
-                // Hacer I/O y mapeo fuera del hilo principal
-                val result = withContext(Dispatchers.IO) {
-                    val response = RetrofitClient.instance.getTickets(limit = 100)
-                    if (!response.isSuccessful) return@withContext null
-                    val items = response.body()?.data?.items ?: emptyList()
-                    val idMap = items.associate { it.ticket_number to it.id }
-                    val mapped = items.map { it.toUiModel() }
-                    val pending = ArrayList<TecnicoTicket>(mapped.size)
-                    val history = ArrayList<TecnicoTicket>(mapped.size)
-                    for (t in mapped) {
-                        when (t.status) {
-                            TicketStatus.COMPLETADO -> history.add(t)
-                            TicketStatus.RECHAZADO -> pending.add(t)
-                            else -> pending.add(t)
-                        }
-                    }
-                    Triple(idMap, pending, history)
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.getTickets(limit = 100)
                 }
-
-                // Actualizar estado en bloque en el hilo principal
-                if (result == null) {
-                    pendingTickets.clear()
-                    historyTickets.clear()
+                if (!response.isSuccessful) {
+                    lastError = response.message().ifBlank { "No se pudieron cargar los tickets." }
                     return@launch
                 }
-                val (idMap, pending, history) = result
+                val items = response.body()?.data?.items.orEmpty()
+                val idMap = items.associate { it.ticket_number to it.id }
+                val mapped = items.map { it.toUiModel() }
+                val pending = ArrayList<TecnicoTicket>(mapped.size)
+                val history = ArrayList<TecnicoTicket>(mapped.size)
+                for (t in mapped) {
+                    when (t.status) {
+                        TicketStatus.COMPLETADO -> history.add(t)
+                        TicketStatus.RECHAZADO -> pending.add(t) // Mesa necesita re-asignarlos
+                        else -> pending.add(t)
+                    }
+                }
                 ticketIdMap.clear()
                 ticketIdMap.putAll(idMap)
                 pendingTickets.clear()
                 pendingTickets.addAll(pending)
                 historyTickets.clear()
                 historyTickets.addAll(history)
-            } catch (_: Exception) {
-                pendingTickets.clear()
-                historyTickets.clear()
+            } catch (e: Exception) {
+                lastError = e.message ?: "Ocurrio un error inesperado."
+            } finally {
+                isLoading = false
             }
         }
     }
@@ -73,7 +90,7 @@ class MesaAyudaSharedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val backendId = ticketIdMap[ticketNumber] ?: return@launch
-                val res = RetrofitClient.instance.getTicketById(backendId)
+                val res = withContext(Dispatchers.IO) { RetrofitClient.instance.getTicketById(backendId) }
                 if (res.isSuccessful) {
                     val apiItem = res.body()?.data ?: return@launch
                     val updated = apiItem.toUiModel()
@@ -87,12 +104,69 @@ class MesaAyudaSharedViewModel : ViewModel() {
                         historyTickets[idxHistory] = updated
                     }
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) {
+                lastError = "No se pudo actualizar el ticket."
+            }
+        }
+    }
+
+    fun assignTicket(ticketNumber: String, technicianId: Int, onResult: (Boolean) -> Unit = {}) {
+        viewModelScope.launch {
+            val backendId = ticketIdMap[ticketNumber]
+            if (backendId == null) {
+                onResult(false)
+                return@launch
+            }
+            assigningTicketNumber = ticketNumber
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.assignTicket(
+                        backendId,
+                        AssignTicketRequest(technician_id = technicianId)
+                    )
+                }
+                if (response.isSuccessful) {
+                    refreshTicketDetail(ticketNumber)
+                    loadTickets()
+                    onResult(true)
+                } else {
+                    onResult(false)
+                }
+            } catch (_: Exception) {
+                onResult(false)
+            } finally {
+                assigningTicketNumber = null
+            }
+        }
+    }
+
+    // Cargar catalogo de tecnicos desde el ViewModel
+    fun loadTechnicians(force: Boolean = false) {
+        if (!force && technicians.isNotEmpty()) return
+        viewModelScope.launch {
+            isLoadingTechnicians = true
+            techniciansError = null
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitClient.instance.getTechnicians()
+                }
+                if (response.isSuccessful) {
+                    technicians = response.body()?.data ?: emptyList()
+                } else {
+                    techniciansError = response.message().ifBlank { "No se pudieron cargar los tecnicos." }
+                    technicians = emptyList()
+                }
+            } catch (e: Exception) {
+                techniciansError = e.message ?: "Error de red al cargar tecnicos."
+                technicians = emptyList()
+            } finally {
+                isLoadingTechnicians = false
+            }
         }
     }
 }
 
-// Extensión: mapear modelo del API a modelo de UI (igual que en técnico)
+// Extension: mapear modelo del API a modelo de UI (igual que en tecnico)
 private fun TicketItem.toUiModel(): TecnicoTicket {
     val assignedName = listOfNotNull(assignee?.first_name, assignee?.last_name)
         .joinToString(" ").ifBlank { assignee?.username ?: "" }

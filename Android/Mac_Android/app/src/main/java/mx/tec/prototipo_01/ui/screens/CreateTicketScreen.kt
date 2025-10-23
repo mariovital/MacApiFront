@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,19 +51,38 @@ import java.io.IOException
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedViewModel) {
-    var nombre by remember { mutableStateOf("") }
-    var compania by remember { mutableStateOf("") }
-    var ubicacion by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-    var dispositivo by remember { mutableStateOf("") }
-    var serie by remember { mutableStateOf("") }
+    var nombre by rememberSaveable { mutableStateOf("") }
+    var compania by rememberSaveable { mutableStateOf("") }
+    var ubicacion by rememberSaveable { mutableStateOf("") }
+    var descripcion by rememberSaveable { mutableStateOf("") }
+    var dispositivo by rememberSaveable { mutableStateOf("") }
+    var serie by rememberSaveable { mutableStateOf("") }
 
     var priorities by remember { mutableStateOf(listOf<PriorityDto>()) }
     var categories by remember { mutableStateOf(listOf<CategoryDto>()) }
-    var technicians by remember { mutableStateOf(listOf<TechnicianDto>()) }
-    var selectedPriority by remember { mutableStateOf<PriorityDto?>(null) }
-    var selectedCategory by remember { mutableStateOf<CategoryDto?>(null) }
-    var selectedTechnician by remember { mutableStateOf<TechnicianDto?>(null) }
+    // Catalogo de tecnicos provisto por el ViewModel (sin Retrofit directo en UI)
+    LaunchedEffect(Unit) { viewModel.loadTechnicians() }
+    val technicians = viewModel.technicians
+    val isLoadingTechs = viewModel.isLoadingTechnicians
+    val techsError = viewModel.techniciansError
+    var selectedPriorityId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedCategoryId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var selectedTechnicianId by rememberSaveable { mutableStateOf<Int?>(null) }
+
+    val selectedPriority = remember(priorities, selectedPriorityId) {
+        priorities.firstOrNull { it.id == selectedPriorityId }
+    }
+    val selectedCategory = remember(categories, selectedCategoryId) {
+        categories.firstOrNull { it.id == selectedCategoryId }
+    }
+    val selectedTechnician = remember(technicians, selectedTechnicianId) {
+        technicians.firstOrNull { it.id == selectedTechnicianId }
+    }
+    LaunchedEffect(technicians) {
+        if (selectedTechnicianId != null && technicians.none { it.id == selectedTechnicianId }) {
+            selectedTechnicianId = null
+        }
+    }
 
     var isPriorityExpanded by remember { mutableStateOf(false) }
     var isCategoryExpanded by remember { mutableStateOf(false) }
@@ -73,17 +93,21 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     val coroutineScope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState()
 
-    val isFormValid by remember(nombre, descripcion, selectedTechnician, selectedPriority) {
+    val isFormValid by remember(nombre, descripcion, selectedTechnicianId, selectedPriorityId) {
         derivedStateOf {
-            nombre.isNotBlank() && descripcion.isNotBlank() && selectedTechnician != null && selectedPriority != null
+            nombre.isNotBlank() && descripcion.isNotBlank() && selectedTechnicianId != null && selectedPriorityId != null
         }
     }
 
     val view = LocalView.current
     val isDark = isSystemInDarkTheme()
     val headerColor = MaterialTheme.colorScheme.primary
-    val isHardwareSelected by remember(selectedCategory) {
-        derivedStateOf { selectedCategory?.name?.contains("hardware", ignoreCase = true) == true }
+    val isHardwareSelected by remember(selectedCategoryId, categories) {
+        derivedStateOf {
+            categories.firstOrNull { it.id == selectedCategoryId }
+                ?.name
+                ?.contains("hardware", ignoreCase = true) == true
+        }
     }
 
     SideEffect {
@@ -95,11 +119,10 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     LaunchedEffect(Unit) {
         coroutineScope.launch {
             try {
-                val (pResp, cResp, tResp) = withContext(Dispatchers.IO) {
-                    Triple(
+                val (pResp, cResp) = withContext(Dispatchers.IO) {
+                    Pair(
                         RetrofitClient.instance.getPriorities(),
-                        RetrofitClient.instance.getCategories(),
-                        RetrofitClient.instance.getTechnicians()
+                        RetrofitClient.instance.getCategories()
                     )
                 }
                 if (pResp.isSuccessful) {
@@ -110,14 +133,11 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                 }
                 if (cResp.isSuccessful) {
                     categories = cResp.body()?.data ?: emptyList()
-                    selectedCategory = categories.firstOrNull() // Autoselect first category
+                    if (selectedCategoryId == null) {
+                        selectedCategoryId = categories.firstOrNull()?.id
+                    }
                 } else {
                     Toast.makeText(context, "Error al cargar categorías: ${cResp.message()}", Toast.LENGTH_SHORT).show()
-                }
-                if (tResp.isSuccessful) {
-                    technicians = tResp.body()?.data ?: emptyList()
-                } else {
-                    Toast.makeText(context, "Error al cargar técnicos: ${tResp.message()}", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Log.e("CreateTicketScreen", "Fallo al cargar catálogos", e)
@@ -168,17 +188,54 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                     )
                     OutlinedTextField(value = compania, onValueChange = { compania = it }, label = { Text("Compañía") }, modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp), shape = RoundedCornerShape(8.dp))
 
-                    Dropdown(label = "Prioridad", expanded = isPriorityExpanded, onExpandedChange = { isPriorityExpanded = it }, selectedValue = selectedPriority?.name ?: "", options = priorities.map { it.name }, onSelect = { priorityName -> priorities.find { it.name == priorityName }?.let { selectedPriority = it } }, isError = selectedPriority == null)
-                    Dropdown(label = "Categoría", expanded = isCategoryExpanded, onExpandedChange = { isCategoryExpanded = it }, selectedValue = selectedCategory?.name ?: "", options = categories.map { it.name }, onSelect = { categoryName -> categories.find { it.name == categoryName }?.let { selectedCategory = it } })
                     Dropdown(
-                        label = "Asignar técnico",
+                        label = "Prioridad",
+                        expanded = isPriorityExpanded,
+                        onExpandedChange = { isPriorityExpanded = it },
+                        selectedValue = selectedPriority?.name ?: "",
+                        options = priorities.map { it.name },
+                        onSelect = { priorityName ->
+                            priorities.find { it.name == priorityName }?.let { selectedPriorityId = it.id }
+                        },
+                        isError = selectedPriorityId == null
+                    )
+                    Dropdown(
+                        label = "Categoría",
+                        expanded = isCategoryExpanded,
+                        onExpandedChange = { isCategoryExpanded = it },
+                        selectedValue = selectedCategory?.name ?: "",
+                        options = categories.map { it.name },
+                        onSelect = { categoryName ->
+                            categories.find { it.name == categoryName }?.let { selectedCategoryId = it.id }
+                        }
+                    )
+                    Dropdown(
+                        label = "Asignar tecnico",
                         expanded = isTechnicianExpanded,
-                        onExpandedChange = { isTechnicianExpanded = it },
+                        onExpandedChange = { if (!isLoadingTechs && technicians.isNotEmpty()) isTechnicianExpanded = it },
                         selectedValue = selectedTechnician?.let { listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" } } ?: "",
                         options = technicians.map { tech -> listOfNotNull(tech.first_name, tech.last_name).joinToString(" ").ifBlank { tech.username ?: "" } },
-                        onSelect = { techName -> technicians.find { (listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" }) == techName }?.let { selectedTechnician = it } },
-                        isError = selectedTechnician == null
+                        onSelect = { techName ->
+                            technicians.find {
+                                (listOfNotNull(it.first_name, it.last_name).joinToString(" ").ifBlank { it.username ?: "" }) == techName
+                            }?.let { selectedTechnicianId = it.id }
+                        },
+                        isError = !isLoadingTechs && selectedTechnicianId == null
                     )
+                    when {
+                        isLoadingTechs -> {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Cargando tecnicos...")
+                            }
+                        }
+                        techsError != null && technicians.isEmpty() -> {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(techsError, color = MaterialTheme.colorScheme.error)
+                        }
+                    }
 
                     OutlinedTextField(value = ubicacion, onValueChange = { ubicacion = it }, label = { Text("Ubicación") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp), shape = RoundedCornerShape(8.dp), trailingIcon = { IconButton(onClick = { coroutineScope.launch { mapCoordinates = getCoordinatesFromAddress(context, ubicacion) } }) { Icon(Icons.Default.LocationOn, "Mostrar en mapa") } })
                     mapCoordinates?.let {
@@ -220,12 +277,12 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                                 val request = CreateTicketRequest(
                                     title = nombre,
                                     description = fullDescription,
-                                    category_id = selectedCategory?.id,
-                                    priority_id = selectedPriority?.id,
+                                    category_id = selectedCategoryId,
+                                    priority_id = selectedPriorityId,
                                     client_company = compania.ifBlank { null },
                                     client_contact = nombre.ifBlank { null },
                                     location = ubicacion.ifBlank { null },
-                                    technician_id = selectedTechnician?.id
+                                    technician_id = selectedTechnicianId
                                 )
                                 try {
                                     val response = withContext(Dispatchers.IO) { RetrofitClient.instance.createTicket(request) }
@@ -235,12 +292,12 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                                             Toast.makeText(context, "Ticket creado y asignado", Toast.LENGTH_SHORT).show()
                                         } else {
                                             val createdId = response.body()?.data?.id
-                                            if (createdId != null && selectedTechnician != null) {
+                                            if (createdId != null && selectedTechnicianId != null) {
                                                 try {
                                                     val assignResp = withContext(Dispatchers.IO) {
                                                         RetrofitClient.instance.assignTicket(
                                                             createdId,
-                                                            AssignTicketRequest(technician_id = selectedTechnician!!.id)
+                                                            AssignTicketRequest(technician_id = selectedTechnicianId!!)
                                                         )
                                                     }
                                                     if (assignResp.isSuccessful) {

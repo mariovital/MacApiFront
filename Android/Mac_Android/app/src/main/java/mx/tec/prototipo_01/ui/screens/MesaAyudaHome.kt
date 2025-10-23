@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.navigation.NavController
+import kotlinx.coroutines.flow.collect
 import mx.tec.prototipo_01.viewmodels.MesaAyudaSharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -114,13 +115,13 @@ fun MesaAyudaHome(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            androidx.compose.runtime.LaunchedEffect(Unit) {
-                navController.currentBackStackEntry
-                    ?.savedStateHandle
-                    ?.getLiveData<Int>("mesa_select_tab")
-                    ?.observeForever { tab ->
+            androidx.compose.runtime.LaunchedEffect(navController) {
+                navController.currentBackStackEntryFlow.collect { entry ->
+                    entry.savedStateHandle.get<Int>("mesa_select_tab")?.let { tab ->
                         if (tab == 0) selectedOption = 0
+                        entry.savedStateHandle.remove<Int>("mesa_select_tab")
                     }
+                }
             }
             androidx.compose.runtime.LaunchedEffect(selectedOption) {
                 if (selectedOption == 0 || selectedOption == 1) {
