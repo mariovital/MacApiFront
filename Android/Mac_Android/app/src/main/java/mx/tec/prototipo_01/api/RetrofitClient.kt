@@ -40,7 +40,8 @@ object RetrofitClient {
         val loggingInterceptor = object : Interceptor {
             override fun intercept(chain: Interceptor.Chain): Response {
                 val request = chain.request()
-                Log.d("Api", "Request: ${request.method} ${request.url}")
+                // Evitar acceder a Request.method para no depender de getters; toString() ya incluye método y URL
+                Log.d("Api", "Request: $request")
                 return chain.proceed(request)
             }
         }

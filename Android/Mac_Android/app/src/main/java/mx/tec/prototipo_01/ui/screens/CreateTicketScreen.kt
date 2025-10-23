@@ -317,15 +317,19 @@ private fun Dropdown(
     Spacer(modifier = Modifier.height(16.dp))
 }
 
-private fun getCoordinatesFromAddress(context: Context, address: String): LatLng? {
-    return try {
-        val geocoder = Geocoder(context)
-        @Suppress("DEPRECATION")
-        val addresses = geocoder.getFromLocationName(address, 1)
-        if (addresses?.isNotEmpty() == true) {
-            LatLng(addresses[0].latitude, addresses[0].longitude)
-        } else null
-    } catch (e: IOException) {
-        null
+private suspend fun getCoordinatesFromAddress(context: Context, address: String): LatLng? {
+    return withContext(Dispatchers.IO) {
+        try {
+            val geocoder = Geocoder(context)
+            @Suppress("DEPRECATION")
+            val addresses = geocoder.getFromLocationName(address, 1)
+            if (addresses?.isNotEmpty() == true) {
+                LatLng(addresses[0].latitude, addresses[0].longitude)
+            } else null
+        } catch (e: IOException) {
+            null
+        } catch (_: Exception) {
+            null
+        }
     }
 }
