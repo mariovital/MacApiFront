@@ -131,5 +131,17 @@ router.post('/:id/attachments', upload.single('file'), ticketController.uploadTi
  */
 router.get('/:id/attachments', ticketController.getTicketAttachments);
 
+/**
+ * GET /api/tickets/:ticketId/attachments/:attachmentId/download
+ * Descargar un archivo adjunto
+ */
+router.get('/:ticketId/attachments/:attachmentId/download', ticketController.downloadTicketAttachment);
+
+/**
+ * DELETE /api/tickets/:ticketId/attachments/:attachmentId
+ * Eliminar un archivo adjunto (soft delete)
+ */
+router.delete('/:ticketId/attachments/:attachmentId', ticketController.deleteTicketAttachment);
+
 export default router;
 

@@ -448,6 +448,104 @@ export const getTicketAttachments = async (req, res) => {
     res.status(500).json({ success: false, message: 'Error obteniendo adjuntos' });
   }
 };
+
+/**
+ * Descargar archivo adjunto
+ * GET /api/tickets/:ticketId/attachments/:attachmentId/download
+ */
+export const downloadTicketAttachment = async (req, res) => {
+  try {
+    const { ticketId, attachmentId } = req.params;
+    
+    // Buscar el archivo
+    const attachment = await TicketAttachment.findOne({
+      where: { id: attachmentId, ticket_id: ticketId, deleted_at: null }
+    });
+    
+    if (!attachment) {
+      return res.status(404).json({ success: false, message: 'Archivo no encontrado' });
+    }
+
+    // Verificar permisos (mismo criterio que ver ticket)
+    const ticket = await Ticket.findByPk(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Ticket no encontrado' });
+    }
+
+    const isAdmin = req.user.role === 'admin';
+    const canView = isAdmin || ticket.assigned_to === req.user.id || ticket.created_by === req.user.id;
+    if (!canView) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso' });
+    }
+
+    // Construir ruta del archivo
+    const uploadDir = process.env.UPLOAD_DIR || './uploads';
+    const filePath = path.resolve(process.cwd(), uploadDir, attachment.file_name);
+
+    // Verificar que el archivo exista
+    const fs = await import('fs/promises');
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ success: false, message: 'Archivo no encontrado en el servidor' });
+    }
+
+    // Configurar headers para descarga
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(attachment.original_name)}"`);
+    res.setHeader('Content-Type', attachment.file_type || 'application/octet-stream');
+
+    // Enviar archivo
+    res.sendFile(filePath);
+
+  } catch (error) {
+    console.error('Error en downloadTicketAttachment:', error);
+    res.status(500).json({ success: false, message: 'Error descargando archivo' });
+  }
+};
+
+/**
+ * Eliminar archivo adjunto
+ * DELETE /api/tickets/:ticketId/attachments/:attachmentId
+ */
+export const deleteTicketAttachment = async (req, res) => {
+  try {
+    const { ticketId, attachmentId } = req.params;
+    
+    // Buscar el archivo
+    const attachment = await TicketAttachment.findOne({
+      where: { id: attachmentId, ticket_id: ticketId, deleted_at: null }
+    });
+    
+    if (!attachment) {
+      return res.status(404).json({ success: false, message: 'Archivo no encontrado' });
+    }
+
+    // Verificar permisos
+    const ticket = await Ticket.findByPk(ticketId);
+    if (!ticket) {
+      return res.status(404).json({ success: false, message: 'Ticket no encontrado' });
+    }
+
+    // Solo admin, creador del ticket o técnico asignado pueden eliminar
+    const isAdmin = req.user.role === 'admin';
+    const isCreator = ticket.created_by === req.user.id;
+    const isAssignee = ticket.assigned_to === req.user.id;
+    
+    if (!isAdmin && !isCreator && !isAssignee) {
+      return res.status(403).json({ success: false, message: 'No tienes permiso para eliminar este archivo' });
+    }
+
+    // Soft delete
+    attachment.deleted_at = new Date();
+    await attachment.save();
+
+    res.json({ success: true, message: 'Archivo eliminado exitosamente' });
+
+  } catch (error) {
+    console.error('Error en deleteTicketAttachment:', error);
+    res.status(500).json({ success: false, message: 'Error eliminando archivo' });
+  }
+};
 /**
  * Obtener estadísticas de tickets
  * GET /api/tickets/stats

@@ -68,6 +68,8 @@ const TicketDetail = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(null);
   
   // Estados para reasignación
   const [showAssignDialog, setShowAssignDialog] = useState(false);
@@ -169,12 +171,56 @@ const TicketDetail = () => {
   const handleUploadFiles = async () => {
     if (selectedFiles.length === 0) return;
 
+    setUploadingFiles(true);
+    setUploadProgress(0);
+
     try {
-      // TODO: Implementar subida de archivos
-      console.log('Subiendo archivos:', selectedFiles);
-      alert('Funcionalidad de subida en desarrollo');
+      // Subir archivos uno por uno
+      for (let i = 0; i < selectedFiles.length; i++) {
+        const file = selectedFiles[i];
+        
+        // Actualizar progreso
+        setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
+        
+        // Subir archivo
+        await ticketService.uploadAttachment(id, file, '');
+      }
+
+      // Limpiar estado y recargar ticket
+      setSelectedFiles([]);
+      setUploadProgress(null);
+      await loadTicketData();
+      
+      alert('✅ Archivos subidos exitosamente');
     } catch (err) {
       console.error('Error subiendo archivos:', err);
+      alert('❌ Error al subir archivos: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setUploadingFiles(false);
+    }
+  };
+
+  const handleDownloadFile = async (attachment) => {
+    try {
+      await ticketService.downloadAttachment(id, attachment.id, attachment.file_name);
+    } catch (err) {
+      console.error('Error descargando archivo:', err);
+      alert('❌ Error al descargar archivo');
+    }
+  };
+
+  const handleDeleteFile = async (attachmentId) => {
+    if (!window.confirm('¿Estás seguro de eliminar este archivo?')) {
+      return;
+    }
+
+    try {
+      await ticketService.deleteAttachment(id, attachmentId);
+      await loadTicketData();
+      alert('✅ Archivo eliminado exitosamente');
+    } catch (err) {
+      console.error('Error eliminando archivo:', err);
+      alert('❌ Error al eliminar archivo: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -817,17 +863,61 @@ const TicketDetail = () => {
 
                 {selectedFiles.length > 0 && (
                   <div className="mb-4">
-                    <Typography variant="caption" className="text-gray-500 dark:text-gray-400 block mb-2">
-                      {selectedFiles.length} archivo(s) seleccionado(s)
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      onClick={handleUploadFiles}
-                      className="bg-red-600 hover:bg-red-700"
-                    >
-                      Subir Archivos
-                    </Button>
+                    <div className="flex items-center justify-between mb-2">
+                      <Typography variant="caption" className="text-gray-500 dark:text-gray-400">
+                        {selectedFiles.length} archivo(s) seleccionado(s)
+                      </Typography>
+                      {uploadProgress !== null && (
+                        <Typography variant="caption" className="text-blue-600 dark:text-blue-400 font-semibold">
+                          {uploadProgress}%
+                        </Typography>
+                      )}
+                    </div>
+                    
+                    {/* Barra de progreso */}
+                    {uploadProgress !== null && (
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-2">
+                        <div 
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Lista de archivos seleccionados */}
+                    <div className="mb-3 space-y-1">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                          <FiPaperclip className="mr-1 flex-shrink-0" size={12} />
+                          <span className="truncate">{file.name}</span>
+                          <span className="ml-1 text-gray-400">({(file.size / 1024).toFixed(1)} KB)</span>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        onClick={handleUploadFiles}
+                        disabled={uploadingFiles}
+                        className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
+                        startIcon={uploadingFiles ? <CircularProgress size={16} className="text-white" /> : <FiPaperclip />}
+                      >
+                        {uploadingFiles ? 'Subiendo...' : 'Subir Archivos'}
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        onClick={() => {
+                          setSelectedFiles([]);
+                          document.getElementById('file-upload').value = '';
+                        }}
+                        disabled={uploadingFiles}
+                        className="border-gray-300 text-gray-600 hover:bg-gray-50"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -838,29 +928,55 @@ const TicketDetail = () => {
                     {ticket.attachments.map((file) => (
                       <div
                         key={file.id}
-                        className="flex items-center justify-between p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
-                        <div className="flex items-center space-x-2 flex-1 min-w-0">
-                          <FiPaperclip className="text-gray-400 flex-shrink-0" />
-                          <Typography variant="body2" className="truncate dark:text-white">
-                            {file.file_name}
-                          </Typography>
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                            <FiPaperclip className="text-red-600 dark:text-red-400" size={18} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <Typography 
+                              variant="body2" 
+                              className="truncate dark:text-white font-medium"
+                              title={file.original_name}
+                            >
+                              {file.original_name}
+                            </Typography>
+                            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              <span>{(file.file_size / 1024).toFixed(1)} KB</span>
+                              <span>•</span>
+                              <span>{new Date(file.created_at).toLocaleDateString()}</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-1 flex-shrink-0">
-                          <IconButton size="small">
-                            <FiDownload className="text-gray-600 dark:text-gray-400" />
+                        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleDownloadFile(file)}
+                            title="Descargar archivo"
+                          >
+                            <FiDownload className="text-gray-600 dark:text-gray-400 hover:text-blue-600" />
                           </IconButton>
-                          <IconButton size="small">
-                            <FiTrash2 className="text-red-600" />
-                          </IconButton>
+                          {(user.role === 'admin' || ticket.created_by === user.id || ticket.assigned_to === user.id) && (
+                            <IconButton 
+                              size="small" 
+                              onClick={() => handleDeleteFile(file.id)}
+                              title="Eliminar archivo"
+                            >
+                              <FiTrash2 className="text-gray-600 dark:text-gray-400 hover:text-red-600" />
+                            </IconButton>
+                          )}
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <Typography variant="body2" className="text-gray-500 dark:text-gray-400 text-center py-4">
-                    No hay archivos adjuntos
-                  </Typography>
+                  <div className="text-center py-8">
+                    <FiPaperclip className="mx-auto text-gray-300 dark:text-gray-600 mb-2" size={32} />
+                    <Typography variant="body2" className="text-gray-500 dark:text-gray-400">
+                      No hay archivos adjuntos
+                    </Typography>
+                  </div>
                 )}
               </CardContent>
             </Card>

@@ -130,6 +130,48 @@ const ticketService = {
     }
   },
 
+  // Obtener lista de archivos adjuntos
+  getAttachments: async (ticketId) => {
+    try {
+      const response = await api.get(`/tickets/${ticketId}/attachments`);
+      return response.data;
+    } catch (error) {
+      console.error('Error obteniendo adjuntos:', error);
+      throw error;
+    }
+  },
+
+  // Descargar archivo adjunto
+  downloadAttachment: async (ticketId, attachmentId, fileName) => {
+    try {
+      // Construir URL de descarga
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const token = localStorage.getItem('token');
+      
+      // Crear URL con token
+      const downloadUrl = `${API_BASE_URL}/tickets/${ticketId}/attachments/${attachmentId}/download?token=${token}`;
+      
+      // Abrir en nueva ventana para descargar
+      window.open(downloadUrl, '_blank');
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error descargando archivo:', error);
+      throw error;
+    }
+  },
+
+  // Eliminar archivo adjunto
+  deleteAttachment: async (ticketId, attachmentId) => {
+    try {
+      const response = await api.delete(`/tickets/${ticketId}/attachments/${attachmentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error eliminando archivo:', error);
+      throw error;
+    }
+  },
+
   // Marcar ticket como resuelto (técnico asignado)
   resolveTicket: async (ticketId, resolutionComment, evidenceFile = null) => {
     try {
