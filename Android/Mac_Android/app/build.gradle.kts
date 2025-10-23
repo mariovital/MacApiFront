@@ -62,6 +62,13 @@ android {
         if (apiBaseUrl.isNotBlank()) {
             println("INFO: Using API_BASE_URL override: $apiBaseUrl")
         }
+
+        // Optional fallback IP for the API host to bypass device DNS issues
+        val apiHostFallbackIp = resolveSecret("API_HOST_FALLBACK_IP") ?: ""
+        buildConfigField("String", "API_HOST_FALLBACK_IP", "\"${apiHostFallbackIp}\"")
+        if (apiHostFallbackIp.isNotBlank()) {
+            println("INFO: Using API_HOST_FALLBACK_IP: $apiHostFallbackIp")
+        }
     }
 
     buildTypes {

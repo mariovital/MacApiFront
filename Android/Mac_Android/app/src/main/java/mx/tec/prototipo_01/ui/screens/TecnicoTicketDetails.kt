@@ -93,7 +93,8 @@ fun TecnicoTicketDetails(
     ticketId: String
 ) {
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
-    var showCloseConfirmationDialog by remember { mutableStateOf(false) }
+    var showResolveDialog by remember { mutableStateOf(false) }
+    var resolveComment by remember { mutableStateOf("") }
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("") }
 
@@ -106,19 +107,33 @@ fun TecnicoTicketDetails(
         return
     }
 
-    if (showCloseConfirmationDialog) {
+    if (showResolveDialog) {
         AlertDialog(
-            onDismissRequest = { showCloseConfirmationDialog = false },
-            title = { Text("Confirmar Cierre") },
-            text = { Text("¿Estás seguro de que quieres cerrar este ticket?") },
-            confirmButton = {
-                Button(onClick = {
-                    viewModel.closeTicket(ticket.id)
-                    showCloseConfirmationDialog = false
-                    navController.popBackStack()
-                }) { Text("Confirmar") }
+            onDismissRequest = { showResolveDialog = false },
+            title = { Text("Resolver ticket") },
+            text = {
+                Column {
+                    Text("Agrega un comentario de resolución:")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = resolveComment,
+                        onValueChange = { resolveComment = it },
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 5,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             },
-            dismissButton = { Button(onClick = { showCloseConfirmationDialog = false }) { Text("Cancelar") } }
+            confirmButton = {
+                val enabled = resolveComment.isNotBlank()
+                Button(onClick = {
+                    viewModel.resolveTicket(ticket.id, resolveComment.trim())
+                    showResolveDialog = false
+                    navController.popBackStack()
+                }, enabled = enabled) { Text("Enviar y resolver") }
+            },
+            dismissButton = { Button(onClick = { showResolveDialog = false }) { Text("Cancelar") } }
         )
     }
 
@@ -291,10 +306,10 @@ fun TecnicoTicketDetails(
                                     Button(onClick = { rejectReason = ""; showRejectDialog = true }, modifier = Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)) { Text("Rechazar", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
                                 }
                             }
-                            TicketStatus.EN_PROCESO -> {
+                TicketStatus.EN_PROCESO -> {
                                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                     Button(onClick = { navController.navigate("tecnico_ticket_attachments/${ticket.id.encodeUrl()}/${ticket.title.encodeUrl()}/${ticket.company.encodeUrl()}/${ticket.assignedTo.encodeUrl()}/${ticket.status.displayName.encodeUrl()}/${ticket.priority.encodeUrl()}") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("Adjuntar evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
-                                    Button(onClick = { showCloseConfirmationDialog = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Cerrar Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
+                    Button(onClick = { showResolveDialog = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Resolver Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
                                 }
                             }
                             TicketStatus.COMPLETADO, TicketStatus.RECHAZADO -> {

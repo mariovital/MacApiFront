@@ -11,6 +11,7 @@ import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.TecnicoTicket
 import mx.tec.prototipo_01.models.TicketStatus
 import mx.tec.prototipo_01.models.toDomain
+import mx.tec.prototipo_01.models.api.ResolveTicketRequest
 
 sealed interface TicketsUiState {
     data class Success(val tickets: List<TecnicoTicket>) : TicketsUiState
@@ -158,6 +159,26 @@ class TecnicoSharedViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("TecnicoSharedViewModel", "Exception al cerrar ticket", e)
+            }
+        }
+    }
+
+    fun resolveTicket(ticketId: String, resolutionComment: String) {
+        viewModelScope.launch {
+            try {
+                val backendId = ticketIdMap[ticketId] ?: return@launch
+                val response = RetrofitClient.instance.resolveTicket(
+                    backendId,
+                    ResolveTicketRequest(resolution_comment = resolutionComment)
+                )
+                if (response.isSuccessful) {
+                    Log.d("TecnicoSharedViewModel", "Ticket resuelto exitosamente")
+                    loadTickets()
+                } else {
+                    Log.e("TecnicoSharedViewModel", "Error al resolver ticket: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("TecnicoSharedViewModel", "Exception al resolver ticket", e)
             }
         }
     }

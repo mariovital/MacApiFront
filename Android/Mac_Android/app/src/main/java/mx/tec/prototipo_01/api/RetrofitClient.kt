@@ -10,6 +10,9 @@ import okhttp3.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import okhttp3.Dns
+import java.net.InetAddress
+import java.net.UnknownHostException
 
 /**
  * Objeto singleton que configura y proporciona una instancia de Retrofit.
@@ -39,9 +42,26 @@ object RetrofitClient {
             Log.d("Api", "Request: ${request.method} ${request.url}")
             chain.proceed(request)
         }
+        // DNS fallback: si el dispositivo no resuelve el host, usar IP alternativa si está configurada
+        val dnsFallback: Dns = object : Dns {
+            override fun lookup(hostname: String): List<InetAddress> {
+                return try {
+                    Dns.SYSTEM.lookup(hostname)
+                } catch (e: UnknownHostException) {
+                    val fallbackIp = BuildConfig.API_HOST_FALLBACK_IP
+                    if (!fallbackIp.isNullOrBlank()) {
+                        Log.w("Api", "DNS fallo para $hostname, usando fallback IP $fallbackIp")
+                        listOf(InetAddress.getByName(fallbackIp))
+                    } else {
+                        throw e
+                    }
+                }
+            }
+        }
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .addInterceptor(authInterceptor)
+            .dns(dnsFallback)
             .connectTimeout(ApiConfig.CONNECT_TIMEOUT, TimeUnit.SECONDS)
             .readTimeout(ApiConfig.READ_TIMEOUT, TimeUnit.SECONDS)
             .writeTimeout(ApiConfig.WRITE_TIMEOUT, TimeUnit.SECONDS)

@@ -19,20 +19,29 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Create
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,19 +80,85 @@ fun MesaAyudaTickets(
             }
         }
     ) {
-    Column(
+        // Estado de búsqueda y filtros (idéntico a Técnico)
+        var filterExpanded by remember { mutableStateOf(false) }
+        var selectedFilter by remember { mutableStateOf(PendingFilterMesa.TODOS) }
+        var searchQuery by remember { mutableStateOf("") }
+
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-        .background(MaterialTheme.colorScheme.background)
-                .padding(it)
+                .background(MaterialTheme.colorScheme.background)
+                .padding(bottom = it.calculateBottomPadding())
         ) {
-            if (tickets.isEmpty()) {
-                EmptyTicketsState()
-            } else {
-                TicketsList(tickets = tickets, navController = navController)
+            Column(modifier = Modifier.fillMaxSize()) {
+                if (tickets.isEmpty()) {
+                    EmptyTicketsState()
+                } else {
+                    // Barra de búsqueda (misma UI que Técnico)
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        placeholder = { Text("Buscar por nombre") },
+                        singleLine = true
+                    )
+
+                    val filtered = remember(tickets, selectedFilter, searchQuery) {
+                        val byStatus = when (selectedFilter) {
+                            PendingFilterMesa.TODOS -> tickets
+                            PendingFilterMesa.SOLO_PENDIENTE -> tickets.filter { it.status.displayName.equals("Pendiente", true) }
+                            PendingFilterMesa.SOLO_EN_PROCESO -> tickets.filter { it.status.displayName.contains("proceso", true) }
+                        }
+                        if (searchQuery.isBlank()) byStatus else byStatus.filter { matchesSearchMesa(it, searchQuery) }
+                    }
+                    TicketsList(tickets = filtered, navController = navController)
+                }
+            }
+
+            // FAB de filtro (idéntico a Técnico: color por defecto, abajo-izquierda)
+            FloatingActionButton(
+                onClick = { filterExpanded = true },
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Default.FilterList, contentDescription = "Filtrar")
+            }
+            DropdownMenu(
+                expanded = filterExpanded,
+                onDismissRequest = { filterExpanded = false },
+                modifier = Modifier.align(Alignment.BottomStart)
+            ) {
+                PendingFilterMesa.values().forEach { option ->
+                    DropdownMenuItem(
+                        text = { Text(option.label) },
+                        onClick = {
+                            selectedFilter = option
+                            filterExpanded = false
+                        }
+                    )
+                }
             }
         }
     }
+}
+
+// Filtros disponibles para Mesa (mismos labels que Técnico)
+private enum class PendingFilterMesa(val label: String) {
+    TODOS("Todos"),
+    SOLO_PENDIENTE("Pendiente"),
+    SOLO_EN_PROCESO("En proceso")
+}
+
+private fun matchesSearchMesa(ticket: TecnicoTicket, query: String): Boolean {
+    if (query.isBlank()) return true
+    val q = query.trim()
+    return listOf(ticket.id, ticket.title, ticket.company, ticket.assignedTo, ticket.description)
+        .any { it.contains(q, ignoreCase = true) }
 }
 
 @Composable
