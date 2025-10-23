@@ -93,8 +93,8 @@ fun TecnicoTicketDetails(
     ticketId: String
 ) {
     val ticket = remember(ticketId) { viewModel.getTicketById(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString())) }
-    var showResolveDialog by remember { mutableStateOf(false) }
-    var resolveComment by remember { mutableStateOf("") }
+    var showCloseDialog by remember { mutableStateOf(false) }
+    var closeReason by remember { mutableStateOf("") }
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("") }
 
@@ -107,17 +107,17 @@ fun TecnicoTicketDetails(
         return
     }
 
-    if (showResolveDialog) {
+    if (showCloseDialog) {
         AlertDialog(
-            onDismissRequest = { showResolveDialog = false },
-            title = { Text("Resolver ticket") },
+            onDismissRequest = { showCloseDialog = false },
+            title = { Text("Cerrar ticket") },
             text = {
                 Column {
-                    Text("Agrega un comentario de resolución:")
+                    Text("Comentario de cierre (opcional):")
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
-                        value = resolveComment,
-                        onValueChange = { resolveComment = it },
+                        value = closeReason,
+                        onValueChange = { closeReason = it },
                         singleLine = false,
                         minLines = 3,
                         maxLines = 5,
@@ -126,14 +126,13 @@ fun TecnicoTicketDetails(
                 }
             },
             confirmButton = {
-                val enabled = resolveComment.isNotBlank()
                 Button(onClick = {
-                    viewModel.resolveTicket(ticket.id, resolveComment.trim())
-                    showResolveDialog = false
+                    viewModel.closeTicketWithReason(ticket.id, closeReason.trim().ifBlank { null })
+                    showCloseDialog = false
                     navController.popBackStack()
-                }, enabled = enabled) { Text("Enviar y resolver") }
+                }) { Text("Cerrar ticket") }
             },
-            dismissButton = { Button(onClick = { showResolveDialog = false }) { Text("Cancelar") } }
+            dismissButton = { Button(onClick = { showCloseDialog = false }) { Text("Cancelar") } }
         )
     }
 
@@ -309,7 +308,7 @@ fun TecnicoTicketDetails(
                 TicketStatus.EN_PROCESO -> {
                                 Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                                     Button(onClick = { navController.navigate("tecnico_ticket_attachments/${ticket.id.encodeUrl()}/${ticket.title.encodeUrl()}/${ticket.company.encodeUrl()}/${ticket.assignedTo.encodeUrl()}/${ticket.status.displayName.encodeUrl()}/${ticket.priority.encodeUrl()}") }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)) { Text("Adjuntar evidencias", color = MaterialTheme.colorScheme.onSecondary, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
-                    Button(onClick = { showResolveDialog = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Resolver Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
+            Button(onClick = { showCloseDialog = true }, modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)) { Text("Cerrar Ticket", color = Color.White, modifier = Modifier.padding(vertical = 8.dp), fontWeight = FontWeight.Bold) }
                                 }
                             }
                             TicketStatus.COMPLETADO, TicketStatus.RECHAZADO -> {

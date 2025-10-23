@@ -280,6 +280,11 @@ data class ResolveTicketRequest(
     val resolution_comment: String
 )
 
+// Cierre con comentario opcional
+data class CloseTicketRequest(
+    val close_reason: String? = null
+)
+
 data class CommentAuthor(
     val id: Int,
     val first_name: String?,

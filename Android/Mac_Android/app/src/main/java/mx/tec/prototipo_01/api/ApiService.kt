@@ -47,6 +47,7 @@ import retrofit2.http.Multipart
 import retrofit2.http.Part
 import okhttp3.MultipartBody
 import mx.tec.prototipo_01.models.api.ResolveTicketRequest
+import mx.tec.prototipo_01.models.api.CloseTicketRequest
 
 /**
  * Interfaz que define las rutas del API para Retrofit.
@@ -150,7 +151,7 @@ interface ApiService {
 
     // POST /api/tickets/{id}/close
     @POST("tickets/{id}/close")
-    suspend fun closeTicket(@Path("id") ticketId: Int): Response<TicketDetailResponse>
+    suspend fun closeTicket(@Path("id") ticketId: Int, @Body body: CloseTicketRequest): Response<TicketDetailResponse>
 
     // POST /api/tickets/{id}/reopen
     @POST("tickets/{id}/reopen")

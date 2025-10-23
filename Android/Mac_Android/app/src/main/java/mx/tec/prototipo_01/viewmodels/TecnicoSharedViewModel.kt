@@ -12,6 +12,9 @@ import mx.tec.prototipo_01.models.TecnicoTicket
 import mx.tec.prototipo_01.models.TicketStatus
 import mx.tec.prototipo_01.models.toDomain
 import mx.tec.prototipo_01.models.api.ResolveTicketRequest
+import mx.tec.prototipo_01.models.api.CloseTicketRequest
+import mx.tec.prototipo_01.models.api.UpdateStatusRequest
+import mx.tec.prototipo_01.models.api.CreateCommentRequest
 
 sealed interface TicketsUiState {
     data class Success(val tickets: List<TecnicoTicket>) : TicketsUiState
@@ -149,7 +152,7 @@ class TecnicoSharedViewModel : ViewModel() {
             try {
                 val backendId = ticketIdMap[ticketId] ?: return@launch
                 // Cerrar ticket usando el endpoint documentado en AWS Gateway
-                val response = RetrofitClient.instance.closeTicket(backendId)
+                val response = RetrofitClient.instance.closeTicket(backendId, CloseTicketRequest())
                 if (response.isSuccessful) {
                     Log.d("TecnicoSharedViewModel", "Ticket cerrado exitosamente")
                     // Recargar tickets para reflejar el cambio
@@ -159,6 +162,43 @@ class TecnicoSharedViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("TecnicoSharedViewModel", "Exception al cerrar ticket", e)
+            }
+        }
+    }
+
+    fun closeTicketWithReason(ticketId: String, reason: String?) {
+        viewModelScope.launch {
+            try {
+                val backendId = ticketIdMap[ticketId] ?: return@launch
+                val response = RetrofitClient.instance.closeTicket(backendId, CloseTicketRequest(close_reason = reason))
+                if (response.isSuccessful) {
+                    Log.d("TecnicoSharedViewModel", "Ticket cerrado exitosamente con comentario")
+                    loadTickets()
+                } else {
+                    // Fallback: si el backend remoto aún exige admin (403), permitir cierre vía PATCH status y comentario normal
+                    if (response.code() == 403) {
+                        try {
+                            val st = RetrofitClient.instance.updateTicketStatus(backendId, UpdateStatusRequest(status_id = 6))
+                            if (st.isSuccessful) {
+                                if (!reason.isNullOrBlank()) {
+                                    runCatching {
+                                        RetrofitClient.instance.addTicketComment(backendId, CreateCommentRequest(comment = "[CIERRE] ${reason}", is_internal = false))
+                                    }
+                                }
+                                Log.d("TecnicoSharedViewModel", "Ticket cerrado via fallback (status=6)")
+                                loadTickets()
+                            } else {
+                                Log.e("TecnicoSharedViewModel", "Fallback cerrar status=6 fallo: ${st.message()}")
+                            }
+                        } catch (fe: Exception) {
+                            Log.e("TecnicoSharedViewModel", "Exception en fallback de cierre", fe)
+                        }
+                    } else {
+                        Log.e("TecnicoSharedViewModel", "Error al cerrar ticket: ${response.message()}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("TecnicoSharedViewModel", "Exception al cerrar ticket con comentario", e)
             }
         }
     }

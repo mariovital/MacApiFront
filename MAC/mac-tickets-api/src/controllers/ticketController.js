@@ -556,10 +556,10 @@ export const closeTicket = async (req, res) => {
     const { close_reason } = req.body;
 
     const updatedTicket = await ticketService.closeTicket(
-      id,
-      close_reason || 'Cerrado por administrador',
-      req.user.id,
-      req.user.role
+  id,
+  close_reason,
+  req.user.id,
+  req.user.role
     );
 
     res.status(200).json({
@@ -580,6 +580,7 @@ export const closeTicket = async (req, res) => {
 
     if (
       error.message.includes('Solo administradores') ||
+      error.message.includes('técnico asignado') ||
       error.message.includes('debe estar en estado')
     ) {
       return res.status(403).json({

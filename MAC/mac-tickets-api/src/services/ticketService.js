@@ -690,10 +690,7 @@ export const resolveTicket = async (ticketId, resolutionComment, userId, userRol
  */
 export const closeTicket = async (ticketId, closeReason, userId, userRole) => {
   try {
-    // VALIDACIÓN: Solo admin puede cerrar tickets
-    if (userRole !== 'admin') {
-      throw new Error('Solo administradores pueden cerrar tickets');
-    }
+    // Permisos: Admin o Técnico asignado pueden cerrar tickets
 
     // Buscar ticket
     const ticket = await Ticket.findByPk(ticketId);
@@ -702,16 +699,23 @@ export const closeTicket = async (ticketId, closeReason, userId, userRole) => {
       throw new Error('Ticket no encontrado');
     }
 
-    // VALIDACIÓN: El ticket debe estar en estado "Resuelto" (status_id = 5)
-    if (ticket.status_id !== 5) {
-      throw new Error('El ticket debe estar en estado "Resuelto" para poder cerrarlo');
+    // Validar permisos: admin o técnico asignado
+    const isAdmin = userRole === 'admin';
+    const isAssignedTech = userRole === 'tecnico' && ticket.assigned_to === userId;
+    if (!isAdmin && !isAssignedTech) {
+      throw new Error('Solo administradores o el técnico asignado pueden cerrar tickets');
+    }
+
+    // VALIDACIÓN de estado: permitir cerrar desde "En Proceso" (3) o "Resuelto" (5)
+    if (![3, 5].includes(ticket.status_id)) {
+      throw new Error('El ticket debe estar en estado "En Proceso" o "Resuelto" para poder cerrarlo');
     }
 
     // Agregar comentario de cierre
     await Comment.create({
       ticket_id: ticketId,
       user_id: userId,
-      comment: `[CIERRE] Ticket cerrado. Razón: ${closeReason}`,
+      comment: `[CIERRE] Ticket cerrado. Razón: ${closeReason || (isAdmin ? 'Cerrado por administrador' : 'Cerrado por técnico')}`,
       is_internal: true
     });
 
@@ -733,7 +737,7 @@ export const closeTicket = async (ticketId, closeReason, userId, userRole) => {
       ]
     });
 
-    console.log(`✅ Ticket ${ticketId} cerrado por admin ${userId}`);
+  console.log(`✅ Ticket ${ticketId} cerrado por ${isAdmin ? 'admin' : 'técnico asignado'} ${userId}`);
 
     return updatedTicket;
 
