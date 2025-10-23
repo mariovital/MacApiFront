@@ -1,6 +1,6 @@
 // /services/ticketService.js
 
-import { Ticket, User, Category, Priority, TicketStatus, Comment } from '../models/index.js';
+import { Ticket, User, Category, Priority, TicketStatus, Comment, TicketAttachment } from '../models/index.js';
 import { Op } from 'sequelize';
 
 /**
@@ -153,6 +153,14 @@ export const getTicketById = async (ticketId, userId, userRole) => {
           model: User,
           as: 'assigner',
           attributes: ['id', 'first_name', 'last_name', 'username']
+        },
+        {
+          model: TicketAttachment,
+          as: 'attachments',
+          where: { deleted_at: null },
+          required: false,
+          attributes: ['id', 'original_name', 'file_name', 'file_size', 'file_type', 'file_path', 'is_image', 'created_at'],
+          order: [['created_at', 'DESC']]
         }
       ]
     });
