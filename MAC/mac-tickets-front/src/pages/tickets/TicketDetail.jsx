@@ -27,7 +27,8 @@ import {
   ListItemAvatar,
   ListItemText,
   ListItemButton,
-  Radio
+  Radio,
+  Tooltip
 } from '@mui/material';
 import {
   FiArrowLeft,
@@ -44,7 +45,12 @@ import {
   FiSend,
   FiAlertCircle,
   FiCheckCircle,
-  FiXCircle
+  FiXCircle,
+  FiFile,
+  FiFileText,
+  FiImage,
+  FiX,
+  FiEye
 } from 'react-icons/fi';
 import ticketService from '../../services/ticketService';
 import catalogService from '../../services/catalogService';
@@ -82,6 +88,10 @@ const TicketDetail = () => {
   const [showResolveDialog, setShowResolveDialog] = useState(false);
   const [resolutionComment, setResolutionComment] = useState('');
   const [evidenceFile, setEvidenceFile] = useState(null);
+  
+  // Estados para previsualización de imágenes
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const [previewImage, setPreviewImage] = useState(null);
   const [resolving, setResolving] = useState(false);
 
   // Estados para cerrar ticket (admin)
@@ -222,6 +232,37 @@ const TicketDetail = () => {
       console.error('Error eliminando archivo:', err);
       alert('❌ Error al eliminar archivo: ' + (err.response?.data?.message || err.message));
     }
+  };
+
+  // Función para obtener el icono según el tipo de archivo
+  const getFileIcon = (fileName, fileType) => {
+    const extension = fileName.split('.').pop().toLowerCase();
+    const isImage = fileType?.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(extension);
+    const isPDF = extension === 'pdf';
+    const isDoc = ['doc', 'docx', 'txt', 'rtf'].includes(extension);
+    
+    if (isImage) return FiImage;
+    if (isPDF || isDoc) return FiFileText;
+    return FiFile;
+  };
+
+  // Función para obtener la URL de preview de imagen
+  const getImagePreviewUrl = (file) => {
+    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+    const token = localStorage.getItem('token');
+    return `${API_BASE_URL}/tickets/${id}/attachments/${file.id}/download?token=${token}`;
+  };
+
+  // Función para abrir preview de imagen
+  const handlePreviewImage = (file) => {
+    setPreviewImage(file);
+    setShowImagePreview(true);
+  };
+
+  // Función para cerrar preview
+  const handleCloseImagePreview = () => {
+    setShowImagePreview(false);
+    setPreviewImage(null);
   };
 
   // Cargar técnicos al abrir el diálogo de asignación
@@ -924,57 +965,114 @@ const TicketDetail = () => {
                 <Divider className="my-4 dark:border-gray-700" />
 
                 {ticket.attachments && ticket.attachments.length > 0 ? (
-                  <div className="space-y-2">
-                    {ticket.attachments.map((file) => (
-                      <div
-                        key={file.id}
-                        className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <div className="flex items-center space-x-3 flex-1 min-w-0">
-                          <div className="flex-shrink-0 w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                            <FiPaperclip className="text-red-600 dark:text-red-400" size={18} />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <Typography 
-                              variant="body2" 
-                              className="truncate dark:text-white font-medium"
-                              title={file.original_name}
-                            >
-                              {file.original_name}
-                            </Typography>
-                            <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              <span>{(file.file_size / 1024).toFixed(1)} KB</span>
-                              <span>•</span>
-                              <span>{new Date(file.created_at).toLocaleDateString()}</span>
+                  <div className="space-y-3">
+                    {ticket.attachments.map((file) => {
+                      const FileIcon = getFileIcon(file.original_name || file.file_name, file.file_type);
+                      const isImage = file.file_type?.startsWith('image/');
+                      
+                      return (
+                        <div
+                          key={file.id}
+                          className="group relative bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-700 transition-all duration-200 overflow-hidden"
+                        >
+                          <div className="flex items-center p-3">
+                            {/* Preview o Icono */}
+                            {isImage ? (
+                              <div 
+                                className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 transition-colors"
+                                onClick={() => handlePreviewImage(file)}
+                                title="Click para ver imagen completa"
+                              >
+                                <img 
+                                  src={getImagePreviewUrl(file)}
+                                  alt={file.original_name || file.file_name}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.innerHTML = '<div class="w-full h-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"><svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>';
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg flex items-center justify-center border border-red-200 dark:border-red-800">
+                                <FileIcon className="text-red-600 dark:text-red-400" size={24} />
+                              </div>
+                            )}
+
+                            {/* Info del archivo */}
+                            <div className="flex-1 min-w-0 mx-3">
+                              <Typography 
+                                variant="body2" 
+                                className="truncate dark:text-white font-semibold mb-1"
+                                title={file.original_name || file.file_name}
+                              >
+                                {file.original_name || file.file_name}
+                              </Typography>
+                              <div className="flex items-center space-x-2 text-xs text-gray-500 dark:text-gray-400">
+                                <span className="font-medium">{(file.file_size / 1024).toFixed(1)} KB</span>
+                                <span>•</span>
+                                <span>{new Date(file.created_at).toLocaleDateString('es-MX', { 
+                                  day: 'numeric', 
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}</span>
+                                {file.file_type && (
+                                  <>
+                                    <span>•</span>
+                                    <span className="uppercase">{file.file_type.split('/')[1]}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Acciones */}
+                            <div className="flex items-center space-x-1 flex-shrink-0">
+                              {isImage && (
+                                <Tooltip title="Ver imagen">
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => handlePreviewImage(file)}
+                                    className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
+                                  >
+                                    <FiEye size={18} />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              <Tooltip title="Descargar">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleDownloadFile(file)}
+                                  className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400"
+                                >
+                                  <FiDownload size={18} />
+                                </IconButton>
+                              </Tooltip>
+                              {(user.role === 'admin' || ticket.created_by === user.id || ticket.assigned_to === user.id) && (
+                                <Tooltip title="Eliminar">
+                                  <IconButton 
+                                    size="small" 
+                                    onClick={() => handleDeleteFile(file.id)}
+                                    className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
+                                  >
+                                    <FiTrash2 size={18} />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
                             </div>
                           </div>
                         </div>
-                        <div className="flex items-center space-x-1 flex-shrink-0 ml-2">
-                          <IconButton 
-                            size="small" 
-                            onClick={() => handleDownloadFile(file)}
-                            title="Descargar archivo"
-                          >
-                            <FiDownload className="text-gray-600 dark:text-gray-400 hover:text-blue-600" />
-                          </IconButton>
-                          {(user.role === 'admin' || ticket.created_by === user.id || ticket.assigned_to === user.id) && (
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleDeleteFile(file.id)}
-                              title="Eliminar archivo"
-                            >
-                              <FiTrash2 className="text-gray-600 dark:text-gray-400 hover:text-red-600" />
-                            </IconButton>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
-                  <div className="text-center py-8">
-                    <FiPaperclip className="mx-auto text-gray-300 dark:text-gray-600 mb-2" size={32} />
-                    <Typography variant="body2" className="text-gray-500 dark:text-gray-400">
+                  <div className="text-center py-12 bg-gray-50 dark:bg-gray-900 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700">
+                    <FiPaperclip className="mx-auto text-gray-300 dark:text-gray-600 mb-3" size={40} />
+                    <Typography variant="body2" className="text-gray-500 dark:text-gray-400 font-medium">
                       No hay archivos adjuntos
+                    </Typography>
+                    <Typography variant="caption" className="text-gray-400 dark:text-gray-500 block mt-1">
+                      Sube archivos usando el botón de arriba
                     </Typography>
                   </div>
                 )}
@@ -1382,6 +1480,84 @@ const TicketDetail = () => {
             {reopening ? 'Reabriendo...' : 'Reabrir Ticket'}
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Modal de Preview de Imagen */}
+      <Dialog
+        open={showImagePreview}
+        onClose={handleCloseImagePreview}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            backgroundColor: 'transparent',
+            boxShadow: 'none',
+            maxWidth: '90vw',
+            maxHeight: '90vh'
+          }
+        }}
+      >
+        {previewImage && (
+          <div className="relative bg-black/90 rounded-2xl p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <FiImage className="text-white" size={24} />
+                <Typography variant="h6" className="text-white font-semibold truncate max-w-md">
+                  {previewImage.original_name || previewImage.file_name}
+                </Typography>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Tooltip title="Descargar">
+                  <IconButton
+                    onClick={() => handleDownloadFile(previewImage)}
+                    className="text-white hover:bg-white/10"
+                  >
+                    <FiDownload size={20} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title="Cerrar">
+                  <IconButton
+                    onClick={handleCloseImagePreview}
+                    className="text-white hover:bg-white/10"
+                  >
+                    <FiX size={24} />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            </div>
+
+            {/* Imagen */}
+            <div className="flex items-center justify-center min-h-[400px] max-h-[70vh] overflow-auto bg-gray-900 rounded-xl">
+              <img
+                src={getImagePreviewUrl(previewImage)}
+                alt={previewImage.original_name || previewImage.file_name}
+                className="max-w-full max-h-full object-contain rounded-lg"
+                style={{ maxHeight: '70vh' }}
+              />
+            </div>
+
+            {/* Info */}
+            <div className="mt-4 flex items-center justify-center space-x-4 text-sm text-gray-300">
+              <span>{(previewImage.file_size / 1024).toFixed(1)} KB</span>
+              <span>•</span>
+              <span>{new Date(previewImage.created_at).toLocaleDateString('es-MX', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}</span>
+              {previewImage.file_type && (
+                <>
+                  <span>•</span>
+                  <span className="uppercase">{previewImage.file_type}</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </Dialog>
     </div>
   );
