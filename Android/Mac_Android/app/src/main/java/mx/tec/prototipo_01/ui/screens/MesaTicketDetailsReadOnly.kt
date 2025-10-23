@@ -302,12 +302,15 @@ fun MesaTicketDetailsReadOnly(
                         val cameraPositionState = rememberCameraPositionState {
                             position = CameraPosition.fromLatLngZoom(defaultTarget, 15f)
                         }
-                        LaunchedEffect(lrSnapshot) {
-                            val success = lrSnapshot as? LocationResult.Success
-                            success?.let { s ->
-                                cameraPositionState.animate(
-                                    CameraUpdateFactory.newLatLngZoom(s.latLng, 15f)
-                                )
+                        var mapLoaded by remember { mutableStateOf(false) }
+                        LaunchedEffect(lrSnapshot, mapLoaded) {
+                            if (mapLoaded) {
+                                val success = lrSnapshot as? LocationResult.Success
+                                success?.let { s ->
+                                    cameraPositionState.animate(
+                                        CameraUpdateFactory.newLatLngZoom(s.latLng, 15f)
+                                    )
+                                }
                             }
                         }
                         Box(
@@ -318,7 +321,8 @@ fun MesaTicketDetailsReadOnly(
                         ) {
                             GoogleMap(
                                 modifier = Modifier.matchParentSize(),
-                                cameraPositionState = cameraPositionState
+                                cameraPositionState = cameraPositionState,
+                                onMapLoaded = { mapLoaded = true }
                             ) {
                                 val success = lrSnapshot as? LocationResult.Success
                                 success?.let { s ->
@@ -326,7 +330,7 @@ fun MesaTicketDetailsReadOnly(
                                 }
                             }
 
-                            if (lrSnapshot is LocationResult.Loading) {
+                            if (!mapLoaded || lrSnapshot is LocationResult.Loading) {
                                 Box(Modifier.matchParentSize().background(Color(0x12000000)), contentAlignment = Alignment.Center) {
                                     CircularProgressIndicator()
                                 }

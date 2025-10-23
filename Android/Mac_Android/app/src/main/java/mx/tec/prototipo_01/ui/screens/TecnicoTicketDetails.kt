@@ -292,9 +292,29 @@ fun TecnicoTicketDetails(
                         Spacer(modifier = Modifier.height(16.dp))
                         val defaultTarget = remember { LatLng(19.4056, -99.0965) }
                         val cameraPositionState = rememberCameraPositionState { position = CameraPosition.fromLatLngZoom(defaultTarget, 15f) }
-                        LaunchedEffect(mapCoordinates) { mapCoordinates?.let { target -> cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(target, 15f)) } }
-                        GoogleMap(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp)), cameraPositionState = cameraPositionState) {
-                            mapCoordinates?.let { target -> Marker(state = MarkerState(position = target), title = "Ubicación del Ticket") }
+                        var mapLoaded by remember { mutableStateOf(false) }
+                        LaunchedEffect(mapCoordinates, mapLoaded) {
+                            if (mapLoaded) {
+                                mapCoordinates?.let { target ->
+                                    cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(target, 15f))
+                                }
+                            }
+                        }
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(12.dp))) {
+                            GoogleMap(
+                                modifier = Modifier.matchParentSize(),
+                                cameraPositionState = cameraPositionState,
+                                onMapLoaded = { mapLoaded = true }
+                            ) {
+                                mapCoordinates?.let { target ->
+                                    Marker(state = MarkerState(position = target), title = "Ubicación del Ticket")
+                                }
+                            }
+                            if (!mapLoaded) {
+                                Box(Modifier.matchParentSize().background(Color(0x12000000)), contentAlignment = Alignment.Center) {
+                                    androidx.compose.material3.CircularProgressIndicator()
+                                }
+                            }
                         }
                         if (geocodeTried && geocodeFailed) Text(text = "No se pudo ubicar la dirección en el mapa", color = Color.Gray, fontSize = 12.sp)
                         Spacer(modifier = Modifier.height(24.dp))

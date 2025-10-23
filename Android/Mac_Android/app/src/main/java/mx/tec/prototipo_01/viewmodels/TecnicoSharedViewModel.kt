@@ -82,7 +82,9 @@ class TecnicoSharedViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val backendId = ticketIdMap[ticketNumber] ?: return@launch
-                val response = RetrofitClient.instance.getTicketById(backendId)
+                val response = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    RetrofitClient.instance.getTicketById(backendId)
+                }
                 if (response.isSuccessful) {
                     val apiItem = response.body()?.data ?: return@launch
                     val updated = apiItem.toDomain()

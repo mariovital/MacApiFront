@@ -45,6 +45,17 @@ object RetrofitClient {
                 return chain.proceed(request)
             }
         }
+        // Interceptor de red para medir duración y código de respuesta
+        val timingInterceptor = Interceptor { chain ->
+            val req = chain.request()
+            val startNs = System.nanoTime()
+            val resp = chain.proceed(req)
+            val tookMs = (System.nanoTime() - startNs) / 1_000_000.0
+            try {
+                Log.d("Api", "Response: ${resp.code} ${req.url} in ${"%.1f".format(tookMs)} ms")
+            } catch (_: Exception) { }
+            resp
+        }
         // DNS preferente: si hay IP de fallback configurada, úsala siempre para evitar latencias de DNS
         val dnsFallback: Dns = object : Dns {
             override fun lookup(hostname: String): List<InetAddress> {
@@ -59,6 +70,7 @@ object RetrofitClient {
         }
         OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
+            .addNetworkInterceptor(timingInterceptor)
             .addInterceptor(authInterceptor)
             .dns(dnsFallback)
             .connectTimeout(ApiConfig.CONNECT_TIMEOUT, TimeUnit.SECONDS)

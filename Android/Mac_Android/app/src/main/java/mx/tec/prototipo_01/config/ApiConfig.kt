@@ -47,9 +47,9 @@ object ApiConfig {
         }
     
     // ====== CONFIGURACIÓN ADICIONAL ======
-    const val CONNECT_TIMEOUT = 15L // segundos
-    const val READ_TIMEOUT = 20L    // segundos
-    const val WRITE_TIMEOUT = 20L   // segundos
+    const val CONNECT_TIMEOUT = 7L  // segundos (fail-fast en conexiones lentas)
+    const val READ_TIMEOUT = 15L    // segundos
+    const val WRITE_TIMEOUT = 15L   // segundos
     
     // Información del ambiente actual
     fun getEnvironmentInfo(): String {

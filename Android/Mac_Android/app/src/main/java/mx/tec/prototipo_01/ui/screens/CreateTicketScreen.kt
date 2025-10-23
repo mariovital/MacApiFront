@@ -92,6 +92,7 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val cameraPositionState = rememberCameraPositionState()
+    var mapLoaded by remember { mutableStateOf(false) }
 
     val isFormValid by remember(nombre, descripcion, selectedTechnicianId, selectedPriorityId) {
         derivedStateOf {
@@ -238,9 +239,32 @@ fun CreateTicketScreen(navController: NavController, viewModel: MesaAyudaSharedV
                     }
 
                     OutlinedTextField(value = ubicacion, onValueChange = { ubicacion = it }, label = { Text("Ubicación") }, modifier = Modifier.fillMaxWidth().padding(top = 16.dp), shape = RoundedCornerShape(8.dp), trailingIcon = { IconButton(onClick = { coroutineScope.launch { mapCoordinates = getCoordinatesFromAddress(context, ubicacion) } }) { Icon(Icons.Default.LocationOn, "Mostrar en mapa") } })
-                    mapCoordinates?.let {
-                        LaunchedEffect(it) { cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(it, 15f)) }
-                        GoogleMap(modifier = Modifier.fillMaxWidth().height(200.dp).padding(vertical = 16.dp).clip(RoundedCornerShape(8.dp)), cameraPositionState = cameraPositionState) { Marker(state = MarkerState(position = it), title = ubicacion) }
+                    mapCoordinates?.let { target ->
+                        LaunchedEffect(target, mapLoaded) {
+                            if (mapLoaded) {
+                                cameraPositionState.animate(CameraUpdateFactory.newLatLngZoom(target, 15f))
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(200.dp)
+                                .padding(vertical = 16.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        ) {
+                            GoogleMap(
+                                modifier = Modifier.matchParentSize(),
+                                cameraPositionState = cameraPositionState,
+                                onMapLoaded = { mapLoaded = true }
+                            ) {
+                                Marker(state = MarkerState(position = target), title = ubicacion)
+                            }
+                            if (!mapLoaded) {
+                                Box(Modifier.matchParentSize().background(Color(0x12000000)), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
                     }
                     OutlinedTextField(
                         value = descripcion,
