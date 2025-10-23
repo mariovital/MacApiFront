@@ -15,6 +15,10 @@ import mx.tec.prototipo_01.models.api.ResolveTicketRequest
 import mx.tec.prototipo_01.models.api.CloseTicketRequest
 import mx.tec.prototipo_01.models.api.UpdateStatusRequest
 import mx.tec.prototipo_01.models.api.CreateCommentRequest
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 sealed interface TicketsUiState {
     data class Success(val tickets: List<TecnicoTicket>) : TicketsUiState
@@ -172,7 +176,17 @@ class TecnicoSharedViewModel : ViewModel() {
                 val backendId = ticketIdMap[ticketId] ?: return@launch
                 val response = RetrofitClient.instance.closeTicket(backendId, CloseTicketRequest(close_reason = reason))
                 if (response.isSuccessful) {
-                    Log.d("TecnicoSharedViewModel", "Ticket cerrado exitosamente con comentario")
+                    Log.d("TecnicoSharedViewModel", "Ticket cerrado exitosamente con comentario (API)")
+                    // Agregar comentario visible con tag para fácil búsqueda
+                    runCatching {
+                        RetrofitClient.instance.addTicketComment(
+                            backendId,
+                            CreateCommentRequest(
+                                comment = buildCloseTagComment(reason, fallback = false),
+                                is_internal = false
+                            )
+                        )
+                    }
                     loadTickets()
                 } else {
                     // Fallback: si el backend remoto aún exige admin (403), permitir cierre vía PATCH status y comentario normal
@@ -180,12 +194,17 @@ class TecnicoSharedViewModel : ViewModel() {
                         try {
                             val st = RetrofitClient.instance.updateTicketStatus(backendId, UpdateStatusRequest(status_id = 6))
                             if (st.isSuccessful) {
-                                if (!reason.isNullOrBlank()) {
-                                    runCatching {
-                                        RetrofitClient.instance.addTicketComment(backendId, CreateCommentRequest(comment = "[CIERRE] ${reason}", is_internal = false))
-                                    }
+                                // Registrar comentario público con tag especial para ubicar cierres por fallback
+                                runCatching {
+                                    RetrofitClient.instance.addTicketComment(
+                                        backendId,
+                                        CreateCommentRequest(
+                                            comment = buildCloseTagComment(reason, fallback = true),
+                                            is_internal = false
+                                        )
+                                    )
                                 }
-                                Log.d("TecnicoSharedViewModel", "Ticket cerrado via fallback (status=6)")
+                                Log.d("TecnicoSharedViewModel", "Ticket cerrado via FALLBACK (status=6)")
                                 loadTickets()
                             } else {
                                 Log.e("TecnicoSharedViewModel", "Fallback cerrar status=6 fallo: ${st.message()}")
@@ -201,6 +220,15 @@ class TecnicoSharedViewModel : ViewModel() {
                 Log.e("TecnicoSharedViewModel", "Exception al cerrar ticket con comentario", e)
             }
         }
+    }
+
+    private fun buildCloseTagComment(reason: String?, fallback: Boolean): String {
+        val tag = if (fallback) "[CIERRE-APP-FALLBACK]" else "[CIERRE-APP]"
+        val ts = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault()).apply {
+            timeZone = TimeZone.getDefault()
+        }.format(Date())
+        val base = reason?.takeIf { it.isNotBlank() } ?: "Cierre desde app"
+        return "$tag $base · $ts"
     }
 
     fun resolveTicket(ticketId: String, resolutionComment: String) {

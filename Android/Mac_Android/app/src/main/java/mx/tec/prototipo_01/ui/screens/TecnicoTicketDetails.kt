@@ -97,6 +97,7 @@ fun TecnicoTicketDetails(
     var closeReason by remember { mutableStateOf("") }
     var showRejectDialog by remember { mutableStateOf(false) }
     var rejectReason by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     LaunchedEffect(ticketId) {
         viewModel.refreshTicketDetail(URLDecoder.decode(ticketId, StandardCharsets.UTF_8.toString()))
@@ -168,7 +169,6 @@ fun TecnicoTicketDetails(
     val (dispositivo, serialNumber, problema) = remember(ticket.description) { parseDescription(ticket.description) }
     val ubicacion = ticket.location ?: "—"
     val cleanAddress = remember(ubicacion) { sanitizeAddress(ubicacion) }
-    val context = LocalContext.current
     var mapCoordinates by remember(ubicacion) { mutableStateOf<LatLng?>(null) }
     var geocodeTried by remember(ubicacion) { mutableStateOf(false) }
     var geocodeFailed by remember(ubicacion) { mutableStateOf(false) }
