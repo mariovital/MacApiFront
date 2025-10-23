@@ -34,9 +34,7 @@ class TecnicoSharedViewModel : ViewModel() {
     var historyTicketsState: TicketsUiState by mutableStateOf(TicketsUiState.Loading)
         private set
 
-    init {
-        loadTickets()
-    }
+    // La carga inicial se dispara desde la pantalla al entrar al home del técnico
 
     fun loadTickets() {
         viewModelScope.launch {

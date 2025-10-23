@@ -44,7 +44,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import mx.tec.prototipo_01.R
 import mx.tec.prototipo_01.viewmodels.LoginState
-import mx.tec.prototipo_01.viewmodels.TecnicoSharedViewModel
 import mx.tec.prototipo_01.viewmodels.LoginViewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,11 +55,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.models.api.PasswordResetRequest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
     val loginViewModel: LoginViewModel = viewModel()
-    val tecnicoViewModel: TecnicoSharedViewModel = viewModel()
     val context = LocalContext.current
     val loginState = loginViewModel.loginState
 
@@ -80,17 +80,22 @@ fun LoginScreen(modifier: Modifier = Modifier, navController: NavController) {
     }
     // ---
 
+    // Warm-up del backend: ping ligero en background para evitar primer-request lento por cold start/DNS
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            withTimeoutOrNull(2000) {
+                try { RetrofitClient.instance.authHealth() } catch (_: Exception) {}
+            }
+        }
+    }
+
     LaunchedEffect(loginState) {
         when (loginState) {
             is LoginState.Success -> {
                 Toast.makeText(context, "Login Exitoso", Toast.LENGTH_SHORT).show()
                 val roleNorm = loginState.role.lowercase()
                 val destination = when {
-                    roleNorm == "tecnico" -> {
-                        // Precargar tickets para técnico
-                        tecnicoViewModel.loadTickets()
-                        "tecnico_home"
-                    }
+                    roleNorm == "tecnico" -> "tecnico_home"
                     roleNorm == "mesa_trabajo" || roleNorm == "mesa de ayuda" -> "mesa_ayuda_home"
                     roleNorm == "admin" -> "mesa_ayuda_home" // no hay home de admin aún; usa mesa_ayuda
                     else -> "client_home"

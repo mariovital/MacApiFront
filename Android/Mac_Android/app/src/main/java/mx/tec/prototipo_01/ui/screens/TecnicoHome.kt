@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +49,11 @@ fun TecnicoHome(
     onThemeChange: () -> Unit
 ) {
     var selectedOption by rememberSaveable { mutableStateOf(0) }
+
+    // Cargar tickets al entrar al home del técnico
+    LaunchedEffect(Unit) {
+        viewModel.loadTickets()
+    }
 
     val view = LocalView.current
     val headerColor = MaterialTheme.colorScheme.primary

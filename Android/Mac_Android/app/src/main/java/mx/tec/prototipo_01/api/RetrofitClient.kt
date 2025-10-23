@@ -45,20 +45,16 @@ object RetrofitClient {
                 return chain.proceed(request)
             }
         }
-        // DNS fallback: si el dispositivo no resuelve el host, usar IP alternativa si está configurada
+        // DNS preferente: si hay IP de fallback configurada, úsala siempre para evitar latencias de DNS
         val dnsFallback: Dns = object : Dns {
             override fun lookup(hostname: String): List<InetAddress> {
-                return try {
-                    Dns.SYSTEM.lookup(hostname)
-                } catch (e: UnknownHostException) {
-                    val fallbackIp = BuildConfig.API_HOST_FALLBACK_IP
-                    if (!fallbackIp.isNullOrBlank()) {
-                        Log.w("Api", "DNS fallo para $hostname, usando fallback IP $fallbackIp")
-                        listOf(InetAddress.getByName(fallbackIp))
-                    } else {
-                        throw e
-                    }
+                val fallbackIp = BuildConfig.API_HOST_FALLBACK_IP
+                if (!fallbackIp.isNullOrBlank()) {
+                    Log.w("Api", "DNS preferente: usando fallback IP $fallbackIp para $hostname")
+                    return listOf(InetAddress.getByName(fallbackIp))
                 }
+                // Sin fallback, usar DNS del sistema
+                return Dns.SYSTEM.lookup(hostname)
             }
         }
         OkHttpClient.Builder()

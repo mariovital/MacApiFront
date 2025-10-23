@@ -11,6 +11,8 @@ import mx.tec.prototipo_01.api.RetrofitClient
 import mx.tec.prototipo_01.auth.TokenStore
 import mx.tec.prototipo_01.models.LoginRequest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 // Simple data class to hold the error response from the API
 data class ErrorResponse(val message: String)
@@ -49,7 +51,7 @@ class LoginViewModel : ViewModel() {
 
     // Performs the login operation
     fun login() {
-        viewModelScope.launch {
+    viewModelScope.launch {
             loginState = LoginState.Loading
             try {
                 // Normalizar entradas
@@ -57,7 +59,7 @@ class LoginViewModel : ViewModel() {
                 val normalizedPassword = password.trim()
 
                 val request = LoginRequest(email = normalizedEmail, password = normalizedPassword)
-                val response = RetrofitClient.instance.login(request)
+        val response = withContext(Dispatchers.IO) { RetrofitClient.instance.login(request) }
 
                 if (response.isSuccessful) {
                     val body = response.body()

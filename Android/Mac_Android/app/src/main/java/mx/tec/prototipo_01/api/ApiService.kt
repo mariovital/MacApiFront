@@ -63,6 +63,10 @@ interface ApiService {
     @POST("auth/login")
     suspend fun login(@Body request: LoginRequest): Response<LoginResponse>
 
+        // GET /api/auth/health - ligero ping para calentar el backend (si existe)
+        @GET("auth/health")
+        suspend fun authHealth(): Response<okhttp3.ResponseBody>
+
     // POST /api/auth/refresh
     @POST("auth/refresh")
     suspend fun refresh(@Body request: AuthRefreshRequest): Response<AuthRefreshResponse>
