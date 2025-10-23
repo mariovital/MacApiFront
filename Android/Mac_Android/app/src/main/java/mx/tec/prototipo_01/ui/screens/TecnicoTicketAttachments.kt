@@ -157,6 +157,7 @@ fun TecnicoTicketAttachments(
                 items(items) { att ->
                     val isImage = att.is_image || att.file_type.startsWith("image/")
                     val fileUrl = absoluteUrl(att.s3_url)
+                    if (fileUrl == null) return@items // skip rendering if url is null
                     ListItem(
                         leadingContent = {
                             if (isImage) {
@@ -383,7 +384,8 @@ private suspend fun postComment(ticketNumber: String?, text: String, onPosted: (
     }
 }
 
-private fun absoluteUrl(pathOrUrl: String): String {
+private fun absoluteUrl(pathOrUrl: String?): String? {
+    if (pathOrUrl.isNullOrBlank()) return null
     return if (pathOrUrl.startsWith("http")) pathOrUrl else RetrofitClientBase() + pathOrUrl.removePrefix("/")
 }
 
