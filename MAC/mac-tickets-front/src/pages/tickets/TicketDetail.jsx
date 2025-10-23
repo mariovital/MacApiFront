@@ -93,6 +93,7 @@ const TicketDetail = () => {
   const [showImagePreview, setShowImagePreview] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
   const [resolving, setResolving] = useState(false);
+  const [imageUrls, setImageUrls] = useState({}); // Cache de URLs de imágenes
 
   // Estados para cerrar ticket (admin)
   const [showCloseDialog, setShowCloseDialog] = useState(false);
@@ -108,6 +109,29 @@ const TicketDetail = () => {
   useEffect(() => {
     loadTicketData();
   }, [id]);
+
+  // Cargar URLs de imágenes cuando cambien los attachments
+  useEffect(() => {
+    if (ticket && ticket.attachments && ticket.attachments.length > 0) {
+      loadImageUrls();
+    }
+  }, [ticket?.attachments]);
+
+  const loadImageUrls = async () => {
+    if (!ticket || !ticket.attachments) return;
+    
+    const newUrls = {};
+    for (const file of ticket.attachments) {
+      const isImage = file.is_image || file.file_type?.startsWith('image/');
+      if (isImage) {
+        const url = await getImagePreviewUrl(file);
+        if (url) {
+          newUrls[file.id] = url;
+        }
+      }
+    }
+    setImageUrls(newUrls);
+  };
 
   const loadTicketData = async () => {
     try {
@@ -246,11 +270,29 @@ const TicketDetail = () => {
     return FiFile;
   };
 
-  // Función para obtener la URL de preview de imagen
-  const getImagePreviewUrl = (file) => {
-    const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
-    const token = localStorage.getItem('token');
-    return `${API_BASE_URL}/tickets/${id}/attachments/${file.id}/download?token=${token}`;
+  // Función para obtener la URL de preview de imagen (usando fetch para evitar CORS)
+  const getImagePreviewUrl = async (file) => {
+    try {
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch(`${API_BASE_URL}/tickets/${id}/attachments/${file.id}/download`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        console.error('Error descargando imagen:', response.status);
+        return null;
+      }
+      
+      const blob = await response.blob();
+      return URL.createObjectURL(blob);
+    } catch (error) {
+      console.error('Error obteniendo preview de imagen:', error);
+      return null;
+    }
   };
 
   // Función para abrir preview de imagen
@@ -983,15 +1025,17 @@ const TicketDetail = () => {
                                 onClick={() => handlePreviewImage(file)}
                                 title="Click para ver imagen completa"
                               >
-                                <img 
-                                  src={getImagePreviewUrl(file)}
-                                  alt={file.original_name || file.file_name}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.parentElement.innerHTML = '<div class="w-full h-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center"><svg class="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div>';
-                                  }}
-                                />
+                                {imageUrls[file.id] ? (
+                                  <img 
+                                    src={imageUrls[file.id]}
+                                    alt={file.original_name || file.file_name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                    <CircularProgress size={20} className="text-gray-400" />
+                                  </div>
+                                )}
                               </div>
                             ) : (
                               <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg flex items-center justify-center border border-red-200 dark:border-red-800">
@@ -1530,12 +1574,18 @@ const TicketDetail = () => {
 
             {/* Imagen */}
             <div className="flex items-center justify-center min-h-[400px] max-h-[70vh] overflow-auto bg-gray-900 rounded-xl">
-              <img
-                src={getImagePreviewUrl(previewImage)}
-                alt={previewImage.original_name || previewImage.file_name}
-                className="max-w-full max-h-full object-contain rounded-lg"
-                style={{ maxHeight: '70vh' }}
-              />
+              {imageUrls[previewImage.id] ? (
+                <img
+                  src={imageUrls[previewImage.id]}
+                  alt={previewImage.original_name || previewImage.file_name}
+                  className="max-w-full max-h-full object-contain rounded-lg"
+                  style={{ maxHeight: '70vh' }}
+                />
+              ) : (
+                <div className="flex items-center justify-center p-8">
+                  <CircularProgress size={40} className="text-white" />
+                </div>
+              )}
             </div>
 
             {/* Info */}
