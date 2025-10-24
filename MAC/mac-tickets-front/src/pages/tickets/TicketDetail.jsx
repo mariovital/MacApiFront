@@ -125,9 +125,8 @@ const TicketDetail = () => {
       const isImage = file.is_image || file.file_type?.startsWith('image/');
       if (isImage) {
         const url = await getImagePreviewUrl(file);
-        if (url) {
-          newUrls[file.id] = url;
-        }
+        // Si url es null (404 u otro error), marcar como 'failed' para no mostrar loading infinito
+        newUrls[file.id] = url || 'failed';
       }
     }
     setImageUrls(newUrls);
@@ -1066,24 +1065,35 @@ const TicketDetail = () => {
                           <div className="flex items-center p-3">
                             {/* Preview o Icono */}
                             {isImage ? (
-                              <div 
-                                className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 transition-colors"
-                                onClick={() => handlePreviewImage(file)}
-                                title="Click para ver imagen completa"
-                              >
-                                {imageUrls[file.id] ? (
+                              // Si es imagen, verificar si se pudo cargar
+                              imageUrls[file.id] && imageUrls[file.id] !== 'failed' ? (
+                                // Imagen cargada correctamente - Mostrar preview clickeable
+                                <div 
+                                  className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden cursor-pointer border-2 border-gray-200 dark:border-gray-700 hover:border-red-500 transition-colors"
+                                  onClick={() => handlePreviewImage(file)}
+                                  title="Click para ver imagen completa"
+                                >
                                   <img 
                                     src={imageUrls[file.id]}
                                     alt={file.original_name || file.file_name}
                                     className="w-full h-full object-cover"
                                   />
-                                ) : (
+                                </div>
+                              ) : imageUrls[file.id] === 'failed' ? (
+                                // Imagen falló (404 u otro error) - Mostrar ícono
+                                <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-lg flex items-center justify-center border border-gray-300 dark:border-gray-600">
+                                  <FileIcon className="text-gray-400 dark:text-gray-500" size={24} />
+                                </div>
+                              ) : (
+                                // Aún cargando - Mostrar spinner
+                                <div className="flex-shrink-0 w-16 h-16 rounded-lg border-2 border-gray-200 dark:border-gray-700 overflow-hidden">
                                   <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                                     <CircularProgress size={20} className="text-gray-400" />
                                   </div>
-                                )}
-                              </div>
+                                </div>
+                              )
                             ) : (
+                              // No es imagen - Mostrar ícono según tipo
                               <div className="flex-shrink-0 w-16 h-16 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-lg flex items-center justify-center border border-red-200 dark:border-red-800">
                                 <FileIcon className="text-red-600 dark:text-red-400" size={24} />
                               </div>
@@ -1118,7 +1128,7 @@ const TicketDetail = () => {
 
                             {/* Acciones */}
                             <div className="flex items-center space-x-1 flex-shrink-0">
-                              {isImage && (
+                              {isImage && imageUrls[file.id] && imageUrls[file.id] !== 'failed' && (
                                 <Tooltip title="Ver imagen">
                                   <IconButton 
                                     size="small" 
@@ -1620,13 +1630,23 @@ const TicketDetail = () => {
 
             {/* Imagen */}
             <div className="flex items-center justify-center min-h-[400px] max-h-[70vh] overflow-auto bg-gray-900 rounded-xl">
-              {imageUrls[previewImage.id] ? (
+              {imageUrls[previewImage.id] && imageUrls[previewImage.id] !== 'failed' ? (
                 <img
                   src={imageUrls[previewImage.id]}
                   alt={previewImage.original_name || previewImage.file_name}
                   className="max-w-full max-h-full object-contain rounded-lg"
                   style={{ maxHeight: '70vh' }}
                 />
+              ) : imageUrls[previewImage.id] === 'failed' ? (
+                <div className="flex flex-col items-center justify-center p-8 text-gray-400">
+                  <FiImage size={64} className="mb-4 opacity-30" />
+                  <Typography variant="body1" className="text-gray-300">
+                    Imagen no disponible
+                  </Typography>
+                  <Typography variant="caption" className="text-gray-500 mt-2">
+                    El archivo no existe en el servidor
+                  </Typography>
+                </div>
               ) : (
                 <div className="flex items-center justify-center p-8">
                   <CircularProgress size={40} className="text-white" />
