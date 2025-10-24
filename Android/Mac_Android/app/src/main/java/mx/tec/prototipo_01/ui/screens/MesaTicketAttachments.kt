@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -41,11 +42,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Scale
@@ -82,6 +87,7 @@ fun MesaTicketAttachments(
     var comments by remember { mutableStateOf(listOf<CommentItem>()) }
     var commentsLoading by remember { mutableStateOf(false) }
     var newComment by remember { mutableStateOf("") }
+    var previewImageUrl by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -129,20 +135,23 @@ fun MesaTicketAttachments(
                     }
                 }
                 items(items) { att ->
-                    val fileType = (att.file_type as String?)?.trim()
-                    val isImage = att.is_image || (fileType?.startsWith("image/") == true)
-                    val s3Url = (att.s3_url as String?)?.trim()
-                    val fileName = (att.file_name as String?)?.trim()
-                    val originalName = (att.original_name as String?)?.trim()
+                    val rawFileType = (att.file_type as? String)?.trim()
+                    val s3Url = (att.s3_url as? String)?.trim()
+                    val fileName = (att.file_name as? String)?.trim()
+                    val originalName = (att.original_name as? String)?.trim()
                     val rawUrl = when {
                         !s3Url.isNullOrBlank() -> s3Url
                         !fileName.isNullOrBlank() -> "uploads/${fileName.encodeUrl()}"
                         else -> null
                     }
                     val fileUrl = absoluteUrl(rawUrl) ?: return@items
-                    val displayName = originalName?.ifBlank { null } ?: fileName ?: "Adjunto"
-                    val mimeLabel = fileType.orEmpty().ifBlank { "Sin tipo" }
-                    val isPdf = (fileType == "application/pdf") || (originalName?.endsWith(".pdf", ignoreCase = true) == true)
+                    val isImage = att.is_image || isProbablyImage(rawFileType, originalName, fileUrl)
+                    val fileType = rawFileType ?: ""
+                    val displayName = originalName?.takeIf { it.isNotBlank() } ?: fileName ?: "Adjunto"
+                    val mimeLabel = fileType.ifBlank { "Sin tipo" }
+                    val isPdf = rawFileType?.equals("application/pdf", ignoreCase = true) == true ||
+                        originalName?.endsWith(".pdf", ignoreCase = true) == true
+                    val resolvedMime = resolveMime(rawFileType, originalName ?: fileName, fileUrl)
                     ListItem(
                         leadingContent = {
                             if (isImage) {
@@ -174,8 +183,11 @@ fun MesaTicketAttachments(
                         headlineContent = { Text(displayName) },
                         supportingContent = { Text("$mimeLabel · ${(att.file_size / 1024)} KB") },
                         modifier = Modifier.clickable {
-                            // Solo lectura: abrir en visor externo
-                            openExternal(ctx, fileUrl, att.file_type)
+                            if (isImage) {
+                                previewImageUrl = fileUrl
+                            } else {
+                                openExternal(ctx, fileUrl, resolvedMime, originalName ?: fileName)
+                            }
                         }
                     )
                     Divider()
@@ -258,6 +270,63 @@ fun MesaTicketAttachments(
                     enabled = newComment.trim().isNotEmpty()
                 ) { androidx.compose.material3.Text("Enviar") }
             }
+
+            val currentPreview = previewImageUrl
+            if (currentPreview != null) {
+                androidx.compose.ui.window.Dialog(onDismissRequest = { previewImageUrl = null }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+                    androidx.compose.material3.Surface(color = Color.Black.copy(alpha = 0.8f)) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp)
+                        ) {
+                            val ctxLocal = LocalContext.current
+                            val density = LocalDensity.current
+                            val cfg = LocalConfiguration.current
+                            val previewWidthPx = with(density) { cfg.screenWidthDp.dp.roundToPx() }
+                            val previewHeightPx = with(density) { 400.dp.roundToPx() }
+                            val previewReq = remember(currentPreview) {
+                                ImageRequest.Builder(ctxLocal)
+                                    .data(currentPreview)
+                                    .size(previewWidthPx, previewHeightPx)
+                                    .scale(Scale.FIT)
+                                    .precision(Precision.INEXACT)
+                                    .bitmapConfig(Bitmap.Config.ARGB_8888)
+                                    .allowHardware(false)
+                                    .crossfade(true)
+                                    .build()
+                            }
+                            SubcomposeAsyncImage(
+                                model = previewReq,
+                                contentDescription = "vista previa",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(400.dp),
+                                contentScale = ContentScale.Fit
+                            ) {
+                                when (val state = painter.state) {
+                                    is AsyncImagePainter.State.Loading -> {
+                                        CircularProgressIndicator()
+                                    }
+                                    is AsyncImagePainter.State.Error -> {
+                                        Icon(
+                                            imageVector = Icons.Default.AttachFile,
+                                            contentDescription = "error al cargar",
+                                            tint = Color.White
+                                        )
+                                    }
+                                    else -> SubcomposeAsyncImageContent()
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            androidx.compose.material3.OutlinedButton(onClick = { previewImageUrl = null }) {
+                                androidx.compose.material3.Text("Cerrar")
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -301,15 +370,45 @@ private fun RetrofitClientBase(): String {
     return apiUrl.replace("/api/", "/")
 }
 
-private fun openExternal(ctx: android.content.Context, url: String, mime: String?) {
+private fun openExternal(ctx: android.content.Context, url: String, mime: String?, name: String? = null) {
     try {
+        val resolvedMime = mime?.takeIf { it.isNotBlank() }
+            ?: guessMimeFromName(name)
+            ?: guessMimeFromUrl(url)
         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
             data = android.net.Uri.parse(url)
-            if (!mime.isNullOrBlank()) setDataAndType(android.net.Uri.parse(url), mime)
+            resolvedMime?.let { setDataAndType(android.net.Uri.parse(url), it) }
             addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         ctx.startActivity(intent)
     } catch (_: Exception) { }
+}
+
+private fun resolveMime(mime: String?, name: String?, url: String?): String? {
+    return mime?.takeIf { it.isNotBlank() }
+        ?: guessMimeFromName(name)
+        ?: guessMimeFromUrl(url)
+}
+
+private fun guessMimeFromName(name: String?): String? {
+    val lower = name?.lowercase() ?: return null
+    return when {
+        lower.endsWith(".pdf") -> "application/pdf"
+        lower.endsWith(".jpg") || lower.endsWith(".jpeg") -> "image/jpeg"
+        lower.endsWith(".png") -> "image/png"
+        lower.endsWith(".gif") -> "image/gif"
+        lower.endsWith(".webp") -> "image/webp"
+        else -> null
+    }
+}
+
+private fun guessMimeFromUrl(url: String?): String? = guessMimeFromName(url)
+
+private fun isProbablyImage(mime: String?, name: String?, url: String?): Boolean {
+    if (!mime.isNullOrBlank() && mime.startsWith("image/", ignoreCase = true)) return true
+    val lower = listOfNotNull(name, url).joinToString(" ").lowercase()
+    return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".gif") || lower.endsWith(".webp")
 }
 
 private fun String.encodeUrl(): String = URLEncoder.encode(this, StandardCharsets.UTF_8.toString())

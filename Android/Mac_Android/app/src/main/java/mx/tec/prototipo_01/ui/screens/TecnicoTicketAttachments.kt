@@ -11,12 +11,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
 import androidx.compose.material.icons.filled.PictureAsPdf
@@ -44,12 +48,19 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.SubcomposeAsyncImageContent
 import coil.request.ImageRequest
 import coil.size.Precision
 import coil.size.Scale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.layout.ContentScale
@@ -151,15 +162,22 @@ fun TecnicoTicketAttachments(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Listado de adjuntos con miniaturas
-            if (loading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-            LazyColumn {
+            val listState = rememberLazyListState()
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                state = listState,
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                if (loading) {
+                    item {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
                 items(items) { att ->
                     val rawFileType = (att.file_type as? String)?.trim()
-                    val fileType = rawFileType ?: ""
-                    val isImage = att.is_image || (rawFileType?.startsWith("image/", true) == true)
                     val s3Url = (att.s3_url as? String)?.trim()
                     val fileName = (att.file_name as? String)?.trim()
                     val originalName = (att.original_name as? String)?.trim()
@@ -169,10 +187,13 @@ fun TecnicoTicketAttachments(
                         else -> null
                     }
                     val fileUrl = absoluteUrl(rawUrl) ?: return@items
+                    val isImage = att.is_image || isProbablyImage(rawFileType, originalName, fileUrl)
+                    val fileType = rawFileType ?: ""
                     val displayName = originalName?.takeIf { it.isNotBlank() } ?: fileName ?: "Adjunto"
                     val mimeLabel = fileType.ifBlank { "Sin tipo" }
                     val isPdf = rawFileType?.equals("application/pdf", ignoreCase = true) == true ||
                         originalName?.endsWith(".pdf", ignoreCase = true) == true
+                    val resolvedMime = resolveMime(rawFileType, originalName ?: fileName, fileUrl)
                     ListItem(
                         leadingContent = {
                             if (isImage) {
@@ -196,7 +217,8 @@ fun TecnicoTicketAttachments(
                                     contentScale = ContentScale.Crop
                                 )
                             } else if (isPdf) {
-                                Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color(0xFFD32F2F))
+                                // Mostrar miniatura de la primera página del PDF
+                                PdfThumbnail(url = fileUrl, size = 48.dp)
                             } else {
                                 Icon(Icons.Default.AttachFile, contentDescription = null)
                             }
@@ -207,23 +229,25 @@ fun TecnicoTicketAttachments(
                             if (isImage) {
                                 previewImageUrl = fileUrl
                             } else {
-                                openExternal(ctx, fileUrl, rawFileType)
+                                openExternal(ctx, fileUrl, resolvedMime, originalName ?: fileName)
                             }
                         }
                     )
                     Divider()
                 }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Comentarios", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            if (commentsLoading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
-            LazyColumn {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Comentarios", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (commentsLoading) {
+                    item {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
                 items(comments) { c ->
                     val author = listOfNotNull(c.author?.first_name, c.author?.last_name).joinToString(" ").ifBlank { c.author?.username ?: "" }
                     val meta = buildString {
@@ -239,10 +263,16 @@ fun TecnicoTicketAttachments(
                     )
                     Divider()
                 }
+                item { Spacer(modifier = Modifier.height(12.dp)) }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .imePadding()
+            ) {
                 OutlinedTextField(
                     value = newComment,
                     onValueChange = { newComment = it },
@@ -288,17 +318,32 @@ fun TecnicoTicketAttachments(
                                     .scale(Scale.FIT)
                                     .precision(Precision.INEXACT)
                                     .bitmapConfig(Bitmap.Config.ARGB_8888)
+                                    .allowHardware(false)
                                     .crossfade(true)
                                     .build()
                             }
-                            AsyncImage(
+                            SubcomposeAsyncImage(
                                 model = previewReq,
                                 contentDescription = "vista previa",
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(400.dp),
                                 contentScale = ContentScale.Fit
-                            )
+                            ) {
+                                when (val state = painter.state) {
+                                    is AsyncImagePainter.State.Loading -> {
+                                        CircularProgressIndicator()
+                                    }
+                                    is AsyncImagePainter.State.Error -> {
+                                        Icon(
+                                            imageVector = Icons.Default.AttachFile,
+                                            contentDescription = "error al cargar",
+                                            tint = Color.White
+                                        )
+                                    }
+                                    else -> SubcomposeAsyncImageContent()
+                                }
+                            }
                             Spacer(modifier = Modifier.height(12.dp))
                             OutlinedButton(onClick = { previewImageUrl = null }) { Text("Cerrar") }
                         }
@@ -338,7 +383,7 @@ private suspend fun uploadFromUri(
         if (backendId == null) return@withContext
 
         val file = createTempFileFromUri(cr, uri) ?: return@withContext
-        val mime = cr.getType(uri) ?: guessMimeFromName(file.name)
+        val mime = cr.getType(uri) ?: guessMimeFromName(file.name) ?: "application/octet-stream"
         val reqBody: RequestBody = file.asRequestBody(mime.toMediaTypeOrNull())
         val part = MultipartBody.Part.createFormData("file", file.name, reqBody)
         val res = RetrofitClient.instance.uploadAttachment(backendId, part)
@@ -412,15 +457,25 @@ private fun RetrofitClientBase(): String {
     return apiUrl.replace("/api/", "/")
 }
 
-private fun openExternal(ctx: android.content.Context, url: String, mime: String?) {
+private fun openExternal(ctx: android.content.Context, url: String, mime: String?, name: String? = null) {
     try {
+        val resolvedMime = mime?.takeIf { it.isNotBlank() }
+            ?: guessMimeFromName(name)
+            ?: guessMimeFromUrl(url)
         val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
             data = android.net.Uri.parse(url)
-            if (!mime.isNullOrBlank()) setDataAndType(android.net.Uri.parse(url), mime)
+            resolvedMime?.let { setDataAndType(android.net.Uri.parse(url), it) }
             addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         ctx.startActivity(intent)
     } catch (_: Exception) { }
+}
+
+private fun resolveMime(mime: String?, name: String?, url: String?): String? {
+    return mime?.takeIf { it.isNotBlank() }
+        ?: guessMimeFromName(name)
+        ?: guessMimeFromUrl(url)
 }
 
 private fun createTempFileFromUri(cr: ContentResolver, uri: Uri): File? {
@@ -449,12 +504,65 @@ private fun getFileName(cr: ContentResolver, uri: Uri): String? {
     } catch (_: Exception) { null }
 }
 
-private fun guessMimeFromName(name: String): String {
-    val lower = name.lowercase()
+private fun guessMimeFromName(name: String?): String? {
+    val lower = name?.lowercase() ?: return null
     return when {
         lower.endsWith(".pdf") -> "application/pdf"
         lower.endsWith(".jpg") || lower.endsWith(".jpeg") -> "image/jpeg"
         lower.endsWith(".png") -> "image/png"
-        else -> "application/octet-stream"
+        lower.endsWith(".gif") -> "image/gif"
+        lower.endsWith(".webp") -> "image/webp"
+        else -> null
+    }
+}
+
+private fun guessMimeFromUrl(url: String?): String? = guessMimeFromName(url)
+
+private fun isProbablyImage(mime: String?, name: String?, url: String?): Boolean {
+    if (!mime.isNullOrBlank() && mime.startsWith("image/", ignoreCase = true)) return true
+    val lower = listOfNotNull(name, url).joinToString(" ").lowercase()
+    return lower.endsWith(".jpg") || lower.endsWith(".jpeg") || lower.endsWith(".png") || lower.endsWith(".gif") || lower.endsWith(".webp")
+}
+
+@Composable
+private fun PdfThumbnail(url: String, size: Dp) {
+    val ctx = LocalContext.current
+    val density = LocalDensity.current
+    val sizePx = with(density) { size.roundToPx() }
+    val bitmapState = produceState<Bitmap?>(initialValue = null, url) {
+        value = withContext(Dispatchers.IO) {
+            try {
+                renderPdfFirstPage(ctx.cacheDir, url, sizePx, sizePx)
+            } catch (_: Exception) { null }
+        }
+    }
+
+    val bmp = bitmapState.value
+    if (bmp != null) {
+        Image(bitmap = bmp.asImageBitmap(), contentDescription = null, modifier = Modifier.size(size), contentScale = ContentScale.Crop)
+    } else {
+        Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color(0xFFD32F2F), modifier = Modifier.size(size))
+    }
+}
+
+// Descarga el PDF a un archivo temporal y renderiza la primera página
+private fun renderPdfFirstPage(cacheDir: File, url: String, widthPx: Int, heightPx: Int): Bitmap? {
+    return try {
+        val tmp = File.createTempFile("pdfthumb_", ".pdf", cacheDir)
+        java.net.URL(url).openStream().use { input ->
+            FileOutputStream(tmp).use { out -> input.copyTo(out) }
+        }
+        val pfd = ParcelFileDescriptor.open(tmp, ParcelFileDescriptor.MODE_READ_ONLY)
+        val renderer = PdfRenderer(pfd)
+        val page = renderer.openPage(0)
+        val bmp = Bitmap.createBitmap(widthPx.coerceAtLeast(1), heightPx.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+        page.render(bmp, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+        page.close()
+        renderer.close()
+        pfd.close()
+        tmp.delete()
+        bmp
+    } catch (e: Exception) {
+        null
     }
 }
