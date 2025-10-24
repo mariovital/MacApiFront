@@ -43,8 +43,6 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
-import java.io.FileOutputStream
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.size.Precision
@@ -56,6 +54,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
+import java.io.File
+import java.io.FileOutputStream
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,9 +157,22 @@ fun TecnicoTicketAttachments(
             }
             LazyColumn {
                 items(items) { att ->
-                    val isImage = att.is_image || att.file_type.startsWith("image/")
-                    val fileUrl = absoluteUrl(att.s3_url)
-                    if (fileUrl == null) return@items // skip rendering if url is null
+                    val rawFileType = (att.file_type as? String)?.trim()
+                    val fileType = rawFileType ?: ""
+                    val isImage = att.is_image || (rawFileType?.startsWith("image/", true) == true)
+                    val s3Url = (att.s3_url as? String)?.trim()
+                    val fileName = (att.file_name as? String)?.trim()
+                    val originalName = (att.original_name as? String)?.trim()
+                    val rawUrl = when {
+                        !s3Url.isNullOrBlank() -> s3Url
+                        !fileName.isNullOrBlank() -> "uploads/${URLEncoder.encode(fileName, StandardCharsets.UTF_8.toString())}"
+                        else -> null
+                    }
+                    val fileUrl = absoluteUrl(rawUrl) ?: return@items
+                    val displayName = originalName?.takeIf { it.isNotBlank() } ?: fileName ?: "Adjunto"
+                    val mimeLabel = fileType.ifBlank { "Sin tipo" }
+                    val isPdf = rawFileType?.equals("application/pdf", ignoreCase = true) == true ||
+                        originalName?.endsWith(".pdf", ignoreCase = true) == true
                     ListItem(
                         leadingContent = {
                             if (isImage) {
@@ -167,7 +182,7 @@ fun TecnicoTicketAttachments(
                                 val thumbReq = remember(fileUrl) {
                                     ImageRequest.Builder(ctxLocal)
                                         .data(fileUrl)
-                                        .size(thumbPx) // cuadrado 48dp
+                                        .size(thumbPx)
                                         .scale(Scale.FILL)
                                         .precision(Precision.INEXACT)
                                         .bitmapConfig(Bitmap.Config.RGB_565)
@@ -180,20 +195,19 @@ fun TecnicoTicketAttachments(
                                     modifier = Modifier.size(48.dp),
                                     contentScale = ContentScale.Crop
                                 )
-                            } else if (att.file_type == "application/pdf" || att.original_name.endsWith(".pdf", true)) {
+                            } else if (isPdf) {
                                 Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color(0xFFD32F2F))
                             } else {
                                 Icon(Icons.Default.AttachFile, contentDescription = null)
                             }
                         },
-                        headlineContent = { Text(att.original_name) },
-                        supportingContent = { Text("${att.file_type} • ${(att.file_size / 1024)} KB") },
+                        headlineContent = { Text(displayName) },
+                        supportingContent = { Text("$mimeLabel · ${(att.file_size / 1024)} KB") },
                         modifier = Modifier.clickable {
                             if (isImage) {
                                 previewImageUrl = fileUrl
                             } else {
-                                // Abrir con visor externo (PDF o genérico)
-                                openExternal(ctx, fileUrl, att.file_type)
+                                openExternal(ctx, fileUrl, rawFileType)
                             }
                         }
                     )

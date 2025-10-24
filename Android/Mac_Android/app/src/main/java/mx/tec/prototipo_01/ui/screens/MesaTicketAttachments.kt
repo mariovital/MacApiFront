@@ -1,8 +1,8 @@
 package mx.tec.prototipo_01.ui.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,8 +10,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachFile
@@ -37,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -109,11 +114,35 @@ fun MesaTicketAttachments(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (loading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            LazyColumn {
+            val listState = rememberLazyListState()
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth(),
+                state = listState,
+                contentPadding = PaddingValues(vertical = 8.dp)
+            ) {
+                if (loading) {
+                    item {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
                 items(items) { att ->
-                    val isImage = att.is_image || att.file_type.startsWith("image/")
-                    val fileUrl = absoluteUrl(att.s3_url)
+                    val fileType = (att.file_type as String?)?.trim()
+                    val isImage = att.is_image || (fileType?.startsWith("image/") == true)
+                    val s3Url = (att.s3_url as String?)?.trim()
+                    val fileName = (att.file_name as String?)?.trim()
+                    val originalName = (att.original_name as String?)?.trim()
+                    val rawUrl = when {
+                        !s3Url.isNullOrBlank() -> s3Url
+                        !fileName.isNullOrBlank() -> "uploads/${fileName.encodeUrl()}"
+                        else -> null
+                    }
+                    val fileUrl = absoluteUrl(rawUrl) ?: return@items
+                    val displayName = originalName?.ifBlank { null } ?: fileName ?: "Adjunto"
+                    val mimeLabel = fileType.orEmpty().ifBlank { "Sin tipo" }
+                    val isPdf = (fileType == "application/pdf") || (originalName?.endsWith(".pdf", ignoreCase = true) == true)
                     ListItem(
                         leadingContent = {
                             if (isImage) {
@@ -136,14 +165,14 @@ fun MesaTicketAttachments(
                                     modifier = Modifier.size(48.dp),
                                     contentScale = ContentScale.Crop
                                 )
-                            } else if (att.file_type == "application/pdf" || att.original_name.endsWith(".pdf", true)) {
+                            } else if (isPdf) {
                                 Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color(0xFFD32F2F))
                             } else {
                                 Icon(Icons.Default.AttachFile, contentDescription = null)
                             }
                         },
-                        headlineContent = { Text(att.original_name) },
-                        supportingContent = { Text("${att.file_type} · ${(att.file_size / 1024)} KB") },
+                        headlineContent = { Text(displayName) },
+                        supportingContent = { Text("$mimeLabel · ${(att.file_size / 1024)} KB") },
                         modifier = Modifier.clickable {
                             // Solo lectura: abrir en visor externo
                             openExternal(ctx, fileUrl, att.file_type)
@@ -151,15 +180,19 @@ fun MesaTicketAttachments(
                     )
                     Divider()
                 }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Comentarios", style = MaterialTheme.typography.titleMedium)
-            Spacer(modifier = Modifier.height(8.dp))
-            if (commentsLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            LazyColumn {
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider()
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Comentarios", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+                if (commentsLoading) {
+                    item {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                }
                 items(comments) { c ->
                     val author = listOfNotNull(c.author?.first_name, c.author?.last_name).joinToString(" ").ifBlank { c.author?.username ?: "" }
                     val meta = buildString {
@@ -172,19 +205,25 @@ fun MesaTicketAttachments(
                     ListItem(headlineContent = { Text(c.comment) }, supportingContent = { Text(meta) })
                     Divider()
                 }
+                item { Spacer(modifier = Modifier.height(8.dp)) }
             }
 
-            Spacer(modifier = androidx.compose.ui.Modifier.height(12.dp))
-            androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .imePadding()
+            ) {
                 androidx.compose.material3.OutlinedTextField(
                     value = newComment,
                     onValueChange = { newComment = it },
-                    modifier = androidx.compose.ui.Modifier.weight(1f),
+                    modifier = Modifier.weight(1f),
                     label = { androidx.compose.material3.Text("Agregar comentario") },
                     singleLine = false,
                     maxLines = 4
                 )
-                Spacer(modifier = androidx.compose.ui.Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 androidx.compose.material3.Button(
                     onClick = {
                         val text = newComment.trim()
@@ -248,8 +287,13 @@ fun MesaTicketAttachments(
     }
 }
 
-private fun absoluteUrl(pathOrUrl: String): String {
-    return if (pathOrUrl.startsWith("http")) pathOrUrl else RetrofitClientBase() + pathOrUrl.removePrefix("/")
+private fun absoluteUrl(pathOrUrl: String?): String? {
+    if (pathOrUrl.isNullOrBlank()) return null
+    return try {
+        if (pathOrUrl.startsWith("http")) pathOrUrl else RetrofitClientBase() + pathOrUrl.removePrefix("/")
+    } catch (_: Exception) {
+        null
+    }
 }
 
 private fun RetrofitClientBase(): String {

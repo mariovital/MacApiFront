@@ -439,8 +439,17 @@ export const getTicketAttachments = async (req, res) => {
     const canView = isAdmin || ticket.assigned_to === req.user.id || ticket.created_by === req.user.id;
     if (!canView) return res.status(403).json({ success: false, message: 'No tienes permiso' });
 
-    const items = await TicketAttachment.findAll({ where: { ticket_id: id, deleted_at: null }, order: [['created_at', 'DESC']] });
-    res.json({ success: true, data: items });
+        const items = await TicketAttachment.findAll({ where: { ticket_id: id, deleted_at: null }, order: [['created_at', 'DESC']] });
+        // Agregar s3_url (url pública) a cada adjunto
+        const baseUrl = req.protocol + '://' + req.get('host');
+        const mapped = items.map(att => {
+          let s3_url = att.s3_url;
+          if (!s3_url && att.file_name) {
+            s3_url = baseUrl + '/uploads/' + encodeURIComponent(att.file_name);
+          }
+          return { ...att.toJSON(), s3_url };
+        });
+        res.json({ success: true, data: mapped });
   } catch (error) {
     console.error('Error en getTicketAttachments:', error);
     res.status(500).json({ success: false, message: 'Error obteniendo adjuntos' });
