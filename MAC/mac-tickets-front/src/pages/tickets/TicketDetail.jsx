@@ -205,6 +205,16 @@ const TicketDetail = () => {
   const handleUploadFiles = async () => {
     if (selectedFiles.length === 0) return;
 
+    // Validar tamaño de archivos ANTES de subir
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+    const oversizedFiles = selectedFiles.filter(file => file.size > MAX_FILE_SIZE);
+    
+    if (oversizedFiles.length > 0) {
+      const fileNames = oversizedFiles.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)`).join('\n');
+      alert(`❌ Los siguientes archivos exceden el límite de 50 MB:\n\n${fileNames}\n\nPor favor, reduce el tamaño o sube archivos más pequeños.`);
+      return;
+    }
+
     setUploadingFiles(true);
     setUploadProgress(0);
 
@@ -212,6 +222,8 @@ const TicketDetail = () => {
       // Subir archivos uno por uno
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
+        
+        console.log(`📤 Subiendo archivo ${i + 1}/${selectedFiles.length}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
         
         // Actualizar progreso
         setUploadProgress(Math.round(((i + 1) / selectedFiles.length) * 100));
@@ -228,7 +240,19 @@ const TicketDetail = () => {
       alert('✅ Archivos subidos exitosamente');
     } catch (err) {
       console.error('Error subiendo archivos:', err);
-      alert('❌ Error al subir archivos: ' + (err.response?.data?.message || err.message));
+      
+      // Mensajes de error mejorados
+      let errorMessage = 'Error al subir archivos';
+      
+      if (err.response?.status === 413) {
+        errorMessage = 'Archivo demasiado grande. Máximo permitido: 50 MB';
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      alert('❌ ' + errorMessage);
     } finally {
       setUploadingFiles(false);
     }

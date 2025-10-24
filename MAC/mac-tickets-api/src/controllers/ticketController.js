@@ -417,9 +417,37 @@ export const uploadTicketAttachment = async (req, res) => {
       user_agent: req.headers['user-agent']
     });
 
+    console.log(`✅ Archivo subido: ${req.file.originalname} (${(req.file.size / 1024 / 1024).toFixed(2)} MB)`);
+
     res.status(201).json({ success: true, message: 'Archivo adjuntado', data: record });
   } catch (error) {
     console.error('Error en uploadTicketAttachment:', error);
+    
+    // Manejo específico de errores de multer
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ 
+        success: false, 
+        message: 'Archivo demasiado grande. Máximo permitido: 50 MB',
+        code: 'FILE_TOO_LARGE'
+      });
+    }
+    
+    if (error.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Demasiados archivos. Máximo 10 archivos simultáneos',
+        code: 'TOO_MANY_FILES'
+      });
+    }
+    
+    if (error.message && error.message.includes('Tipo de archivo no permitido')) {
+      return res.status(400).json({ 
+        success: false, 
+        message: error.message,
+        code: 'INVALID_FILE_TYPE'
+      });
+    }
+    
     res.status(500).json({ success: false, message: 'Error subiendo adjunto' });
   }
 };
