@@ -117,7 +117,32 @@ const storage = multer.diskStorage({
 		cb(null, unique + '-' + safe);
 	}
 });
-const upload = multer({ storage });
+
+// Configuración de multer con límites
+const upload = multer({ 
+	storage,
+	limits: {
+		fileSize: 50 * 1024 * 1024, // 50 MB máximo por archivo
+		files: 10 // Máximo 10 archivos simultáneos
+	},
+	fileFilter: (_req, file, cb) => {
+		// Tipos de archivo permitidos
+		const allowedTypes = [
+			'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+			'application/pdf',
+			'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+			'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			'text/plain',
+			'video/mp4', 'video/quicktime'
+		];
+		
+		if (allowedTypes.includes(file.mimetype)) {
+			cb(null, true);
+		} else {
+			cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}`), false);
+		}
+	}
+});
 
 /**
  * POST /api/tickets/:id/attachments

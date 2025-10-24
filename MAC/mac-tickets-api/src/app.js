@@ -82,7 +82,7 @@ if (process.env.NODE_ENV === 'development') {
 
 // Parser de JSON
 app.use(express.json({ 
-  limit: '10mb',
+  limit: '50mb', // Aumentado para soportar archivos más grandes
   verify: (req, res, buf) => {
     req.rawBody = buf;
   }
@@ -91,7 +91,7 @@ app.use(express.json({
 // Parser de URL encoded
 app.use(express.urlencoded({ 
   extended: true,
-  limit: '10mb'
+  limit: '50mb' // Aumentado para soportar archivos más grandes
 }));
 
 // =====================================================================

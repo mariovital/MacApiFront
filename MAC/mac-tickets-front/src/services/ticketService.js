@@ -148,11 +148,39 @@ const ticketService = {
       const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
       const token = localStorage.getItem('token');
       
-      // Crear URL con token
-      const downloadUrl = `${API_BASE_URL}/tickets/${ticketId}/attachments/${attachmentId}/download?token=${token}`;
+      const downloadUrl = `${API_BASE_URL}/tickets/${ticketId}/attachments/${attachmentId}/download`;
       
-      // Abrir en nueva ventana para descargar
-      window.open(downloadUrl, '_blank');
+      console.log('📥 Descargando archivo:', fileName);
+      
+      // Descargar con fetch (permite Authorization header)
+      const response = await fetch(downloadUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error al descargar archivo: ${response.status}`);
+      }
+      
+      // Convertir a blob
+      const blob = await response.blob();
+      
+      // Crear URL temporal
+      const blobUrl = URL.createObjectURL(blob);
+      
+      // Crear elemento <a> temporal para descargar
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName || 'archivo';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Liberar memoria
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+      
+      console.log('✅ Archivo descargado exitosamente:', fileName);
       
       return { success: true };
     } catch (error) {
