@@ -110,7 +110,7 @@ const pdfService = {
       });
 
       // 5. Construir el PDF
-      pdfService.buildPDFContent(doc, ticket, attachments, comments);
+      pdfService.buildPDFContent(doc, ticket, attachments, history, comments);
 
       // 6. Finalizar el documento
       doc.end();
@@ -126,7 +126,7 @@ const pdfService = {
   /**
    * Construye el contenido visual del PDF
    */
-  buildPDFContent: (doc, ticket, attachments, comments) => {
+  buildPDFContent: (doc, ticket, attachments, history, comments) => {
     const pageWidth = doc.page.width - 100; // Ancho útil (restando márgenes)
     let currentY = 50;
 
